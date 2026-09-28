@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case load validator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F7F9;
+    --panel: #FFFFFF;
+    --panel-2: #EEF2F6;
+    --ink: #1B2430;
+    --ink-2: #4B5967;
+    --ink-3: #7F8B98;
+    --line: #D5DCE4;
+    --line-2: #E7ECF1;
+    --accent: #1F5F8B;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E4EEF6;
+    --ok: #1E7D4F;      --ok-bg: #E1F3E8;
+    --bad: #B3261E;     --bad-bg: #FBE8E6;
+    --warn: #875800;    --warn-bg: #FFF1CC;
+    --info: #1F5F8B;    --info-bg: #E4EEF6;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141A21; --panel: #1B232C; --panel-2: #222C37;
+      --ink: #E6EBF0; --ink-2: #AEB9C4; --ink-3: #7B8794;
+      --line: #33404D; --line-2: #2A3540;
+      --accent: #6FB1E3; --accent-ink: #0F1A24; --accent-soft: #1E3346;
+      --ok: #6CCB94; --ok-bg: #173324;
+      --bad: #F09A93; --bad-bg: #3B1E1B;
+      --warn: #F2C862; --warn-bg: #3A2F12;
+      --info: #6FB1E3; --info-bg: #1E3346;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  code, .mono { font-family: var(--mono); }
+
+  /* ---------- header ---------- */
+  .top {
+    display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between;
+    padding: 22px 28px 14px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  .top h1 { margin: 0 0 4px; font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
+  .top p { margin: 0; color: var(--ink-2); max-width: 62ch; }
+  .run-block { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
+  .field input {
+    font-family: var(--mono); font-size: 13px; padding: 7px 10px; width: 25ch;
+    border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink);
+  }
+  .btn {
+    padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); font-weight: 500;
+  }
+  .btn:hover { background: var(--panel-2); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.small { padding: 5px 10px; font-size: 12.5px; }
+  .link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  /* ---------- loader ---------- */
+  .loader { padding: 16px 28px 0; display: grid; gap: 12px; }
+  .drop {
+    border: 1.5px dashed var(--line); border-radius: 8px; padding: 14px 18px;
+    background: var(--panel); transition: background .15s, border-color .15s;
+  }
+  .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop p { margin: 0; }
+  .drop .hint { margin-top: 6px; font-size: 12.5px; color: var(--ink-2); min-height: 1.4em; }
+  .drop .hint.err { color: var(--bad); }
+  .drop .hint.ok { color: var(--ok); }
+  .sources { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 8px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--panel);
+    font-family: var(--mono); font-size: 12.5px; cursor: pointer;
+  }
+  .chip:hover { background: var(--panel-2); }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--ink-3); }
+  .chip.loaded .dot { background: var(--ok); border-color: var(--ok); }
+  .chip .meta { font-family: var(--sans); color: var(--ink-2); }
+  .chip .x { border: 0; background: none; color: var(--ink-3); padding: 0 2px; line-height: 1; font-size: 14px; }
+  .chip .x:hover { color: var(--bad); }
+
+  /* ---------- tabs ---------- */
+  .tabs { display: flex; gap: 2px; padding: 14px 28px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .tabs button[role="tab"] {
+    background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    padding: 9px 13px; color: var(--ink-2); white-space: nowrap; display: inline-flex; gap: 7px; align-items: center;
+  }
+  .tabs button[role="tab"]:hover { color: var(--ink); }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 500; }
+  .tabs .badge {
+    font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--panel-2); color: var(--ink-2); font-family: var(--mono);
+  }
+  .tabs .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .tabs .badge.bad { background: var(--bad-bg); color: var(--bad); }
+  .tabs .badge.warn { background: var(--warn-bg); color: var(--warn); }
+
+  main { padding: 18px 28px 40px; }
+  [role="tabpanel"][hidden] { display: none; }
+
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 10px; }
+  .query { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); }
+  .query b { color: var(--accent); font-weight: 500; }
+  .toolbar .grow { flex: 1; }
+  .toolbar input[type="search"], .lookup input {
+    padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink);
+    font-family: var(--mono); font-size: 13px; min-width: 22ch;
+  }
+  .count { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+  .empty {
+    border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+    padding: 26px 22px; color: var(--ink-2); max-width: 70ch;
+  }
+  .empty strong { color: var(--ink); }
+
+  /* ---------- grid ---------- */
+  .grid-wrap { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+  table.grid { border-collapse: separate; border-spacing: 0; font-family: var(--mono); font-size: 12.5px; min-width: 100%; }
+  table.grid th, table.grid td { text-align: left; vertical-align: top; padding: 7px 11px; border-bottom: 1px solid var(--line-2); border-right: 1px solid var(--line-2); white-space: nowrap; }
+  table.grid th:last-child, table.grid td:last-child { border-right: 0; }
+  table.grid thead th {
+    position: sticky; top: 0; z-index: 2; background: var(--panel-2); color: var(--ink);
+    font-weight: 500; border-bottom: 1px solid var(--line); cursor: pointer; user-select: none;
+  }
+  table.grid thead th .type { font-family: var(--sans); font-weight: 400; font-size: 10.5px; color: var(--ink-3); margin-left: 6px; }
+  table.grid thead th .arrow { color: var(--accent); margin-left: 4px; }
+  table.grid tbody tr:hover td { background: color-mix(in srgb, var(--panel-2) 55%, var(--panel)); }
+  table.grid tbody tr:last-child td { border-bottom: 0; }
+  table.grid .rownum { position: sticky; left: 0; z-index: 1; background: var(--panel-2); color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; cursor: default; }
+  table.grid thead th.rownum { z-index: 3; }
+  .null { color: var(--ink-3); font-style: italic; }
+  td.flag-bad  { background: var(--bad-bg)  !important; box-shadow: inset 0 -2px var(--bad); }
+  td.flag-warn { background: var(--warn-bg) !important; box-shadow: inset 0 -2px var(--warn); }
+  table.grid td.wrap { white-space: normal; min-width: 40ch; }
+  table.grid td.reason ul { width: 62ch; }
+  table.grid td.wrap ul { margin: 0; padding-left: 1.1em; }
+  table.grid td.wrap li + li { margin-top: 3px; }
+  table.grid td.wrap li.note { color: var(--ink-2); }
+  .flag-key { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); margin-top: 8px; align-items: center; }
+  .flag-key i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+  .flag-key i.bad { background: var(--bad-bg); box-shadow: inset 0 -2px var(--bad); }
+  .flag-key i.warn { background: var(--warn-bg); box-shadow: inset 0 -2px var(--warn); }
+
+  .pill {
+    display: inline-block; font-family: var(--sans); font-size: 11.5px; font-weight: 600; letter-spacing: .02em;
+    padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+  }
+  .pill.ACCEPT { background: var(--ok-bg); color: var(--ok); }
+  .pill.REJECT { background: var(--bad-bg); color: var(--bad); }
+  .pill.HUMAN_REVIEW { background: var(--warn-bg); color: var(--warn); }
+  .pill.PASS { background: var(--ok-bg); color: var(--ok); }
+  .pill.PAUSE_LOAD { background: var(--bad-bg); color: var(--bad); }
+  .pill.LOAD_WARNING { background: var(--warn-bg); color: var(--warn); }
+  .pill.PUBLISHED { background: var(--info-bg); color: var(--info); }
+
+  /* ---------- report ---------- */
+  .report-head { display: grid; gap: 16px; margin-bottom: 18px; }
+  .banner { border-radius: 8px; padding: 12px 16px; border: 1px solid var(--line); background: var(--panel); }
+  .banner.bad { border-color: var(--bad); background: var(--bad-bg); }
+  .banner.warn { border-color: var(--warn); background: var(--warn-bg); }
+  .banner h2 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+  .banner p { margin: 0; color: var(--ink-2); }
+  .banner ul { margin: 6px 0 0; padding-left: 1.2em; color: var(--ink-2); }
+  .banner code { font-size: 12.5px; }
+
+  .summary { display: grid; gap: 8px; }
+  .summary .bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); background: var(--panel-2); }
+  .summary .bar span { display: block; height: 100%; }
+  .summary .bar .a { background: var(--ok); }
+  .summary .bar .h { background: var(--warn); }
+  .summary .bar .r { background: var(--bad); }
+  .summary .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .summary .legend b { color: var(--ink); font-weight: 600; }
+
+  .section-title { font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 0 0 8px; }
+  details.sql { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  details.sql summary { cursor: pointer; padding: 10px 14px; color: var(--ink-2); }
+  details.sql pre { margin: 0; padding: 4px 16px 14px; font-family: var(--mono); font-size: 12.5px; line-height: 1.55; overflow-x: auto; color: var(--ink); }
+  details.sql pre b { color: var(--accent); font-weight: 500; }
+  details.sql pre i { color: var(--ink-3); font-style: normal; }
+
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .seg button { border: 0; background: var(--panel); padding: 6px 11px; font-size: 12.5px; color: var(--ink-2); }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+  label.check { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+
+  .runs { font-size: 12.5px; color: var(--ink-2); }
+  .runs table { border-collapse: collapse; font-family: var(--mono); font-size: 12px; margin-top: 6px; }
+  .runs td, .runs th { padding: 3px 12px 3px 0; text-align: left; font-weight: 400; color: var(--ink-2); }
+  .runs th { color: var(--ink-3); }
+
+  /* ---------- lookup ---------- */
+  .lookup { display: grid; gap: 18px; max-width: 1100px; }
+  .lookup form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .verdict { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 14px 18px; display: grid; gap: 8px; }
+  .verdict .head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .verdict .head h2 { margin: 0; font-size: 18px; font-family: var(--mono); font-weight: 500; }
+  .verdict .sub { color: var(--ink-2); font-size: 12.5px; }
+  .verdict ul { margin: 0; padding-left: 1.2em; }
+  .verdict li + li { margin-top: 3px; }
+  .verdict li.note { color: var(--ink-2); }
+  .chain { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); }
+  .chain b { color: var(--ink); font-weight: 500; }
+  .related { display: grid; gap: 14px; }
+  .related section { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); overflow: hidden; }
+  .related h3 { margin: 0; padding: 10px 14px; font-size: 12.5px; font-weight: 500; font-family: var(--mono); color: var(--ink-2); background: var(--panel-2); border-bottom: 1px solid var(--line); }
+  .related h3 b { color: var(--accent); font-weight: 500; }
+  .related .none { padding: 12px 14px; color: var(--ink-3); font-size: 13px; }
+  .kv { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; }
+  .kv th { width: 24ch; text-align: left; font-weight: 400; color: var(--ink-2); padding: 6px 14px; border-bottom: 1px solid var(--line-2); vertical-align: top; background: color-mix(in srgb, var(--panel-2) 40%, var(--panel)); }
+  .kv td { padding: 6px 14px; border-bottom: 1px solid var(--line-2); white-space: pre-wrap; word-break: break-word; }
+  .kv tr:last-child th, .kv tr:last-child td { border-bottom: 0; }
+  .kv + .kv { border-top: 2px solid var(--line); }
+
+  /* ---------- rules ---------- */
+  .rules-intro { color: var(--ink-2); max-width: 78ch; margin: 0 0 12px; }
+  table.grid td.wrap.rule { min-width: 28ch; max-width: 46ch; }
+
+  @media (max-width: 720px) {
+    .top, .loader, .tabs, main { padding-left: 16px; padding-right: 16px; }
+    .field input { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <h1>Case load validator</h1>
+    <p>Joins support cases to their orders, issue records and human reviews, then routes every case: accept, reject, or human review.</p>
+  </div>
+  <div class="run-block">
+    <label class="field">Fixed run time for freshness check (VR-008)
+      <input id="runTime" value="2026-09-18T10:00:00Z" spellcheck="false" aria-describedby="runTimeHint">
+    </label>
+    <button class="btn primary" id="btnGenerate">Generate report</button>
+  </div>
+</header>
+
+<section class="loader">
+  <div class="drop" id="dropZone">
+    <p><strong>Drop the four CSV files here</strong> (support_cases, orders, issue_records, human_reviews), or
+      <button class="link" id="btnPick">choose files</button> or
+      <button class="link" id="btnFolder">load them from this folder</button>.
+      Files are recognised by their columns, so names don't matter.</p>
+    <input type="file" id="filePick" multiple accept=".csv,text/csv,text/plain" hidden>
+    <p class="hint" id="loaderMsg"></p>
+  </div>
+  <ul class="sources" id="sourceChips" aria-label="Loaded source files"></ul>
+</section>
+
+<nav class="tabs" role="tablist" id="tabs"></nav>
+
+<main id="panels"></main>
+
+<script>
+/* ============================================================
+   Pure logic: CSV parsing, schema, rules, evaluation
+   (kept UI-free so it can be tested on its own)
+   ============================================================ */
+const SOURCES = {
+  support_cases: {
+    file: 'support_cases.csv',
+    required: ['case_id','order_id','received_at','customer_question','case_type','review_status','extract_generated_at'],
+    detect: h => h.includes('customer_question') || (h.includes('case_type') && h.includes('review_status')),
+  },
+  orders: {
+    file: 'orders.csv',
+    required: ['order_id','product','order_date','delivery_date','payment_status','extract_generated_at'],
+    detect: h => h.includes('product') && h.includes('order_date'),
+  },
+  issue_records: {
+    file: 'issue_records.csv',
+    required: ['case_id','issue_type','issue_details','reported_delivery_date','evidence_status','extract_generated_at'],
+    detect: h => h.includes('issue_type') || h.includes('reported_delivery_date'),
+  },
+  human_reviews: {
+    file: 'human_reviews.csv',
+    required: ['review_id','case_id','reviewer_role','decision','decision_reason','reviewed_at','extract_generated_at'],
+    detect: h => h.includes('review_id') || (h.includes('decision') && h.includes('reviewer_role')),
+  },
+};
+const SOURCE_KEYS = Object.keys(SOURCES);
+const ALLOWED_REVIEW_STATUS = ['PENDING','APPROVED','REJECTED'];
+const FRESHNESS_HOURS = 24;
+
+const RULES = [
+  { id:'VR-001', file:'support_cases.csv', field:'case_id', type:'required', condition:'case_id is present', route:'REJECT', reason:'A case cannot be traced or connected reliably.', how:'Any support_cases row with a blank case_id is rejected.' },
+  { id:'VR-002', file:'support_cases.csv', field:'case_id', type:'unique', condition:'case_id is unique in the incoming support load; both duplicate occurrences fail', route:'REJECT', reason:'Publishing either occurrence could hide which row is intended.', how:'case_id values are counted across support_cases; every row sharing a repeated id is rejected.' },
+  { id:'VR-003', file:'support_cases.csv', field:'order_id', type:'conditional_required', condition:'order_id is present when case_type is RETURN or DAMAGE', route:'REJECT', reason:'The required relationship cannot be established.', how:'RETURN and DAMAGE cases without an order_id are rejected. An order_id that has no matching row in orders is treated the same way, since the join cannot be made.' },
+  { id:'VR-004', file:'support_cases.csv', field:'review_status', type:'allowed_values', condition:'review_status is PENDING, APPROVED or REJECTED', route:'REJECT', reason:'The downstream meaning is not agreed.', how:'Exact, case-sensitive match against the three allowed values.' },
+  { id:'VR-005', file:'orders.csv', field:'delivery_date', type:'date_format', condition:'A present delivery_date is a valid calendar date in YYYY-MM-DD form; a failed purchase order blocks its linked case bundle', route:'REJECT', reason:'A date cannot be compared consistently until it is valid.', how:'After the join, the linked order\'s delivery_date must be a real calendar date written YYYY-MM-DD. A blank date passes; a malformed one rejects every case linked to that order.' },
+  { id:'VR-006', file:'orders.csv + issue_records.csv', field:'delivery_date', type:'cross_source_match', condition:'If order and issue sources both provide delivery dates, the values agree', route:'HUMAN_REVIEW', reason:'The pipeline cannot decide source ownership.', how:'When the linked order and the case\'s issue record both carry a valid date and they differ, the case goes to human review. Skipped when either side is blank or the order already failed VR-005.' },
+  { id:'VR-007', file:'all supplied files', field:'required files and columns', type:'schema', condition:'Every required source file and required column exists', route:'PAUSE_LOAD', reason:'The intended question may depend on unavailable data.', how:'All four files must be loaded with their expected columns before any case is evaluated; otherwise the load is paused and the missing items are listed.' },
+  { id:'VR-008', file:'operational files', field:'extract_generated_at', type:'freshness', condition:'extract_generated_at is within 24 hours of the fixed classroom run time', route:'LOAD_WARNING', reason:'The intended question may depend on current data.', how:'Each file\'s extract_generated_at is compared with the run time entered at the top. Files more than 24 hours away raise a warning; cases that used a stale file carry a note but keep their status.' },
+  { id:'VR-009', file:'published outputs', field:'content hash and record keys', type:'idempotency', condition:'Rerunning the same file content and keys creates no additional trusted records', route:'PAUSE_LOAD', reason:'Duplicate publication would change counts without new evidence.', how:'A fingerprint of the four files\' content plus their record keys is stored per run. Generating again with identical content publishes zero new trusted records.' },
+];
+
+function parseCSV(text) {
+  const rows = []; let row = [], cell = '', i = 0, inQ = false;
+  text = text.replace(/^\uFEFF/, '');
+  while (i < text.length) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i+1] === '"') { cell += '"'; i += 2; continue; } inQ = false; i++; continue; }
+      cell += c; i++; continue;
+    }
+    if (c === '"') { inQ = true; i++; continue; }
+    if (c === ',') { row.push(cell); cell = ''; i++; continue; }
+    if (c === '\r') { i++; continue; }
+    if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; i++; continue; }
+    cell += c; i++;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  const nonEmpty = rows.filter(r => r.some(v => v.trim() !== ''));
+  if (!nonEmpty.length) return { headers: [], rows: [] };
+  const headers = nonEmpty[0].map(h => h.trim());
+  const data = nonEmpty.slice(1).map(r => {
+    const o = {}; headers.forEach((h, j) => { o[h] = (r[j] ?? '').trim(); }); return o;
+  });
+  return { headers, rows: data };
+}
+
+function detectSource(headers, fileName = '') {
+  for (const k of SOURCE_KEYS) if (SOURCES[k].detect(headers)) return k;
+  const base = fileName.toLowerCase();
+  for (const k of SOURCE_KEYS) if (base.includes(k)) return k;
+  return null;
+}
+
+function isValidISODate(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return false;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (mo < 1 || mo > 12 || d < 1) return false;
+  const dim = [31, (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 29 : 28, 31,30,31,30,31,31,30,31,30,31][mo-1];
+  return d <= dim;
+}
+
+function inferType(values) {
+  const v = values.filter(x => x !== '');
+  if (!v.length) return 'empty';
+  if (v.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x))) return 'date';
+  if (v.every(x => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x))) return 'timestamp';
+  if (v.every(x => /^-?\d+$/.test(x))) return 'int';
+  if (v.every(x => /^-?\d+\.\d+$/.test(x))) return 'decimal';
+  if (v.every(x => /^(true|false)$/i.test(x))) return 'bool';
+  return 'text';
+}
+
+function checkSchema(data) {
+  const missingFiles = [], missingCols = {};
+  for (const k of SOURCE_KEYS) {
+    const d = data[k];
+    if (!d) { missingFiles.push(SOURCES[k].file); continue; }
+    const miss = SOURCES[k].required.filter(c => !d.headers.includes(c));
+    if (miss.length) missingCols[k] = miss;
+  }
+  return { ok: !missingFiles.length && !Object.keys(missingCols).length, missingFiles, missingCols };
+}
+
+function checkFreshness(data, runTimeISO) {
+  const run = Date.parse(runTimeISO);
+  const out = [];
+  for (const k of SOURCE_KEYS) {
+    const d = data[k]; if (!d) continue;
+    if (!d.headers.includes('extract_generated_at')) { out.push({ source:k, extract:'', hours:null, ok:null, detail:'column missing' }); continue; }
+    const vals = [...new Set(d.rows.map(r => r.extract_generated_at).filter(Boolean))];
+    if (!vals.length) { out.push({ source:k, extract:'', hours:null, ok:null, detail:'no values' }); continue; }
+    if (isNaN(run)) { out.push({ source:k, extract:vals.join(', '), hours:null, ok:null, detail:'run time is not a valid timestamp' }); continue; }
+    let worst = 0, bad = false, unparsable = [];
+    for (const v of vals) {
+      const t = Date.parse(v);
+      if (isNaN(t)) { unparsable.push(v); continue; }
+      const h = Math.abs(run - t) / 36e5; worst = Math.max(worst, h); if (h > FRESHNESS_HOURS) bad = true;
+    }
+    out.push({ source:k, extract:vals.join(', '), hours:worst, ok: !bad && !unparsable.length, unparsable });
+  }
+  return out;
+}
+
+function groupBy(rows, key) {
+  const m = new Map();
+  rows.forEach((row, idx) => { const k = row[key] || ''; if (!k) return; if (!m.has(k)) m.set(k, []); m.get(k).push({ row, idx }); });
+  return m;
+}
+
+function evaluate(data, runTimeISO) {
+  const schema = checkSchema(data);
+  const freshness = checkFreshness(data, runTimeISO);
+  const flags = {};
+  const flag = (src, idx, col, level, msg) => { const k = `${src}|${idx}|${col}`; if (!flags[k] || level === 'bad') flags[k] = { level, msg }; };
+  if (!schema.ok) return { schema, freshness, cases: null, flags, staleSources: [] };
+
+  const sc = data.support_cases, od = data.orders, ir = data.issue_records, hr = data.human_reviews;
+  const ordersById = groupBy(od.rows, 'order_id');
+  const issuesByCase = groupBy(ir.rows, 'case_id');
+  const reviewsByCase = groupBy(hr.rows, 'case_id');
+  const caseRows = groupBy(sc.rows, 'case_id');
+  const staleSources = freshness.filter(f => f.ok === false).map(f => f.source);
+
+  const cases = sc.rows.map((r, i) => {
+    const rowNo = i + 1, reasons = [], notes = [], used = new Set(['support_cases']);
+    let status = 'ACCEPT';
+    const reject = m => { status = 'REJECT'; reasons.push(m); };
+    const review = m => { if (status !== 'REJECT') status = 'HUMAN_REVIEW'; reasons.push(m); };
+    const cid = r.case_id || '', oid = r.order_id || '', ct = r.case_type || '', rs = r.review_status || '';
+
+    if (!cid) {
+      reject(`VR-001: case_id is blank (support_cases row ${rowNo}); the case cannot be traced or connected reliably.`);
+      flag('support_cases', i, 'case_id', 'bad', 'VR-001: case_id is blank');
+    } else if (caseRows.get(cid).length > 1) {
+      const rows = caseRows.get(cid).map(x => x.idx + 1);
+      reject(`VR-002: case_id ${cid} appears ${rows.length} times in support_cases (rows ${rows.join(', ')}); every occurrence fails.`);
+      flag('support_cases', i, 'case_id', 'bad', `VR-002: duplicate case_id (rows ${rows.join(', ')})`);
+    }
+    if ((ct === 'RETURN' || ct === 'DAMAGE') && !oid) {
+      reject(`VR-003: case_type is ${ct} but order_id is blank; the required relationship cannot be established.`);
+      flag('support_cases', i, 'order_id', 'bad', `VR-003: ${ct} case without order_id`);
+    }
+    if (!ALLOWED_REVIEW_STATUS.includes(rs)) {
+      reject(`VR-004: review_status '${rs || '(blank)'}' is not one of PENDING, APPROVED, REJECTED; the downstream meaning is not agreed.`);
+      flag('support_cases', i, 'review_status', 'bad', `VR-004: '${rs}' is not an allowed value`);
+    }
+
+    let order = null, orderIdx = -1, orderDateOk = null;
+    if (oid) {
+      const m = ordersById.get(oid);
+      if (!m) {
+        reject(`Join: order_id ${oid} has no matching row in orders; the required relationship cannot be established (VR-003).`);
+        flag('support_cases', i, 'order_id', 'bad', `Join: ${oid} not found in orders`);
+      } else {
+        order = m[0].row; orderIdx = m[0].idx; used.add('orders');
+        if (m.length > 1) notes.push(`Note: order_id ${oid} appears ${m.length} times in orders; the first row was used.`);
+        const dd = order.delivery_date || '';
+        if (dd) {
+          if (isValidISODate(dd)) orderDateOk = true;
+          else {
+            orderDateOk = false;
+            reject(`VR-005: orders.delivery_date '${dd}' on ${oid} is not a valid YYYY-MM-DD date; the failed order blocks this case bundle.`);
+            flag('orders', orderIdx, 'delivery_date', 'bad', `VR-005: '${dd}' is not a valid YYYY-MM-DD date`);
+          }
+        }
+      }
+    }
+
+    const issues = cid ? (issuesByCase.get(cid) || []) : [];
+    if (issues.length) used.add('issue_records');
+    if (order && orderDateOk) {
+      for (const { row: ir1, idx } of issues) {
+        const rd = ir1.reported_delivery_date || '';
+        if (!rd) continue;
+        if (!isValidISODate(rd)) {
+          review(`VR-006: issue_records.reported_delivery_date '${rd}' is not a valid YYYY-MM-DD date, so it cannot be compared with the order's delivery date.`);
+          flag('issue_records', idx, 'reported_delivery_date', 'warn', `VR-006: '${rd}' cannot be compared`);
+        } else if (rd !== order.delivery_date) {
+          review(`VR-006: delivery dates disagree; orders says ${order.delivery_date}, issue_records says ${rd}; the pipeline cannot decide source ownership.`);
+          flag('orders', orderIdx, 'delivery_date', 'warn', `VR-006: differs from issue_records (${rd})`);
+          flag('issue_records', idx, 'reported_delivery_date', 'warn', `VR-006: differs from orders (${order.delivery_date})`);
+        }
+      }
+    }
+
+    const reviews = cid ? (reviewsByCase.get(cid) || []) : [];
+    if (reviews.length) used.add('human_reviews');
+    for (const { row } of reviews) notes.push(`Prior human review ${row.review_id} (${row.reviewer_role}): ${row.decision}. ${row.decision_reason}`);
+    if (cid && !issues.length) notes.push('Note: no issue_records row for this case.');
+    for (const s of staleSources) if (used.has(s)) notes.push(`Note: ${SOURCES[s].file} was extracted more than ${FRESHNESS_HOURS} hours from the run time (VR-008 load warning).`);
+
+    if (status === 'ACCEPT') {
+      const parts = [];
+      if (order) parts.push(`joined to order ${oid} (${order.product || 'no product'})`);
+      else parts.push(`no order linked (${ct || 'untyped'} case)`);
+      if (issues.length) parts.push(`issue record ${issues.map(x => x.row.issue_type).join(', ')} found`);
+      const agreed = order && orderDateOk && issues.some(x => x.row.reported_delivery_date === order.delivery_date);
+      if (agreed) parts.push(`delivery dates agree (${order.delivery_date})`);
+      reasons.push(`All rules passed: ${parts.join('; ')}.`);
+    }
+
+    return { source:'support_cases', rowNo, case_id: cid, status, reasons, notes, support: r,
+      order, issues: issues.map(x => x.row), reviews: reviews.map(x => x.row) };
+  });
+
+  const known = new Set(sc.rows.map(r => r.case_id).filter(Boolean));
+  const orphans = new Map();
+  const addOrphan = (id, src) => { if (!id || known.has(id)) return; if (!orphans.has(id)) orphans.set(id, new Set()); orphans.get(id).add(src); };
+  ir.rows.forEach(r => addOrphan(r.case_id, 'issue_records'));
+  hr.rows.forEach(r => addOrphan(r.case_id, 'human_reviews'));
+  for (const [id, srcs] of orphans) {
+    cases.push({ source:'orphan', rowNo: null, case_id: id, status:'HUMAN_REVIEW',
+      reasons: [`No support_cases row for ${id}; it appears only in ${[...srcs].join(' and ')}, so the case cannot be evaluated against the load.`],
+      notes: [], support: null, order: null,
+      issues: (issuesByCase.get(id) || []).map(x => x.row), reviews: (reviewsByCase.get(id) || []).map(x => x.row) });
+  }
+
+  return { schema, freshness, cases, flags, staleSources };
+}
+
+function fingerprint(data) {
+  let h1 = 0x811c9dc5, h2 = 0x01000193 ^ 0x5bd1e995;
+  const feed = s => { for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i);
+    h1 ^= c; h1 = Math.imul(h1, 0x01000193) >>> 0; h2 = (Math.imul(h2 ^ c, 0x5bd1e995) + 0x9e3779b9) >>> 0; } };
+  for (const k of SOURCE_KEYS) {
+    const d = data[k]; feed(k + '\u0001'); if (!d) continue;
+    feed(d.raw.replace(/\r\n?/g, '\n').trim() + '\u0002');
+    const keyCol = k === 'orders' ? 'order_id' : k === 'human_reviews' ? 'review_id' : 'case_id';
+    feed(d.rows.map(r => r[keyCol] || '').join('\u0003') + '\u0004');
+  }
+  return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const state = { data: {}, report: null, flags: {}, runs: [], tab: 'support_cases', sort: {}, filter: {}, statusFilter: 'ALL', showJoined: true };
+try { state.runs = JSON.parse(localStorage.getItem('clv_runs') || '[]'); } catch (e) { state.runs = []; }
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const statusLabel = { ACCEPT:'ACCEPT', REJECT:'REJECT', HUMAN_REVIEW:'HUMAN REVIEW', PASS:'PASS', PAUSE_LOAD:'PAUSE LOAD', LOAD_WARNING:'LOAD WARNING', PUBLISHED:'PUBLISHED' };
+const pill = s => `<span class="pill ${esc(s)}">${esc(statusLabel[s] || s)}</span>`;
+const cellVal = v => v === '' || v == null ? '<span class="null">NULL</span>' : esc(v);
+
+const TABS = [
+  ...SOURCE_KEYS.map(k => ({ id: k, label: k })),
+  { id: 'report', label: 'Report' },
+  { id: 'lookup', label: 'Case lookup' },
+  { id: 'rules', label: 'Rules' },
+];
+
+/* ---- loading ---- */
+function ingestText(text, fileName) {
+  const parsed = parseCSV(text);
+  const key = detectSource(parsed.headers, fileName);
+  if (!key) return { ok: false, msg: `${fileName}: columns not recognised (${parsed.headers.slice(0, 4).join(', ') || 'no header row'}).` };
+  state.data[key] = { key, fileName, headers: parsed.headers, rows: parsed.rows, raw: text, loadedAt: new Date() };
+  return { ok: true, key };
+}
+
+async function ingestFiles(files) {
+  const loaded = [], errors = [];
+  for (const f of files) {
+    try { const r = ingestText(await f.text(), f.name); r.ok ? loaded.push(`${f.name} → ${r.key}`) : errors.push(r.msg); }
+    catch (e) { errors.push(`${f.name}: ${e.message}`); }
+  }
+  afterLoad(loaded, errors);
+}
+
+async function loadFromFolder() {
+  const loaded = [], errors = [];
+  if (location.protocol === 'file:') {
+    setMsg('Browsers block pages opened from disk (file://) from reading the files next to them. Choose the files instead, or serve this folder (for example: python3 -m http.server) and open the page at http://localhost:8000/.', 'err');
+    return;
+  }
+  for (const k of SOURCE_KEYS) {
+    const name = SOURCES[k].file;
+    try {
+      const res = await fetch('./' + name, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const r = ingestText(await res.text(), name);
+      r.ok ? loaded.push(`${name} → ${r.key}`) : errors.push(r.msg);
+    } catch (e) { errors.push(`${name}: ${e.message}`); }
+  }
+  afterLoad(loaded, errors);
+}
+
+function afterLoad(loaded, errors) {
+  state.report = null; state.flags = {};
+  if (loaded.length) {
+    for (const k of SOURCE_KEYS) if (!(k in state.filter)) state.filter[k] = '';
+  }
+  const parts = [];
+  if (loaded.length) parts.push(`Loaded ${loaded.join(', ')}.`);
+  if (errors.length) parts.push(errors.join(' '));
+  setMsg(parts.join(' '), errors.length ? 'err' : 'ok');
+  if (loaded.length === 1) { const k = loaded[0].split('→ ')[1]; if (SOURCE_KEYS.includes(k)) state.tab = k; }
+  renderAll();
+}
+
+function setMsg(text, kind = '') { const el = $('#loaderMsg'); el.textContent = text; el.className = 'hint ' + kind; }
+
+function removeSource(k) { delete state.data[k]; state.report = null; state.flags = {}; setMsg(`Removed ${SOURCES[k].file}.`); renderAll(); }
+
+/* ---- report ---- */
+function generateReport() {
+  const runTime = $('#runTime').value.trim();
+  const result = evaluate(state.data, runTime);
+  const fp = fingerprint(state.data);
+  let publish = null;
+  if (result.cases) {
+    const accepted = result.cases.filter(c => c.status === 'ACCEPT').length;
+    const prior = state.runs.find(r => r.fingerprint === fp);
+    if (prior) publish = { status: 'PAUSE_LOAD', published: 0, prior, fingerprint: fp };
+    else {
+      const run = { n: state.runs.length + 1, at: new Date().toISOString(), fingerprint: fp, published: accepted, total: result.cases.length };
+      state.runs.unshift(run);
+      try { localStorage.setItem('clv_runs', JSON.stringify(state.runs.slice(0, 50))); } catch (e) {}
+      publish = { status: 'PUBLISHED', published: accepted, run, fingerprint: fp };
+    }
+  }
+  state.report = { ...result, runTime, publish, generatedAt: new Date() };
+  state.flags = result.flags;
+  state.tab = 'report';
+  renderAll();
+}
+
+function clearRuns() { state.runs = []; try { localStorage.removeItem('clv_runs'); } catch (e) {} renderAll(); }
+
+/* ---- rendering ---- */
+function renderAll() { renderChips(); renderTabs(); renderPanels(); }
+
+function renderChips() {
+  $('#sourceChips').innerHTML = SOURCE_KEYS.map(k => {
+    const d = state.data[k];
+    return `<li><span class="chip ${d ? 'loaded' : ''}" role="button" tabindex="0" data-tab="${k}" title="Open the ${k} tab">
+      <span class="dot"></span>${esc(SOURCES[k].file)}
+      <span class="meta">${d ? `${d.rows.length} rows` : 'not loaded'}</span>
+      ${d ? `<button class="x" data-remove="${k}" aria-label="Remove ${k}" title="Remove">×</button>` : ''}
+    </span></li>`;
+  }).join('');
+}
+
+function renderTabs() {
+  $('#tabs').innerHTML = TABS.map(t => {
+    let badge = '';
+    if (SOURCE_KEYS.includes(t.id)) { const d = state.data[t.id]; badge = d ? `<span class="badge">${d.rows.length}</span>` : ''; }
+    if (t.id === 'report' && state.report) {
+      if (!state.report.cases) badge = `<span class="badge bad">paused</span>`;
+      else {
+        const c = state.report.cases; const a = c.filter(x => x.status === 'ACCEPT').length, r = c.filter(x => x.status === 'REJECT').length, h = c.filter(x => x.status === 'HUMAN_REVIEW').length;
+        badge = `<span class="badge ok">${a}</span><span class="badge warn">${h}</span><span class="badge bad">${r}</span>`;
+      }
+    }
+    return `<button role="tab" id="tab-${t.id}" aria-selected="${state.tab === t.id}" aria-controls="panel-${t.id}" data-tab="${t.id}">${esc(t.label)}${badge}</button>`;
+  }).join('');
+}
+
+function renderPanels() {
+  const main = $('#panels');
+  main.innerHTML = TABS.map(t => `<section role="tabpanel" id="panel-${t.id}" aria-labelledby="tab-${t.id}" ${state.tab === t.id ? '' : 'hidden'}></section>`).join('');
+  for (const k of SOURCE_KEYS) renderSourcePanel(k);
+  renderReportPanel();
+  renderLookupPanel();
+  renderRulesPanel();
+}
+
+function renderGrid(headers, rows, opts = {}) {
+  const { source, sortKey, filterText = '', rowNos } = opts;
+  const types = {}; headers.forEach(h => types[h] = inferType(rows.map(r => r[h] ?? '')));
+  let idx = rows.map((_, i) => i);
+  if (filterText) { const f = filterText.toLowerCase(); idx = idx.filter(i => headers.some(h => String(rows[i][h] ?? '').toLowerCase().includes(f))); }
+  if (sortKey) {
+    const { col, dir } = sortKey; const sgn = dir === 'asc' ? 1 : -1;
+    idx.sort((a, b) => { const va = rows[a][col] ?? '', vb = rows[b][col] ?? ''; if (va === vb) return a - b; if (va === '') return 1; if (vb === '') return -1;
+      const na = Number(va), nb = Number(vb); if (!isNaN(na) && !isNaN(nb) && va !== '' && vb !== '') return (na - nb) * sgn; return va.localeCompare(vb) * sgn; });
+  }
+  const head = `<tr><th class="rownum">#</th>${headers.map(h => `<th data-col="${esc(h)}">${esc(h)}<span class="type">${types[h]}</span>${sortKey && sortKey.col === h ? `<span class="arrow">${sortKey.dir === 'asc' ? '↑' : '↓'}</span>` : ''}</th>`).join('')}</tr>`;
+  const body = idx.map(i => {
+    const r = rows[i];
+    const cells = headers.map(h => {
+      const fl = source ? state.flags[`${source}|${i}|${h}`] : null;
+      return `<td class="${fl ? 'flag-' + fl.level : ''}" ${fl ? `title="${esc(fl.msg)}"` : ''}>${cellVal(r[h])}</td>`;
+    }).join('');
+    return `<tr><td class="rownum">${rowNos ? rowNos[i] : i + 1}</td>${cells}</tr>`;
+  }).join('');
+  return { html: `<div class="grid-wrap"><table class="grid"><thead>${head}</thead><tbody>${body || `<tr><td colspan="${headers.length + 1}" class="null" style="padding:14px">no rows match</td></tr>`}</tbody></table></div>`, shown: idx.length };
+}
+
+function renderSourcePanel(k) {
+  const el = $(`#panel-${k}`); const d = state.data[k];
+  if (!d) {
+    el.innerHTML = `<div class="empty"><strong>${esc(SOURCES[k].file)} isn't loaded.</strong><br>Drop it above or choose files. Expected columns: <code>${SOURCES[k].required.join(', ')}</code>.</div>`;
+    return;
+  }
+  const grid = renderGrid(d.headers, d.rows, { source: k, sortKey: state.sort[k], filterText: state.filter[k] || '' });
+  const hasFlags = Object.keys(state.flags).some(f => f.startsWith(k + '|'));
+  el.innerHTML = `
+    <div class="toolbar">
+      <span class="query"><b>SELECT</b> * <b>FROM</b> ${esc(k)};</span>
+      <span class="grow"></span>
+      <input type="search" placeholder="Filter rows" value="${esc(state.filter[k] || '')}" data-filter="${k}" aria-label="Filter ${k} rows">
+      <span class="count">${grid.shown} of ${d.rows.length} rows${state.filter[k] ? ' shown' : ''}</span>
+    </div>
+    ${grid.html}
+    ${hasFlags ? `<div class="flag-key"><span><i class="bad"></i>cell failed a rule (hover for the rule)</span><span><i class="warn"></i>cell needs human review</span></div>` : `<div class="flag-key">Cells that fail a rule are marked here after you generate the report.</div>`}`;
+}
+
+function reportColumns() {
+  const base = [
+    { key: 'case_id', label: 'case_id', get: c => c.case_id },
+    { key: 'status', label: 'status', get: c => c.status, html: c => pill(c.status) },
+    { key: 'reason', label: 'reason', get: c => [...c.reasons, ...c.notes].join(' | '),
+      html: c => `<ul>${c.reasons.map(r => `<li>${esc(r)}</li>`).join('')}${c.notes.map(n => `<li class="note">${esc(n)}</li>`).join('')}</ul>`, cls: 'wrap reason' },
+    { key: 'row', label: 'source row', get: c => c.rowNo == null ? '' : `support_cases ${c.rowNo}` },
+  ];
+  const joined = [
+    { key: 'case_type', label: 'case_type', get: c => c.support?.case_type ?? '' },
+    { key: 'review_status', label: 'review_status', get: c => c.support?.review_status ?? '' },
+    { key: 'order_id', label: 'order_id', get: c => c.support?.order_id ?? '' },
+    { key: 'product', label: 'orders.product', get: c => c.order?.product ?? '' },
+    { key: 'order_delivery', label: 'orders.delivery_date', get: c => c.order?.delivery_date ?? '' },
+    { key: 'issue_delivery', label: 'issue.reported_delivery_date', get: c => c.issues.map(i => i.reported_delivery_date).filter(Boolean).join(', ') },
+    { key: 'issue_type', label: 'issue.issue_type', get: c => c.issues.map(i => i.issue_type).join(', ') },
+    { key: 'evidence', label: 'issue.evidence_status', get: c => c.issues.map(i => i.evidence_status).join(', ') },
+    { key: 'review', label: 'human_review.decision', get: c => c.reviews.map(r => `${r.decision} (${r.review_id})`).join(', ') },
+  ];
+  return state.showJoined ? [...base, ...joined] : base;
+}
+
+function renderReportPanel() {
+  const el = $('#panel-report'); const rep = state.report;
+  if (!rep) {
+    el.innerHTML = `<div class="empty"><strong>Nothing to report yet.</strong><br>Load the four source files, then choose <em>Generate report</em>. Each support case is joined to its order, issue record and human review, checked against the nine rules, and routed to ACCEPT, REJECT or HUMAN REVIEW.</div>`;
+    return;
+  }
+  const { schema, freshness, cases, publish } = rep;
+
+  // load checks table
+  const freshRows = freshness.map(f => `<tr><td class="rownum"></td><td>VR-008</td><td>${f.ok === null ? pill('LOAD_WARNING') : f.ok ? pill('PASS') : pill('LOAD_WARNING')}</td><td class="wrap">${esc(SOURCES[f.source].file)}: extract_generated_at ${esc(f.extract)}${f.hours != null ? `, ${f.hours.toFixed(1)} h from run time ${esc(rep.runTime)}` : ''}${f.unparsable?.length ? `; unparsable: ${esc(f.unparsable.join(', '))}` : ''}${f.detail ? `; ${esc(f.detail)}` : ''}${f.ok === false ? '. The intended question may depend on current data.' : ''}</td></tr>`).join('');
+  const schemaDetail = schema.ok ? 'All four files are present with their required columns.' :
+    [schema.missingFiles.length ? `Missing files: ${schema.missingFiles.join(', ')}` : '',
+     ...Object.entries(schema.missingCols).map(([k, cols]) => `${SOURCES[k].file} is missing columns: ${cols.join(', ')}`)].filter(Boolean).join('. ') + '. The intended question may depend on unavailable data.';
+  const idemRow = publish ? `<tr><td class="rownum"></td><td>VR-009</td><td>${pill(publish.status)}</td><td class="wrap">${publish.status === 'PUBLISHED'
+      ? `Run ${publish.run.n}: new content fingerprint <code>${publish.fingerprint}</code>; ${publish.published} trusted record${publish.published === 1 ? '' : 's'} published.`
+      : `Identical content and keys were already published in run ${publish.prior.n} (${new Date(publish.prior.at).toLocaleString()}), fingerprint <code>${publish.fingerprint}</code>. No additional trusted records were created.`}</td></tr>` : '';
+  const checks = `<div class="grid-wrap"><table class="grid"><thead><tr><th class="rownum"></th><th>rule</th><th>result</th><th>detail</th></tr></thead><tbody>
+      <tr><td class="rownum"></td><td>VR-007</td><td>${pill(schema.ok ? 'PASS' : 'PAUSE_LOAD')}</td><td class="wrap">${esc(schemaDetail)}</td></tr>
+      ${freshRows}${idemRow}</tbody></table></div>`;
+
+  if (!cases) {
+    el.innerHTML = `<div class="report-head">
+      <div class="banner bad"><h2>Load paused (VR-007)</h2><p>${esc(schemaDetail)}</p><p style="margin-top:6px">Load the missing files, then generate the report again.</p></div>
+      <div><p class="section-title">Load checks</p>${checks}</div></div>`;
+    return;
+  }
+
+  const a = cases.filter(c => c.status === 'ACCEPT').length, h = cases.filter(c => c.status === 'HUMAN_REVIEW').length, r = cases.filter(c => c.status === 'REJECT').length, n = cases.length || 1;
+  const warnBanner = publish?.status === 'PAUSE_LOAD'
+    ? `<div class="banner warn"><h2>Rerun of identical content (VR-009)</h2><p>These files and record keys were already published in run ${publish.prior.n}. The results below are shown for reference; no additional trusted records were created.</p></div>` : '';
+  const staleBanner = rep.staleSources.length
+    ? `<div class="banner warn"><h2>Load warning (VR-008)</h2><p>${rep.staleSources.map(s => SOURCES[s].file).join(', ')} ${rep.staleSources.length > 1 ? 'were' : 'was'} extracted more than ${FRESHNESS_HOURS} hours from the run time ${esc(rep.runTime)}. Cases that used ${rep.staleSources.length > 1 ? 'these files' : 'this file'} carry a note in their reason column.</p></div>` : '';
+
+  const cols = reportColumns();
+  const visible = cases.filter(c => state.statusFilter === 'ALL' || c.status === state.statusFilter)
+    .filter(c => { const f = (state.filter.report || '').toLowerCase(); return !f || cols.some(col => String(col.get(c)).toLowerCase().includes(f)); });
+  const head = `<tr><th class="rownum">#</th>${cols.map(c => `<th>${esc(c.label)}</th>`).join('')}</tr>`;
+  const body = visible.map((c, i) => `<tr><td class="rownum">${i + 1}</td>${cols.map(col => `<td class="${col.cls || ''}">${col.html ? col.html(c) : cellVal(col.get(c))}</td>`).join('')}</tr>`).join('')
+    || `<tr><td colspan="${cols.length + 1}" class="null" style="padding:14px">no cases match</td></tr>`;
+
+  const runs = state.runs.length ? `<div class="runs">Run history (this browser) <button class="link" id="btnClearRuns" style="margin-left:8px">clear</button>
+      <table><thead><tr><th>run</th><th>generated</th><th>fingerprint</th><th>published</th></tr></thead><tbody>
+      ${state.runs.slice(0, 6).map(x => `<tr><td>${x.n}</td><td>${new Date(x.at).toLocaleString()}</td><td>${x.fingerprint}</td><td>${x.published} of ${x.total}</td></tr>`).join('')}</tbody></table></div>` : '';
+
+  el.innerHTML = `
+    <div class="report-head">
+      ${warnBanner}${staleBanner}
+      <div class="summary">
+        <div class="bar" role="img" aria-label="${a} accepted, ${h} human review, ${r} rejected">
+          <span class="a" style="width:${a / n * 100}%"></span><span class="h" style="width:${h / n * 100}%"></span><span class="r" style="width:${r / n * 100}%"></span>
+        </div>
+        <div class="legend"><span><b>${cases.length}</b> case rows evaluated</span><span>${pill('ACCEPT')} <b>${a}</b></span><span>${pill('HUMAN_REVIEW')} <b>${h}</b></span><span>${pill('REJECT')} <b>${r}</b></span><span>${publish.published} trusted record${publish.published === 1 ? '' : 's'} published this run</span></div>
+      </div>
+      <div><p class="section-title">Load checks</p>${checks}</div>
+      <details class="sql"><summary>Logical join and routing used for this report</summary><pre><b>SELECT</b> sc.*, o.product, o.delivery_date, ir.issue_type, ir.reported_delivery_date, ir.evidence_status, hr.decision
+<b>FROM</b>       support_cases  sc
+<b>LEFT JOIN</b>  orders         o   <b>ON</b> o.order_id  = sc.order_id
+<b>LEFT JOIN</b>  issue_records  ir  <b>ON</b> ir.case_id  = sc.case_id
+<b>LEFT JOIN</b>  human_reviews  hr  <b>ON</b> hr.case_id  = sc.case_id;
+
+<i>-- routing, evaluated per support_cases row, REJECT taking precedence over HUMAN REVIEW:</i>
+<i>--   REJECT        VR-001 blank case_id, VR-002 duplicate case_id, VR-003 RETURN/DAMAGE without a resolvable order,</i>
+<i>--                 VR-004 review_status outside PENDING/APPROVED/REJECTED, VR-005 linked order has an invalid delivery_date</i>
+<i>--   HUMAN REVIEW  VR-006 order and issue delivery dates both present but different; case_id known only to issue_records/human_reviews</i>
+<i>--   ACCEPT        everything else. Human reviews and VR-008 staleness are recorded as notes, not routing.</i></pre></details>
+      ${runs}
+    </div>
+    <div class="toolbar">
+      <span class="query"><b>SELECT</b> case_id, status, reason <b>FROM</b> report;</span>
+      <span class="grow"></span>
+      <div class="seg" role="group" aria-label="Filter by status">
+        ${['ALL','ACCEPT','HUMAN_REVIEW','REJECT'].map(s => `<button data-status="${s}" aria-pressed="${state.statusFilter === s}">${s === 'ALL' ? 'All' : statusLabel[s].charAt(0) + statusLabel[s].slice(1).toLowerCase()}</button>`).join('')}
+      </div>
+      <label class="check"><input type="checkbox" id="chkJoined" ${state.showJoined ? 'checked' : ''}> Show joined columns</label>
+      <input type="search" placeholder="Filter" value="${esc(state.filter.report || '')}" data-filter="report" aria-label="Filter report rows">
+      <button class="btn small" id="btnCsv">Download report CSV</button>
+      <span class="count">${visible.length} of ${cases.length} rows</span>
+    </div>
+    <div class="grid-wrap"><table class="grid"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+}
+
+function downloadReportCsv() {
+  const rep = state.report; if (!rep?.cases) return;
+  const cols = reportColumns();
+  const q = v => { v = String(v ?? ''); return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+  const lines = [cols.map(c => q(c.label)).join(',')];
+  for (const c of rep.cases) lines.push(cols.map(col => q(col.key === 'status' ? statusLabel[c.status] : col.get(c))).join(','));
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `case_report_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* ---- lookup ---- */
+function allCaseIds() {
+  const ids = new Set();
+  for (const k of ['support_cases','issue_records','human_reviews']) state.data[k]?.rows.forEach(r => r.case_id && ids.add(r.case_id));
+  return [...ids].sort();
+}
+
+function kvTable(row, headers, source, idx) {
+  return `<table class="kv">${headers.map(h => { const fl = source != null && idx != null ? state.flags[`${source}|${idx}|${h}`] : null;
+    return `<tr><th>${esc(h)}</th><td class="${fl ? 'flag-' + fl.level : ''}" ${fl ? `title="${esc(fl.msg)}"` : ''}>${cellVal(row[h])}</td></tr>`; }).join('')}</table>`;
+}
+
+function renderLookupPanel() {
+  const el = $('#panel-lookup');
+  const ids = allCaseIds();
+  const q = (state.lookupQuery || '').trim();
+  let result = '';
+  if (!SOURCE_KEYS.some(k => state.data[k])) {
+    result = `<div class="empty"><strong>No files loaded yet.</strong><br>Load the source files above, then enter a case id to see everything about it in one place.</div>`;
+  } else if (!q) {
+    result = `<div class="empty">Enter a case id such as <code>${esc(ids[0] || 'MCS-501')}</code> to see its support case, order, issue record, human review and validation result together.</div>`;
+  } else {
+    result = renderLookupResult(q);
+  }
+  el.innerHTML = `<div class="lookup">
+    <form id="lookupForm">
+      <label for="lookupInput" class="query"><b>WHERE</b> case_id =</label>
+      <input id="lookupInput" list="caseIds" value="${esc(q)}" placeholder="MCS-501" autocomplete="off" spellcheck="false">
+      <datalist id="caseIds">${ids.map(i => `<option value="${esc(i)}">`).join('')}</datalist>
+      <button class="btn" type="submit">Show case</button>
+      <span class="count">${ids.length} case ids across loaded files</span>
+    </form>
+    ${result}</div>`;
+}
+
+function renderLookupResult(q) {
+  const qi = q.toLowerCase();
+  const sc = state.data.support_cases, od = state.data.orders, ir = state.data.issue_records, hr = state.data.human_reviews;
+  const eqi = v => (v || '').toLowerCase() === qi;
+
+  let supportRows = sc ? sc.rows.map((row, idx) => ({ row, idx })).filter(x => eqi(x.row.case_id)) : [];
+  let byOrder = false;
+  if (!supportRows.length && sc && sc.rows.some(r => eqi(r.order_id))) { supportRows = sc.rows.map((row, idx) => ({ row, idx })).filter(x => eqi(x.row.order_id)); byOrder = true; }
+  const caseIds = new Set(supportRows.map(x => x.row.case_id).filter(Boolean)); if (!byOrder) caseIds.add(q);
+  const orderIds = new Set(supportRows.map(x => x.row.order_id).filter(Boolean)); if (byOrder || (od && od.rows.some(r => eqi(r.order_id)))) orderIds.add(q);
+  const match = (v, set) => [...set].some(s => (v || '').toLowerCase() === s.toLowerCase());
+  const orderRows = od ? od.rows.map((row, idx) => ({ row, idx })).filter(x => match(x.row.order_id, orderIds)) : [];
+  const issueRows = ir ? ir.rows.map((row, idx) => ({ row, idx })).filter(x => match(x.row.case_id, caseIds)) : [];
+  const reviewRows = hr ? hr.rows.map((row, idx) => ({ row, idx })).filter(x => match(x.row.case_id, caseIds)) : [];
+
+  if (!supportRows.length && !orderRows.length && !issueRows.length && !reviewRows.length)
+    return `<div class="empty"><strong>No rows reference <code>${esc(q)}</code></strong> in any loaded file. Check the id, or pick one from the list.</div>`;
+
+  // verdict: evaluate lazily (pure, no publish bookkeeping)
+  let verdict = '';
+  const ev = state.report && state.report.cases ? state.report : evaluate(state.data, $('#runTime').value.trim());
+  if (!ev.cases) {
+    verdict = `<div class="verdict"><div class="head"><h2>${esc(q)}</h2>${pill('PAUSE_LOAD')}</div><div class="sub">Load paused (VR-007): ${esc([ev.schema.missingFiles.length ? `missing ${ev.schema.missingFiles.join(', ')}` : '', ...Object.entries(ev.schema.missingCols).map(([k, c]) => `${k} lacks ${c.join(', ')}`)].filter(Boolean).join('; '))}. Related rows are shown below; the validation result needs all four files.</div></div>`;
+  } else {
+    const hits = ev.cases.filter(c => (c.case_id && match(c.case_id, caseIds)) || (c.support && supportRows.some(x => x.row === c.support)));
+    if (!hits.length) verdict = `<div class="verdict"><div class="head"><h2>${esc(q)}</h2></div><div class="sub">No case row to evaluate.</div></div>`;
+    else verdict = hits.map(c => {
+      const chain = [`support_cases${c.rowNo ? ` row ${c.rowNo}` : ''}`, c.support?.order_id ? `orders <b>${esc(c.support.order_id)}</b>${c.order ? '' : ' (no match)'}` : 'orders (none)', `issue_records <b>${c.issues.length}</b>`, `human_reviews <b>${c.reviews.length}</b>`];
+      return `<div class="verdict">
+        <div class="head"><h2>${c.case_id ? esc(c.case_id) : '<span class="null">NULL</span>'}</h2>${pill(c.status)}<span class="sub">${c.source === 'orphan' ? 'no support_cases row' : `support_cases row ${c.rowNo}`}${c.support?.case_type ? `, ${esc(c.support.case_type)}` : ''}${c.support?.review_status ? `, review_status ${esc(c.support.review_status)}` : ''}</span></div>
+        <ul>${c.reasons.map(r => `<li>${esc(r)}</li>`).join('')}${c.notes.map(n => `<li class="note">${esc(n)}</li>`).join('')}</ul>
+        <div class="chain">${chain.join(' → ')}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const section = (title, where, rows, headers, source) => `<section><h3><b>SELECT</b> * <b>FROM</b> ${esc(title)} <b>WHERE</b> ${esc(where)};</h3>${rows.length ? rows.map(x => kvTable(x.row, headers, source, x.idx)).join('') : `<div class="none">no rows</div>`}</section>`;
+  const inList = set => [...set].map(s => `'${s}'`).join(', ') || `'${q}'`;
+  const related = `<div class="related">
+    ${sc ? section('support_cases', byOrder ? `order_id = '${q}'` : `case_id = '${q}'`, supportRows, sc.headers, 'support_cases') : `<section><h3>support_cases</h3><div class="none">file not loaded</div></section>`}
+    ${od ? section('orders', `order_id IN (${inList(orderIds)})`, orderRows, od.headers, 'orders') : `<section><h3>orders</h3><div class="none">file not loaded</div></section>`}
+    ${ir ? section('issue_records', `case_id IN (${inList(caseIds)})`, issueRows, ir.headers, 'issue_records') : `<section><h3>issue_records</h3><div class="none">file not loaded</div></section>`}
+    ${hr ? section('human_reviews', `case_id IN (${inList(caseIds)})`, reviewRows, hr.headers, 'human_reviews') : `<section><h3>human_reviews</h3><div class="none">file not loaded</div></section>`}
+  </div>`;
+  return verdict + related;
+}
+
+/* ---- rules ---- */
+function renderRulesPanel() {
+  const el = $('#panel-rules');
+  const head = `<tr><th class="rownum">#</th><th>rule_id</th><th>applies_to</th><th>field</th><th>rule_type</th><th>condition</th><th>failure_route</th><th>reason</th><th>how this page checks it</th></tr>`;
+  const body = RULES.map((r, i) => `<tr><td class="rownum">${i + 1}</td><td>${esc(r.id)}</td><td>${esc(r.file)}</td><td>${esc(r.field)}</td><td>${esc(r.type)}</td><td class="wrap rule">${esc(r.condition)}</td><td>${pill(r.route)}</td><td class="wrap rule">${esc(r.reason)}</td><td class="wrap rule">${esc(r.how)}</td></tr>`).join('');
+  el.innerHTML = `<p class="rules-intro">These nine rules from validation_rules.csv are built into the page, so that file doesn't need to be loaded. Routing precedence for a case row is REJECT, then HUMAN REVIEW, then ACCEPT; load-level rules (VR-007 to VR-009) apply to the whole run.</p>
+    <div class="toolbar"><span class="query"><b>SELECT</b> * <b>FROM</b> validation_rules <b>WHERE</b> enabled = true;</span><span class="grow"></span><span class="count">${RULES.length} rows</span></div>
+    <div class="grid-wrap"><table class="grid"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+}
+
+/* ---- events ---- */
+document.addEventListener('click', e => {
+  const tab = e.target.closest('[data-tab]');
+  if (tab && !e.target.closest('[data-remove]')) { state.tab = tab.dataset.tab; renderTabs(); document.querySelectorAll('[role="tabpanel"]').forEach(p => p.hidden = p.id !== 'panel-' + state.tab); if (state.tab === 'lookup') $('#lookupInput')?.focus(); return; }
+  const rm = e.target.closest('[data-remove]'); if (rm) { removeSource(rm.dataset.remove); return; }
+  const th = e.target.closest('table.grid thead th[data-col]');
+  if (th) { const panel = th.closest('[role="tabpanel"]'); const k = panel.id.replace('panel-', ''); if (SOURCE_KEYS.includes(k)) {
+    const cur = state.sort[k]; state.sort[k] = cur && cur.col === th.dataset.col ? (cur.dir === 'asc' ? { col: th.dataset.col, dir: 'desc' } : null) : { col: th.dataset.col, dir: 'asc' }; renderSourcePanel(k); } return; }
+  const st = e.target.closest('[data-status]'); if (st) { state.statusFilter = st.dataset.status; renderReportPanel(); return; }
+  if (e.target.id === 'btnCsv') { downloadReportCsv(); return; }
+  if (e.target.id === 'btnClearRuns') { clearRuns(); return; }
+});
+document.addEventListener('keydown', e => {
+  const chip = e.target.closest('.chip[data-tab]'); if (chip && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); chip.click(); }
+  if (e.target.matches('[role="tab"]') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+    const tabs = [...document.querySelectorAll('[role="tab"]')]; const i = tabs.indexOf(e.target); const n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]; n.focus(); n.click();
+  }
+});
+document.addEventListener('input', e => {
+  const f = e.target.dataset?.filter; if (f) { state.filter[f] = e.target.value; const pos = e.target.selectionStart;
+    if (f === 'report') renderReportPanel(); else renderSourcePanel(f);
+    const again = document.querySelector(`[data-filter="${f}"]`); if (again) { again.focus(); again.setSelectionRange(pos, pos); } }
+  if (e.target.id === 'chkJoined') { state.showJoined = e.target.checked; renderReportPanel(); }
+});
+document.addEventListener('submit', e => { if (e.target.id === 'lookupForm') { e.preventDefault(); state.lookupQuery = $('#lookupInput').value; renderLookupPanel(); } });
+
+$('#btnGenerate').addEventListener('click', generateReport);
+$('#btnPick').addEventListener('click', () => $('#filePick').click());
+$('#filePick').addEventListener('change', e => { ingestFiles([...e.target.files]); e.target.value = ''; });
+$('#btnFolder').addEventListener('click', loadFromFolder);
+const dz = $('#dropZone');
+['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('over'); }));
+dz.addEventListener('drop', e => { const files = [...e.dataTransfer.files].filter(f => /\.(csv|txt)$/i.test(f.name) || f.type.includes('csv')); if (files.length) ingestFiles(files); else setMsg('Drop .csv files.', 'err'); });
+document.addEventListener('dragover', e => e.preventDefault()); document.addEventListener('drop', e => e.preventDefault());
+
+renderAll();
+if (location.protocol.startsWith('http')) {
+  setMsg('Looking for the four CSV files next to this page…');
+  loadFromFolder().then(() => { if (!SOURCE_KEYS.some(k => state.data[k])) setMsg('No CSV files were found next to this page. Drop them here or choose files.'); });
+} else {
+  setMsg('Tip: opened from disk, so drop or choose the files. Served over http://, the page loads them from its folder automatically.');
+}
+</script>
+</body>
+</html>
