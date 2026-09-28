@@ -1,0 +1,13 @@
+case_id,order_id,received_at,customer_question,case_type,review_status,extract_generated_at
+MCS-501,MR-501,2026-09-18T08:10:00Z,Can I return this jacket within the return window?,RETURN,PENDING,2026-09-18T10:00:00Z
+MCS-502,MR-502,2026-09-18T08:18:00Z,The backpack arrived damaged. What should I do?,DAMAGE,PENDING,2026-09-18T10:00:00Z
+MCS-503,MR-503,2026-09-18T08:24:00Z,Is this shirt still eligible for a return?,RETURN,PENDING,2026-09-18T10:00:00Z
+MCS-504,,2026-09-18T08:31:00Z,I want to return the shoes from my recent order.,RETURN,PENDING,2026-09-18T10:00:00Z
+MCS-505,MR-505,2026-09-18T08:43:00Z,How can I update the contact details on my account?,GENERAL,APPROVED_COMPLETE,2026-09-18T10:00:00Z
+MCS-510,MR-510,2026-09-18T08:55:00Z,Can I return this scarf?,RETURN,PENDING,2026-09-18T10:00:00Z
+MCS-510,MR-510,2026-09-18T08:55:00Z,Can I return this scarf?,RETURN,PENDING,2026-09-18T10:00:00Z
+,MR-511,2026-09-18T09:02:00Z,Where can I find the care instructions?,GENERAL,PENDING,2026-09-18T10:00:00Z
+MCS-506,MR-506,2026-09-18T09:10:00Z,Can I exchange these trousers for another size?,RETURN,APPROVED,2026-09-18T10:00:00Z
+MCS-507,MR-507,2026-09-18T09:19:00Z,The mug arrived cracked and I have a photo.,DAMAGE,PENDING,2026-09-18T10:00:00Z
+MCS-508,,2026-09-18T09:27:00Z,What material is the green sweater made from?,GENERAL,PENDING,2026-09-18T10:00:00Z
+MCS-509,MR-509,2026-09-18T09:36:00Z,I received the wrong colour cap.,DAMAGE,REJECTED,2026-09-18T10:00:00Z

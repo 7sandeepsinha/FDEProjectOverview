@@ -1,0 +1,11 @@
+case_id,issue_type,issue_details,reported_delivery_date,evidence_status,extract_generated_at
+MCS-501,RETURN_WINDOW,Customer asks about the standard return window,2026-09-10,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-502,DAMAGED_ITEM,Backpack seam is torn on arrival,2026-09-14,PHOTO_ATTACHED,2026-09-18T09:50:00Z
+MCS-503,LATE_RETURN,Customer asks whether the item is inside the return window,2026-09-17,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-504,RETURN_REQUEST,Customer wants to return shoes but supplied no order reference,,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-505,ACCOUNT_QUESTION,Customer asks to update account contact details,,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-506,SIZE_EXCHANGE,Customer requests a different trouser size,2026-09-12,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-507,DAMAGED_ITEM,Mug has a visible crack,2026-09-16,PHOTO_ATTACHED,2026-09-18T09:50:00Z
+MCS-508,PRODUCT_INFORMATION,Customer asks about sweater material,,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-509,WRONG_ITEM,Delivered cap colour differs from the order,2026-09-14,PHOTO_ATTACHED,2026-09-18T09:50:00Z
+MCS-510,RETURN_WINDOW,Customer asks about returning a scarf,2026-09-11,NOT_REQUIRED,2026-09-18T09:50:00Z

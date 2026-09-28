@@ -1,0 +1,10 @@
+rule_id,applies_to_file,field_name,rule_type,condition,failure_route,reason,enabled
+VR-001,support_cases.csv,case_id,required,case_id is present,REJECT,A case cannot be traced or connected reliably.,true
+VR-002,support_cases.csv,case_id,unique,"case_id is unique in the incoming support load; both duplicate occurrences fail",REJECT,Publishing either occurrence could hide which row is intended.,true
+VR-003,support_cases.csv,order_id,conditional_required,order_id is present when case_type is RETURN or DAMAGE,REJECT,The required relationship cannot be established.,true
+VR-004,support_cases.csv,review_status,allowed_values,"review_status is PENDING, APPROVED or REJECTED",REJECT,The downstream meaning is not agreed.,true
+VR-005,orders.csv,delivery_date,date_format,"A present delivery_date is a valid calendar date in YYYY-MM-DD form; a failed purchase order blocks its linked case bundle",REJECT,A date cannot be compared consistently until it is valid.,true
+VR-006,orders.csv + issue_records.csv,delivery_date,cross_source_match,"If order and issue sources both provide delivery dates, the values agree",HUMAN_REVIEW,The pipeline cannot decide source ownership.,true
+VR-007,all supplied files,required files and columns,schema,Every required source file and required column exists,PAUSE_LOAD,The intended question may depend on unavailable data.,true
+VR-008,operational files,extract_generated_at,freshness,extract_generated_at is within 24 hours of the fixed classroom run time,LOAD_WARNING,The intended question may depend on current data.,true
+VR-009,published outputs,content hash and record keys,idempotency,Rerunning the same file content and keys creates no additional trusted records,PAUSE_LOAD,Duplicate publication would change counts without new evidence.,true

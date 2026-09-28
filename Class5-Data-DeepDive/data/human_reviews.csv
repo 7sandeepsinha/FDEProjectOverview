@@ -1,0 +1,5 @@
+review_id,case_id,reviewer_role,decision,decision_reason,reviewed_at,extract_generated_at
+HR-901,MCS-501,Support lead,ALLOW_STANDARD_FLOW,Order and request match the current return rule,2026-09-16T14:00:00Z,2026-09-16T08:00:00Z
+HR-902,MCS-502,Operations reviewer,NEEDS_SOURCE_OWNER,Two systems report different delivery dates,2026-09-16T14:20:00Z,2026-09-16T08:00:00Z
+HR-903,MCS-507,Support lead,ALLOW_DAMAGE_FLOW,Photo evidence is attached and readable,2026-09-16T15:00:00Z,2026-09-16T08:00:00Z
+HR-904,MCS-508,Knowledge specialist,ANSWER_FROM_CATALOGUE,Material information is available in the catalogue,2026-09-16T15:30:00Z,2026-09-16T08:00:00Z
