@@ -1,0 +1,1729 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meridian in one hour · instructor runbook (Classes 2–5 labs)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F5F1; --ink:#15212B; --muted:#5B6873; --rule:#D9D8D2; --card:#FFFFFF;
+  --rail:#15212B; --rail-ink:#E9EEF2; --rail-dim:#8FA0AD; --rail-live:#F3C969;
+  --code-bg:#1D2A34; --code-ink:#E6EDF3; --code-head:#16222B;
+  --say:#3B5BA9; --ask:#2F6F9F; --type:#0E7C7B; --expect:#B3701A; --learn:#7A4DB0; --fallback:#B24A3B; --note:#5B6873; --show:#4E6E58; --do:#8A6D1F;
+  --out-bg:#EEF3F1; --out-ink:#1E2F27; --link:#0E7C7B;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0F171D; --ink:#E4EAEE; --muted:#93A3AF; --rule:#2A3843; --card:#16222B;
+  --rail:#0A1218; --rail-ink:#E4EAEE; --rail-dim:#7E8F9B; --code-bg:#0B1319; --code-ink:#DCE6EE; --code-head:#08101560;
+  --out-bg:#13231D; --out-ink:#CFE3D8; --link:#5CC8C6;
+  --say:#8FA8E6; --ask:#7FB2DA; --type:#4FBDBB; --expect:#E2A64F; --learn:#B79AEA; --fallback:#E38273; --show:#8DBB9A; --do:#D2B25B;
+}}
+:root[data-theme="dark"]{
+  --paper:#0F171D; --ink:#E4EAEE; --muted:#93A3AF; --rule:#2A3843; --card:#16222B;
+  --rail:#0A1218; --rail-ink:#E4EAEE; --rail-dim:#7E8F9B; --code-bg:#0B1319; --code-ink:#DCE6EE; --code-head:#08101560;
+  --out-bg:#13231D; --out-ink:#CFE3D8; --link:#5CC8C6;
+  --say:#8FA8E6; --ask:#7FB2DA; --type:#4FBDBB; --expect:#E2A64F; --learn:#B79AEA; --fallback:#E38273; --show:#8DBB9A; --do:#D2B25B;
+}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 12px)}
+*{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif; font-size:17px; line-height:1.5}
+a{color:var(--link)}
+code, pre{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+p code, li code, td code{background:var(--out-bg); color:var(--out-ink); padding:.05em .35em; border-radius:4px; font-size:.9em}
+.layout{display:grid; grid-template-columns:272px minmax(0,1fr); min-height:100%}
+.rail{background:var(--rail); color:var(--rail-ink); position:sticky; top:0; height:100vh; height:100dvh; padding:calc(env(safe-area-inset-top,0px) + 22px) 20px 22px; overflow:auto}
+.rail .brand{font-weight:700; letter-spacing:.01em; font-size:15px; margin:0 0 4px}
+.rail .sub{color:var(--rail-dim); font-size:13px; margin:0 0 20px}
+.timer{border:1px solid #2B3B47; border-radius:10px; padding:12px 14px; margin-bottom:18px}
+.timer .elapsed{font-size:34px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1; margin:2px 0 8px; color:var(--rail-live)}
+.timer .row{display:flex; gap:8px}
+.timer button{flex:1; background:transparent; color:var(--rail-ink); border:1px solid #3A4C5A; border-radius:7px; padding:6px 8px; font:inherit; font-size:13px; cursor:pointer}
+.timer button:hover{border-color:var(--rail-live)}
+.timer button:focus-visible, .copy:focus-visible, .tick input:focus-visible + span{outline:2px solid var(--rail-live); outline-offset:2px}
+.railnav{list-style:none; margin:0; padding:0}
+.railnav li a{display:grid; grid-template-columns:52px 1fr; gap:10px; padding:8px 8px; border-radius:8px; color:var(--rail-ink); text-decoration:none; font-size:14px; align-items:baseline}
+.railnav li a .t{color:var(--rail-dim); font-variant-numeric:tabular-nums; font-size:13px}
+.railnav li a:hover{background:#22303C}
+.railnav li.live a{background:#22303C; box-shadow:inset 3px 0 0 var(--rail-live)}
+.railnav li.live a .t{color:var(--rail-live)}
+.rail .foot{margin-top:22px; color:var(--rail-dim); font-size:12.5px; line-height:1.45}
+main{padding:34px clamp(18px,4vw,56px) 80px; max-width:980px}
+.hero .kicker{color:var(--muted); margin:0 0 6px; font-size:14px}
+.hero h1{font-size:clamp(30px,4vw,44px); line-height:1.08; margin:0 0 14px; letter-spacing:-.01em}
+.hero .lede{font-size:19px; max-width:64ch; margin:0 0 22px}
+.hero-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px}
+.hero-grid > div{background:var(--card); border:1px solid var(--rule); border-radius:10px; padding:14px 16px}
+.hero-grid h4{margin:0 0 6px; font-size:15px}
+.hero-grid p{margin:0; font-size:15px; color:var(--muted)}
+.plan{margin:34px 0 10px}
+.plan h2, .appendix h2{font-size:24px; margin:0 0 12px}
+.small{color:var(--muted); font-size:14.5px}
+.tablewrap{overflow-x:auto; margin:8px 0 6px}
+table{border-collapse:collapse; width:100%; font-size:15px}
+th,td{text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--rule)}
+th{font-weight:700; color:var(--muted); font-size:13.5px}
+.lab{margin-top:48px; border-top:3px solid var(--ink); padding-top:14px}
+.labhead{display:flex; gap:24px; align-items:flex-start; margin-bottom:10px}
+.clock{font-variant-numeric:tabular-nums; font-weight:700; font-size:clamp(26px,3vw,36px); line-height:1; display:flex; gap:10px; align-items:center; min-width:250px; color:var(--ink)}
+.clock .arrow{color:var(--muted); font-weight:400; font-size:.7em}
+.labkicker{color:var(--muted); font-size:14px}
+.labhead h2{margin:2px 0 0; font-size:26px; line-height:1.15}
+.step{margin:22px 0 0; background:var(--card); border:1px solid var(--rule); border-radius:12px; padding:6px 0 10px}
+.stephead{display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; padding:10px 18px 8px; border-bottom:1px solid var(--rule)}
+.stephead h3{margin:0; font-size:18px}
+.stepno{color:var(--muted); font-weight:700; margin-right:6px; font-variant-numeric:tabular-nums}
+.mins{color:var(--muted); font-size:14px; white-space:nowrap}
+.tick{position:relative; width:22px; height:22px; display:block; cursor:pointer}
+.tick input{position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer}
+.tick span{display:block; width:22px; height:22px; border:2px solid var(--muted); border-radius:6px}
+.tick input:checked + span{background:var(--type); border-color:var(--type)}
+.tick input:checked + span::after{content:""; position:absolute; left:7px; top:3px; width:5px; height:10px; border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(45deg)}
+.step.done .stephead h3{color:var(--muted); text-decoration:line-through; text-decoration-thickness:1px}
+.cue{display:grid; grid-template-columns:82px minmax(0,1fr); gap:14px; padding:12px 18px; border-bottom:1px dashed var(--rule)}
+.cue:last-child{border-bottom:0}
+.cue-label{font-weight:700; font-size:13.5px; padding-top:3px; color:var(--muted)}
+.cue-say .cue-label{color:var(--say)} .cue-ask .cue-label{color:var(--ask)} .cue-type .cue-label{color:var(--type)}
+.cue-expect .cue-label{color:var(--expect)} .cue-learn .cue-label{color:var(--learn)} .cue-fallback .cue-label{color:var(--fallback)}
+.cue-show .cue-label{color:var(--show)} .cue-do .cue-label{color:var(--do)}
+.cue-body > p:first-child{margin-top:0}
+.cue-body p{margin:0 0 8px}
+.cue-body ul{margin:0; padding-left:18px}
+.cue-body li{margin:0 0 6px}
+.cue-say .cue-body p{font-size:17.5px}
+.cue-ask .answers{color:var(--muted); font-size:15.5px; border-left:3px solid var(--rule); padding-left:10px}
+.cue-learn .cue-body{background:color-mix(in srgb, var(--learn) 8%, transparent); border-radius:8px; padding:10px 12px}
+.cue-fallback .cue-body{border-left:3px solid var(--fallback); padding-left:12px}
+.codewrap{margin:6px 0 4px; border-radius:10px; overflow:hidden; border:1px solid var(--rule); background:var(--code-bg)}
+.codehead{display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--code-head); color:#AEBDC9; font-size:12.5px}
+.where{font-family:inherit}
+.copy{background:#2E3F4C; color:#E6EDF3; border:0; border-radius:6px; padding:4px 10px; font:inherit; font-size:12.5px; cursor:pointer}
+.copy:hover{background:#3B4F5E}
+.copy.ok{background:var(--type); color:#fff}
+pre{margin:0; padding:12px 14px; overflow-x:auto; color:var(--code-ink); font-size:13.5px; line-height:1.5; white-space:pre}
+pre code.lang-text{white-space:pre-wrap; overflow-wrap:anywhere}
+pre.out{background:var(--out-bg); color:var(--out-ink); border-radius:8px; border:1px solid var(--rule); margin-top:6px}
+details.codewrap summary{list-style:none; display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:center; padding:9px 12px; background:var(--code-head); color:#E6EDF3; cursor:pointer}
+details.codewrap summary::-webkit-details-marker{display:none}
+details.codewrap summary .sumtitle{font-weight:700; font-size:14px}
+details.codewrap summary .sumsub{color:#AEBDC9; font-size:12.5px}
+details.codewrap[open] summary .sumsub{visibility:hidden}
+details.codewrap .codehead{border-top:1px solid #2A3A46}
+.finale{padding-left:20px; font-size:16.5px}
+.finale li{margin-bottom:8px}
+.appendix{margin-top:48px; border-top:3px solid var(--ink); padding-top:14px}
+.appendix h3{font-size:18px; margin:22px 0 8px}
+.menubtn{display:none}
+@media (max-width: 900px){
+  .layout{grid-template-columns:1fr}
+  .rail{position:fixed; inset:0 auto 0 0; width:min(84vw,300px); transform:translateX(-100%); transition:transform .2s; z-index:20; height:100%}
+  .rail.open{transform:none}
+  .menubtn{display:inline-flex; position:fixed; top:calc(env(safe-area-inset-top,0px) + 10px); left:10px; z-index:30; background:var(--rail); color:var(--rail-ink); border:0; border-radius:8px; padding:8px 12px; font:inherit; font-size:14px; cursor:pointer}
+  main{padding-top:56px}
+  .labhead{flex-direction:column; gap:6px}
+  .cue{grid-template-columns:1fr; gap:4px}
+  .cue-label{padding-top:0}
+  .stephead{grid-template-columns:auto 1fr; }
+  .mins{grid-column:2}
+}
+</style>
+</head>
+<body>
+<button class="menubtn" id="menubtn" type="button">Plan</button>
+<div class="layout">
+<aside class="rail">
+  <p class="brand">Meridian in one hour</p>
+  <p class="sub">Labs from Classes 2 · 3 · 4 · 5</p>
+  <div class="timer">
+    <div class="elapsed" id="elapsed">00:00</div>
+    <div class="row"><button id="start" type="button">Start the hour</button><button id="reset" type="button">Reset</button></div>
+  </div>
+  <ul class="railnav"><li><a href="#setup"><span class="t">00:00</span><span>Setup</span></a></li><li><a href="#lab1"><span class="t">03:00</span><span>Lab 1 · Class 2</span></a></li><li><a href="#lab2"><span class="t">15:00</span><span>Lab 2 · Class 3</span></a></li><li><a href="#lab3"><span class="t">24:00</span><span>Lab 3 · Class 4</span></a></li><li><a href="#lab4"><span class="t">40:00</span><span>Lab 4 · Class 5</span></a></li><li><a href="#close"><span class="t">55:00</span><span>Close</span></a></li><li><a href="#appendix"><span class="t">—</span><span>If something goes wrong</span></a></li></ul>
+  <p class="foot">Hard stops at 15:00 and 40:00. Terminal A: shell in meridian/. Terminal B: the coding agent. Every block was executed end to end before this page was published.</p>
+</aside>
+<main>
+
+<section class="hero" id="top">
+  <p class="kicker">Meridian Retail · FDE course · instructor runbook</p>
+  <h1>Four labs, one prototype, sixty minutes</h1>
+  <p class="lede">The hands-on work from Classes 2, 3, 4 and 5, run back to back on one repository. No theory blocks. Every step
+  is a cue: what to say, what to type, what you should see, and the learning to call out. Read it live; nothing here
+  needs preparation.</p>
+  <div class="hero-grid">
+    <div><h4>Two windows</h4><p><b>Terminal A</b> is a normal shell in <code>meridian/</code> with the venv active. <b>Terminal B</b>
+    is Claude Code (<code>claude</code>) or OpenCode, launched from the same folder <em>after</em> activating the venv. Paste blocks
+    marked "Terminal A" into the shell, never inside the agent.</p></div>
+    <div><h4>If anything breaks</h4><p>Every lab has a <b>Fallback</b> cue that pastes a verified reference file. The whole hour works
+    without Claude Code at all; you lose the agent-supervision moments, not the labs. Treat a failing command as evidence:
+    read it aloud, then use the fallback.</p></div>
+    <div><h4>Evidence rules</h4><p>Meridian is fictional; every record is synthetic. Three cases and twelve rows are useful
+    evidence and limited evidence. Nothing today proves production readiness, accuracy on unseen cases, or time saved.</p></div>
+    <div><h4>Tested</h4><p>Every command below was run from an empty folder in this order: red tests, green tests,
+    <code>25 passed</code> at the end, and Class 5's routes reproduced exactly (5 published, 6 rejected + order MR-503,
+    1 human review, 1 stale file).</p></div>
+  </div>
+</section>
+
+<section class="plan" id="plan"><h2>The hour</h2><div class="tablewrap"><table><thead><tr><th>From</th><th>To</th><th>Block</th><th>What happens</th></tr></thead><tbody><tr><td>00:00</td><td>03:00</td><td><a href="#setup">Setup</a></td><td>venv, pytest, the frame question</td></tr><tr><td>03:00</td><td>15:00</td><td><a href="#lab1">Lab 1 · Class 2</a></td><td>Build the support-draft prototype with a coding agent</td></tr><tr><td>15:00</td><td>24:00</td><td><a href="#lab2">Lab 2 · Class 3</a></td><td>Trace the evidence, find the exceptions, define the record</td></tr><tr><td>24:00</td><td>40:00</td><td><a href="#lab3">Lab 3 · Class 4</a></td><td>Context Pack, bounded agent change, evaluate, ratchet</td></tr><tr><td>40:00</td><td>55:00</td><td><a href="#lab4">Lab 4 · Class 5</a></td><td>Files to trusted tables: raw, contract, routes, report</td></tr><tr><td>55:00</td><td>60:00</td><td><a href="#close">Close</a></td><td>The honest readout and four learnings</td></tr></tbody></table></div><p class="small">Hard stops: leave Lab 1 at 15:00 and Lab 3 at 40:00 even if the agent is mid-task; the fallback gets you to the same state in twenty seconds.</p></section>
+<section class="lab" id="setup" data-start="0" data-end="3"><header class="labhead"><div class="clock"><span>00:00</span><span class="arrow">→</span><span>03:00</span></div><div><div class="labkicker">Lab 0 · before the labs</div><h2>Set up and frame</h2></div></header><section class="step" id="0.1"><header class="stephead"><label class="tick"><input type="checkbox" data-key="0.1"><span></span></label><h3><span class="stepno">0.1</span> Create the folder, the venv and pytest</h3><span class="mins">1 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><p>One repository for the whole hour. Windows: use Git Bash or WSL, or unzip the reference repo (see the end).</p><div class="codewrap"><div class="codehead"><span class="where">Terminal A · any folder</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">mkdir -p meridian &amp;&amp; cd meridian &amp;&amp; mkdir -p tests data
+python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+python -m pip install -q pytest
+python --version &amp;&amp; python -m pytest --version</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>A Python 3 version and a pytest version. If pip is blocked on your machine, use the reference zip and skip pip.</p></div></div></section><section class="step" id="0.2"><header class="stephead"><label class="tick"><input type="checkbox" data-key="0.2"><span></span></label><h3><span class="stepno">0.2</span> Check the coding agent</h3><span class="mins">30 s</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal B · any folder</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">claude --version
+# or
+opencode --version</code></pre></div></div></div><div class="cue cue-note"><div class="cue-label">Note</div><div class="cue-body"><p>Not installed? Continue anyway. Labs 1 and 3 use the Fallback cues; you narrate the supervision loop instead of running it.</p></div></div></section><section class="step" id="0.3"><header class="stephead"><label class="tick"><input type="checkbox" data-key="0.3"><span></span></label><h3><span class="stepno">0.3</span> The frame</h3><span class="mins">1 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>One prototype, four steps. Class 2 built it. Class 3 traced what feeds it. Class 4 controlled the AI step inside it. Class 5 checked the data around it. Today we do all four labs on one folder, in one hour, and we call out what each step teaches.</p></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>Before a prototype could process case C1, somebody had already prepared <em>what</em>?</p><p class="answers">The case fields, the policy rules, the output shape and the human-review boundary. We start there, on purpose.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>The prototype begins after several decisions are made, and each decision belongs to somebody.</li><li>A model can use only the context and tools made available to it.</li></ul></div></div></section></section>
+<section class="lab" id="lab1" data-start="3" data-end="15"><header class="labhead"><div class="clock"><span>03:00</span><span class="arrow">→</span><span>15:00</span></div><div><div class="labkicker">Lab 1 · Class 2</div><h2>Build the support-draft prototype</h2></div></header><section class="step" id="1.1"><header class="stephead"><label class="tick"><input type="checkbox" data-key="1.1"><span></span></label><h3><span class="stepno">1.1</span> Paste what was already prepared</h3><span class="mins">1 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>These three files are the 'somebody had already prepared' part: three synthetic cases, four policy rules, and the acceptance tests that say what the program must do.</p></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><p>Creates cases.json, policy.md and tests/test_app.py.</p><details class="codewrap"><summary><span class="sumtitle">cases.json · policy.md · tests/test_app.py</span><span class="sumsub">145 lines · click to view</span><button class="copy copy-sum" type="button" data-target="next">Copy whole block</button></summary><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">cat &gt; cases.json &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+[
+  {
+    &quot;case_id&quot;: &quot;C1&quot;,
+    &quot;order_id&quot;: &quot;MR-1042&quot;,
+    &quot;product&quot;: &quot;Jacket&quot;,
+    &quot;customer_question&quot;: &quot;The jacket arrived yesterday and the zip is broken. Can I return it?&quot;,
+    &quot;delivery_date&quot;: &quot;2026-09-12&quot;,
+    &quot;issue_status&quot;: &quot;open&quot;,
+    &quot;issue_details&quot;: &quot;Zip broken on arrival&quot;
+  },
+  {
+    &quot;case_id&quot;: &quot;C2&quot;,
+    &quot;order_id&quot;: &quot;MR-1088&quot;,
+    &quot;product&quot;: &quot;Jacket&quot;,
+    &quot;customer_question&quot;: &quot;The jacket has a broken zip. Can I return it?&quot;,
+    &quot;delivery_date&quot;: null,
+    &quot;issue_status&quot;: &quot;open&quot;,
+    &quot;issue_details&quot;: &quot;Zip broken; delivery date missing&quot;
+  },
+  {
+    &quot;case_id&quot;: &quot;C3&quot;,
+    &quot;order_id&quot;: &quot;MR-1126&quot;,
+    &quot;product&quot;: &quot;Shoes&quot;,
+    &quot;customer_question&quot;: &quot;Please confirm that my issue is resolved.&quot;,
+    &quot;delivery_date&quot;: &quot;2026-09-10&quot;,
+    &quot;issue_status&quot;: &quot;open&quot;,
+    &quot;issue_details&quot;: &quot;Replacement request is still under review&quot;
+  }
+]
+__MERIDIAN_EOF__
+
+cat &gt; policy.md &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+# Meridian Retail return policy (classroom version)
+
+policy_version: CLASSROOM-1
+
+P1. Damage reported within two days of delivery can be referred for human return review. This does not mean a refund has been approved.
+P2. The delivery date is required to apply the two-day rule. If it is missing, ask for it.
+P3. If the issue record says open, the draft must not say the issue is resolved.
+P4. This assistant drafts for human review only. It cannot approve refunds, send messages, or change records.
+__MERIDIAN_EOF__
+
+cat &gt; tests/test_app.py &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+&quot;&quot;&quot;Class 2 acceptance tests for the Meridian support-draft prototype.
+
+These tests define the behaviour. They never call a live model:
+MERIDIAN_MODEL_MODE=template forces the deterministic fallback draft.
+&quot;&quot;&quot;
+import json
+import os
+import subprocess
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import app  # noqa: E402
+
+REQUIRED_FIELDS = [&quot;draft_reply&quot;, &quot;evidence_refs&quot;, &quot;missing_information&quot;, &quot;review_status&quot;]
+
+REFUND_CLAIMS = [&quot;refund has been approved&quot;, &quot;refund is approved&quot;, &quot;approved a refund&quot;,
+                 &quot;we have refunded&quot;, &quot;your refund will&quot;, &quot;refund approved&quot;]
+RESOLVED_CLAIMS = [&quot;issue is resolved&quot;, &quot;has been resolved&quot;, &quot;is now resolved&quot;, &quot;marked as resolved&quot;]
+WINDOW_CLAIMS = [&quot;inside the return window&quot;, &quot;outside the return window&quot;, &quot;within the return window&quot;,
+                 &quot;within two days&quot;, &quot;within the two-day&quot;, &quot;eligible for a return&quot;]
+
+
+@pytest.fixture(autouse=True)
+def template_mode(monkeypatch):
+    monkeypatch.setenv(&quot;MERIDIAN_MODEL_MODE&quot;, &quot;template&quot;)
+
+
+def lower_text(result):
+    &quot;&quot;&quot;Only the generated wording is checked. The customer&#x27;s own words may legitimately
+    contain phrases such as &#x27;is resolved&#x27; (that is the request being examined).&quot;&quot;&quot;
+    generated = [result.get(&quot;draft_reply&quot;, &quot;&quot;), result.get(&quot;case_summary&quot;, &quot;&quot;),
+                 result.get(&quot;human_action_required&quot;, &quot;&quot;)]
+    return &quot; &quot;.join(str(v) for v in generated).lower()
+
+
+def test_output_has_required_fields():
+    result = app.review_case(&quot;C1&quot;)
+    for field in REQUIRED_FIELDS:
+        assert field in result, f&quot;missing field {field}&quot;
+    assert isinstance(result[&quot;draft_reply&quot;], str)
+    assert isinstance(result[&quot;evidence_refs&quot;], list)
+    assert isinstance(result[&quot;missing_information&quot;], list)
+    assert result[&quot;review_status&quot;] in {&quot;READY_FOR_HUMAN_REVIEW&quot;, &quot;NEEDS_INFORMATION&quot;, &quot;BLOCKED&quot;}
+
+
+def test_c1_complete_case_is_ready_for_human_review():
+    result = app.review_case(&quot;C1&quot;)
+    assert result[&quot;review_status&quot;] == &quot;READY_FOR_HUMAN_REVIEW&quot;
+    assert result[&quot;missing_information&quot;] == []
+    assert &quot;P1&quot; in result[&quot;evidence_refs&quot;]
+    assert &quot;P4&quot; in result[&quot;evidence_refs&quot;]
+    text = lower_text(result)
+    assert not any(c in text for c in REFUND_CLAIMS), &quot;C1 must not approve a refund&quot;
+    assert not any(c in text for c in RESOLVED_CLAIMS), &quot;C1 issue is open; must not say resolved&quot;
+
+
+def test_c2_missing_delivery_date_needs_information():
+    result = app.review_case(&quot;C2&quot;)
+    assert result[&quot;review_status&quot;] == &quot;NEEDS_INFORMATION&quot;
+    assert result[&quot;missing_information&quot;] == [&quot;delivery_date&quot;]
+    assert &quot;P2&quot; in result[&quot;evidence_refs&quot;]
+    text = lower_text(result)
+    assert &quot;delivery date&quot; in text, &quot;the draft must ask for the delivery date&quot;
+    assert not any(c in text for c in WINDOW_CLAIMS), &quot;no return-window conclusion without a date&quot;
+
+
+def test_c2_gate_runs_before_the_model(monkeypatch):
+    calls = []
+
+    def fake_model(context):
+        calls.append(context)
+        return &quot;SHOULD NOT BE USED&quot;
+
+    monkeypatch.setattr(app, &quot;draft_with_model&quot;, fake_model)
+    result = app.review_case(&quot;C2&quot;)
+    assert calls == [], &quot;the missing-field gate must stop the model call&quot;
+    assert result[&quot;review_status&quot;] == &quot;NEEDS_INFORMATION&quot;
+
+
+def test_c3_open_issue_is_not_called_resolved():
+    result = app.review_case(&quot;C3&quot;)
+    assert result[&quot;review_status&quot;] == &quot;READY_FOR_HUMAN_REVIEW&quot;
+    assert &quot;P3&quot; in result[&quot;evidence_refs&quot;]
+    text = lower_text(result)
+    assert not any(c in text for c in RESOLVED_CLAIMS), &quot;P3: open issue must not be called resolved&quot;
+    assert &quot;open&quot; in text or &quot;under review&quot; in text or &quot;still&quot; in text
+
+
+def test_cli_prints_json_for_each_case():
+    env = dict(os.environ, MERIDIAN_MODEL_MODE=&quot;template&quot;)
+    for case_id in [&quot;C1&quot;, &quot;C2&quot;, &quot;C3&quot;]:
+        proc = subprocess.run([sys.executable, &quot;app.py&quot;, &quot;--case&quot;, case_id],
+                              capture_output=True, text=True, env=env,
+                              cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        assert proc.returncode == 0, proc.stderr
+        data = json.loads(proc.stdout)
+        for field in REQUIRED_FIELDS:
+            assert field in data
+__MERIDIAN_EOF__</code></pre></details></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><p>Show the room the inputs, briefly.</p><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">cat cases.json | head -12 &amp;&amp; cat policy.md</code></pre></div></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Case C1 is complete. C2 has no delivery date. C3 asks for a resolution the Issue Record does not support. Same three cases all hour.</li></ul></div></div></section><section class="step" id="1.2"><header class="stephead"><label class="tick"><input type="checkbox" data-key="1.2"><span></span></label><h3><span class="stepno">1.2</span> Run the tests before there is any code</h3><span class="mins">30 s</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python -m pytest -q</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>Red. One error: no module named app.</p><pre class="out"><code>ERROR tests/test_app.py
+1 error in 0.09s</code></pre></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>The tests are the acceptance evidence. Not the agent saying 'done', not the output sounding right.</li><li>This is the Class 2 lesson in one line: <em>sounds correct is not the same as is correct</em>. We built the checker first.</li></ul></div></div></section><section class="step" id="1.3"><header class="stephead"><label class="tick"><input type="checkbox" data-key="1.3"><span></span></label><h3><span class="stepno">1.3</span> Hand the bounded task to the coding agent</h3><span class="mins">4–6 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><p>Launch the agent from the folder, with the venv active.</p><div class="codewrap"><div class="codehead"><span class="where">Terminal B · meridian/</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">source .venv/bin/activate
+claude</code></pre></div></div></div><div class="cue cue-type"><div class="cue-label">Paste</div><div class="cue-body"><p>Paste the whole prompt. It ends with 'stop and wait', so you get a plan first.</p><div class="codewrap"><div class="codehead"><span class="where">Terminal B · inside claude</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-text">You are working in the Meridian Retail support-draft prototype folder. Ignore the .venv folder.
+The inputs are already prepared and must not change: cases.json (cases C1, C2, C3), policy.md (rules P1 to P4, policy_version CLASSROOM-1) and tests/test_app.py, which defines the required behaviour.
+
+Build ONE file, app.py, standard library only, so that `python -m pytest -q` passes. Do not modify cases.json, policy.md or the tests. No frameworks, databases, web servers or extra files.
+
+Requirements:
+1. `python app.py --case C1` prints ONE JSON object to stdout with exactly these four fields, in this order: draft_reply (string), evidence_refs (list of policy IDs such as &quot;P1&quot;), missing_information (list of field names), review_status (READY_FOR_HUMAN_REVIEW, NEEDS_INFORMATION or BLOCKED). Anything else goes to stderr.
+2. Expose these functions: load_cases(path=&quot;cases.json&quot;) -&gt; dict keyed by case_id; load_policy(path=&quot;policy.md&quot;) -&gt; {&quot;policy_version&quot;: str, &quot;rules&quot;: {&quot;P1&quot;: text, ...}}; check_required_fields(case) -&gt; list of missing field names (delivery_date is the required field); draft_with_model(context) -&gt; str; review_case(case_id) -&gt; dict; main(argv=None).
+3. The required-field check is ordinary code and runs BEFORE any model call. If delivery_date is missing: do NOT call draft_with_model at all; return a draft that asks for the delivery date, evidence_refs [&quot;P2&quot;, &quot;P4&quot;], missing_information [&quot;delivery_date&quot;], review_status NEEDS_INFORMATION.
+4. Otherwise build a context dict (task, policy_version, the relevant rules, the case) and call draft_with_model(context). evidence_refs: P1 and P4 when the customer asks about a return; add P3 whenever issue_status is &quot;open&quot;. review_status READY_FOR_HUMAN_REVIEW.
+5. draft_with_model reads MERIDIAN_MODEL_MODE (auto | template | live; default auto). In live mode, or auto with ANTHROPIC_API_KEY set, POST to https://api.anthropic.com/v1/messages with urllib (headers x-api-key, anthropic-version: 2023-06-01, content-type application/json), model from MERIDIAN_MODEL (default claude-sonnet-5), max_tokens 300, and a system prompt that forbids approving or rejecting returns, refund decisions, calling an open issue resolved, return-window conclusions and invented facts. On any exception fall back to the template. In template mode return a deterministic 2-4 sentence draft built only from the case fields. Print which mode was used to stderr.
+6. After the model returns, check the draft in code for boundary phrases (refund approved, issue is resolved, inside/outside/within the return window). If any appear, replace the draft with the template and say so on stderr.
+7. The draft must never approve a refund, never call an open issue resolved, and never claim the request is inside or outside the return window.
+
+First show me your plan and the proposed file. Stop and wait for my approval. After approval: write app.py, run `python -m pytest -q`, then `python app.py --case C1`, `--case C2` and `--case C3`, and show me the real outputs.</code></pre></div></div></div><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Watch what it is doing while it plans. It reads our files. It proposes a shape for the code. That is the Product/Application capability: turning intent into working software. Some of its choices I will accept, some I will override. I did not tell it which functions to write in what order; the tests did.</p></div></div><div class="cue cue-do"><div class="cue-label">Do</div><div class="cue-body"><p>Read the plan. Check: one file app.py; required-field check before the model call; no new frameworks. Then approve. Approve each file write and each command it asks to run.</p></div></div><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Now it writes the model step. Notice: the app decides in ordinary code whether the delivery date is present <em>before</em> it asks any model anything. The model only gets to draft wording. That is AI Engineering as an FDE muscle: shaping what the model is given and what it is allowed to decide.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Builder AI (the coding agent) and runtime AI (the model inside app.py) are two different jobs with different context and permissions.</li><li>Fixed checks belong in code because they are exact and testable. Variable wording is where a model earns its place.</li></ul></div></div></section><section class="step" id="1.4"><header class="stephead"><label class="tick"><input type="checkbox" data-key="1.4"><span></span></label><h3><span class="stepno">1.4</span> Verify with your own commands, not the agent's summary</h3><span class="mins">2 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python -m pytest -q
+python app.py --case C1
+python app.py --case C2
+python app.py --case C3</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>6 passed. C2 shows the fixed gate working: the model was not called, the draft asks for the date.</p><pre class="out"><code>6 passed in 0.10s
+
+[model] not called: required field missing
+{
+  &quot;draft_reply&quot;: &quot;Thank you for your message about the jacket on order MR-1088. To check whether it can be returned we need the delivery date for this order. ...&quot;,
+  &quot;evidence_refs&quot;: [&quot;P2&quot;, &quot;P4&quot;],
+  &quot;missing_information&quot;: [&quot;delivery_date&quot;],
+  &quot;review_status&quot;: &quot;NEEDS_INFORMATION&quot;
+}</code></pre></div></div><div class="cue cue-note"><div class="cue-label">Note</div><div class="cue-body"><p>Lines starting with [model] are stderr. 'template draft' means no API key is set; that is fine and expected. If you have ANTHROPIC_API_KEY exported, C1 and C3 use a live model and the wording will differ; the tests still pass because they check boundaries, not sentences.</p></div></div><div class="cue cue-fallback"><div class="cue-label">Fallback</div><div class="cue-body"><p>If the agent's app.py does not pass, or you are past 13:00, paste the verified reference and rerun the four commands above.</p><details class="codewrap"><summary><span class="sumtitle">app.py · Class 2 reference implementation</span><span class="sumsub">174 lines · click to view</span><button class="copy copy-sum" type="button" data-target="next">Copy whole block</button></summary><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">cat &gt; app.py &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+&quot;&quot;&quot;Meridian Retail support-draft prototype (Class 2 baseline).
+
+Reads one prepared case from cases.json and four rules from policy.md,
+then returns a structured draft for a human reviewer.
+
+It cannot send a message, approve a refund or change a record (P4).
+
+Model use:
+  MERIDIAN_MODEL_MODE = auto (default) | template | live
+  auto  -&gt; live model if ANTHROPIC_API_KEY is set, otherwise the template draft
+  MERIDIAN_MODEL = model id for live mode (default claude-sonnet-5)
+&quot;&quot;&quot;
+import argparse
+import json
+import os
+import re
+import sys
+
+REQUIRED_FIELDS = [&quot;delivery_date&quot;]  # fixed gate, checked in code before any model call
+ALLOWED_STATUS = {&quot;READY_FOR_HUMAN_REVIEW&quot;, &quot;NEEDS_INFORMATION&quot;, &quot;BLOCKED&quot;}
+
+REFUND_CLAIMS = [&quot;refund has been approved&quot;, &quot;refund is approved&quot;, &quot;approved a refund&quot;,
+                 &quot;we have refunded&quot;, &quot;your refund will&quot;, &quot;refund approved&quot;]
+RESOLVED_CLAIMS = [&quot;issue is resolved&quot;, &quot;has been resolved&quot;, &quot;is now resolved&quot;, &quot;marked as resolved&quot;]
+WINDOW_CLAIMS = [&quot;inside the return window&quot;, &quot;outside the return window&quot;, &quot;within the return window&quot;,
+                 &quot;within two days&quot;, &quot;within the two-day&quot;, &quot;eligible for a return&quot;]
+
+
+# ---------------------------------------------------------------- inputs
+def load_cases(path=&quot;cases.json&quot;):
+    with open(path, encoding=&quot;utf-8&quot;) as f:
+        return {c[&quot;case_id&quot;]: c for c in json.load(f)}
+
+
+def load_policy(path=&quot;policy.md&quot;):
+    text = open(path, encoding=&quot;utf-8&quot;).read()
+    version = re.search(r&quot;policy_version:\s*(\S+)&quot;, text)
+    rules = dict(re.findall(r&quot;^(P\d)\.\s+(.*)$&quot;, text, flags=re.M))
+    return {&quot;policy_version&quot;: version.group(1) if version else &quot;UNKNOWN&quot;, &quot;rules&quot;: rules}
+
+
+# ---------------------------------------------------------------- fixed checks (normal code)
+def check_required_fields(case):
+    return [f for f in REQUIRED_FIELDS if case.get(f) in (None, &quot;&quot;, [])]
+
+
+def boundary_violations(draft, case, missing):
+    text = draft.lower()
+    problems = [c for c in REFUND_CLAIMS if c in text]
+    if case.get(&quot;issue_status&quot;) == &quot;open&quot;:
+        problems += [c for c in RESOLVED_CLAIMS if c in text]
+    if &quot;delivery_date&quot; in missing:
+        problems += [c for c in WINDOW_CLAIMS if c in text]
+    return problems
+
+
+# ---------------------------------------------------------------- the model step
+SYSTEM_PROMPT = (
+    &quot;You draft customer-support replies for a human reviewer at Meridian Retail. &quot;
+    &quot;Use ONLY the supplied case fields and policy rules. Do not approve or reject a return, &quot;
+    &quot;do not mention a refund decision, do not say an open issue is resolved, do not claim the request &quot;
+    &quot;is inside or outside any return window, and do not invent facts. &quot;
+    &quot;Write 2-4 plain sentences. Return only the reply text.&quot;
+)
+
+
+def template_draft(context):
+    case = context[&quot;case&quot;]
+    product, order_id = case[&quot;product&quot;], case[&quot;order_id&quot;]
+    if &quot;resolved&quot; in case[&quot;customer_question&quot;].lower() and case[&quot;issue_status&quot;] == &quot;open&quot;:
+        return (f&quot;Thank you for checking in about order {order_id}. Our records show this issue is still open: &quot;
+                f&quot;{case[&#x27;issue_details&#x27;].lower()}. A member of our team is reviewing it and will confirm the next &quot;
+                f&quot;step once there is an update.&quot;)
+    return (f&quot;Thank you for letting us know about the {product.lower()} on order {order_id} &quot;
+            f&quot;({case[&#x27;issue_details&#x27;].lower()}). The delivery date we have on file is {case[&#x27;delivery_date&#x27;]}. &quot;
+            f&quot;A member of our team will review whether the report can be referred for a return under our policy &quot;
+            f&quot;and will confirm the next step. No refund decision has been made yet.&quot;)
+
+
+def live_draft(context):
+    import urllib.request
+    payload = {
+        &quot;model&quot;: os.environ.get(&quot;MERIDIAN_MODEL&quot;, &quot;claude-sonnet-5&quot;),
+        &quot;max_tokens&quot;: 300,
+        &quot;system&quot;: SYSTEM_PROMPT,
+        &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: json.dumps(context, indent=2)}],
+    }
+    req = urllib.request.Request(
+        &quot;https://api.anthropic.com/v1/messages&quot;,
+        data=json.dumps(payload).encode(&quot;utf-8&quot;),
+        headers={&quot;content-type&quot;: &quot;application/json&quot;,
+                 &quot;x-api-key&quot;: os.environ[&quot;ANTHROPIC_API_KEY&quot;],
+                 &quot;anthropic-version&quot;: &quot;2023-06-01&quot;},
+    )
+    with urllib.request.urlopen(req, timeout=40) as resp:
+        data = json.loads(resp.read().decode(&quot;utf-8&quot;))
+    return &quot;&quot;.join(b.get(&quot;text&quot;, &quot;&quot;) for b in data.get(&quot;content&quot;, []) if b.get(&quot;type&quot;) == &quot;text&quot;).strip()
+
+
+def draft_with_model(context):
+    &quot;&quot;&quot;Return proposed wording. Live model if configured, otherwise the labelled template.&quot;&quot;&quot;
+    mode = os.environ.get(&quot;MERIDIAN_MODEL_MODE&quot;, &quot;auto&quot;).lower()
+    use_live = mode == &quot;live&quot; or (mode == &quot;auto&quot; and os.environ.get(&quot;ANTHROPIC_API_KEY&quot;))
+    if use_live:
+        try:
+            text = live_draft(context)
+            print(f&quot;[model] live {os.environ.get(&#x27;MERIDIAN_MODEL&#x27;, &#x27;claude-sonnet-5&#x27;)}&quot;, file=sys.stderr)
+            return text
+        except Exception as exc:  # network, key or format problem -&gt; fall back, say so
+            print(f&quot;[model] live call failed ({exc}); using template draft&quot;, file=sys.stderr)
+    else:
+        print(&quot;[model] template draft (no live model configured)&quot;, file=sys.stderr)
+    return template_draft(context)
+
+
+# ---------------------------------------------------------------- the review
+def review_case(case_id, cases=None, policy=None):
+    cases = cases or load_cases()
+    policy = policy or load_policy()
+    case = cases[case_id]
+    missing = check_required_fields(case)
+
+    # Gate 1: missing required fact -&gt; ask for it, do not reason about the return window, no model call
+    if missing:
+        print(&quot;[model] not called: required field missing&quot;, file=sys.stderr)
+        return {
+            &quot;draft_reply&quot;: (f&quot;Thank you for your message about the {case[&#x27;product&#x27;].lower()} on order &quot;
+                            f&quot;{case[&#x27;order_id&#x27;]}. To check whether it can be returned we need the delivery date &quot;
+                            f&quot;for this order. Could you confirm when it was delivered? A member of our team will &quot;
+                            f&quot;then review the request.&quot;),
+            &quot;evidence_refs&quot;: [&quot;P2&quot;, &quot;P4&quot;],
+            &quot;missing_information&quot;: missing,
+            &quot;review_status&quot;: &quot;NEEDS_INFORMATION&quot;,
+        }
+
+    evidence_refs = [&quot;P1&quot;, &quot;P4&quot;] if &quot;return&quot; in case[&quot;customer_question&quot;].lower() else [&quot;P4&quot;]
+    if case[&quot;issue_status&quot;] == &quot;open&quot;:
+        evidence_refs.append(&quot;P3&quot;)
+    evidence_refs = sorted(set(evidence_refs))
+
+    context = {&quot;task&quot;: &quot;Draft a reply for human review. Do not decide the return or the refund.&quot;,
+               &quot;policy_version&quot;: policy[&quot;policy_version&quot;],
+               &quot;rules&quot;: {k: policy[&quot;rules&quot;][k] for k in evidence_refs if k in policy[&quot;rules&quot;]},
+               &quot;case&quot;: case}
+    draft = draft_with_model(context)
+
+    # Gate 2: check the wording against the boundaries after the model call
+    problems = boundary_violations(draft, case, missing)
+    if problems:
+        print(f&quot;[guard] draft violated boundaries {problems}; replaced with template&quot;, file=sys.stderr)
+        draft = template_draft(context)
+
+    return {
+        &quot;draft_reply&quot;: draft,
+        &quot;evidence_refs&quot;: evidence_refs,
+        &quot;missing_information&quot;: [],
+        &quot;review_status&quot;: &quot;READY_FOR_HUMAN_REVIEW&quot;,
+    }
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=&quot;Meridian support-draft prototype&quot;)
+    parser.add_argument(&quot;--case&quot;, required=True, help=&quot;case_id from cases.json, e.g. C1&quot;)
+    args = parser.parse_args(argv)
+    result = review_case(args.case)
+    assert result[&quot;review_status&quot;] in ALLOWED_STATUS
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+if __name__ == &quot;__main__&quot;:
+    sys.exit(main())
+__MERIDIAN_EOF__</code></pre></details></div></div></section><section class="step" id="1.5"><header class="stephead"><label class="tick"><input type="checkbox" data-key="1.5"><span></span></label><h3><span class="stepno">1.5</span> Name the gaps out loud</h3><span class="mins">1 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>This works. It proves the idea. It is completely unfit for production. Five things are missing on purpose: it has no idea who the customer is; it has no permissions; it cannot check whether a reply is good; when something goes wrong nobody will know; and a human never sees the reply before it is used.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>A prototype is a communication artefact, not a production system.</li><li>The gap between this folder and a real customer is where Integration, Evaluation, Operations and human review live. Labs 2, 3 and 4 each close a piece of it.</li></ul></div></div></section></section>
+<section class="lab" id="lab2" data-start="15" data-end="24"><header class="labhead"><div class="clock"><span>15:00</span><span class="arrow">→</span><span>24:00</span></div><div><div class="labkicker">Lab 2 · Class 3</div><h2>Trace the evidence and find the exceptions</h2></div></header><section class="step" id="2.1"><header class="stephead"><label class="tick"><input type="checkbox" data-key="2.1"><span></span></label><h3><span class="stepno">2.1</span> Trace C1 fact by fact</h3><span class="mins">3 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>The prototype worked because a neat case file existed. Class 3 asks: where did each value come from, which rule uses it, and which decision stays human? We trace C1 because everything is present.</p></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python app.py --case C1 2&gt;/dev/null
+cat cases.json | python -c &quot;import json,sys; print(json.dumps(json.load(sys.stdin)[0], indent=2))&quot;</code></pre></div></div></div><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Field</th><th>Supplied value</th><th>Source</th><th>Why it matters</th></tr></thead><tbody><tr><td>case_id</td><td>C1</td><td>Support Queue</td><td>Connects records for this work item</td></tr><tr><td>order_id</td><td>MR-1042</td><td>Support Queue / Order Record</td><td>Links the question to the correct order</td></tr><tr><td>product</td><td>Jacket</td><td>Order Record</td><td>Identifies the item</td></tr><tr><td>customer_question</td><td>The jacket arrived yesterday…</td><td>Support Queue</td><td>The request in the customer's own words</td></tr><tr><td>delivery_date</td><td>2026-09-12</td><td>Order Record</td><td>Required by P2 to assess P1</td></tr><tr><td>issue_status</td><td>open</td><td>Issue Record</td><td>P3 forbids calling it resolved</td></tr><tr><td>policy_version</td><td>CLASSROOM-1</td><td>Policy Register</td><td>Which rulebook was open</td></tr><tr><td>draft_reply</td><td>(generated)</td><td>Prototype</td><td>Proposed wording, not an action</td></tr><tr><td>Human decision</td><td>not yet made</td><td>Human Review Log</td><td>A person approves, rejects or escalates</td></tr></tbody></table></div></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>The customer says the jacket arrived 'yesterday'. Why does the record use 2026-09-12 from the Order Record instead of computing from that word?</p><p class="answers">Relative words depend on when the message was received, and the exercise has no received timestamp. A stored date is auditable. If the two disagree, investigate; do not silently resolve.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>A useful trace connects each decision-relevant fact to a source and a rule. The customer question is evidence of what was asked, not authority over order status or dates.</li><li>Different facts have different sources of truth. One system can be right about dates and wrong place to check whether an issue is closed.</li></ul></div></div></section><section class="step" id="2.2"><header class="stephead"><label class="tick"><input type="checkbox" data-key="2.2"><span></span></label><h3><span class="stepno">2.2</span> Exception archaeology: C2 and C3</h3><span class="mins">3 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Smooth cases show the expected path. Exceptions show the controls a workflow really needs. Two exceptions, two questions.</p></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python app.py --case C2 2&gt;/dev/null
+python app.py --case C3 2&gt;/dev/null</code></pre></div></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>C2: which policy decision cannot be made from the evidence, and what should happen next?</p><p class="answers">P1 needs the two-day condition; P2 says the delivery date is required; it is missing. Name it, ask for it, do not assume eligibility, do not approve anything. NEEDS_INFORMATION is a valid, safe state.</p></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>C3: can the draft confirm the issue is resolved? Which rule controls the answer?</p><p class="answers">No. The customer asks for confirmation; asking does not prove resolution. The Issue Record says open; P3 forbids saying resolved. Keep both pieces of information visible and keep the case in human review.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Missing information is a <em>condition the case is in</em>, with its own next step, not an empty cell to guess around.</li><li>C3 is not a mysterious system conflict. It is a requested statement versus a supplied authoritative status. Do not teach software to pick the more plausible one.</li></ul></div></div></section><section class="step" id="2.3"><header class="stephead"><label class="tick"><input type="checkbox" data-key="2.3"><span></span></label><h3><span class="stepno">2.3</span> Who may do what: the source-and-action map</h3><span class="mins">2 min</span></header><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Information</th><th>Classroom source</th><th>Permitted action in this exercise</th></tr></thead><tbody><tr><td>Customer question</td><td>Support Queue</td><td>Read only</td></tr><tr><td>Order ID, product, delivery date</td><td>Order Record</td><td>Read only</td></tr><tr><td>Issue status and details</td><td>Issue Record</td><td>Read only</td></tr><tr><td>Policy rules and version</td><td>Policy Register</td><td>Read only</td></tr><tr><td>Draft result</td><td>The prototype</td><td>Create a draft only</td></tr><tr><td>Human decision</td><td>Human Review Log</td><td>Written by a human reviewer</td></tr><tr><td>Customer message, refund, record update</td><td>outside today's exercise</td><td><b>Not permitted</b></td></tr></tbody></table></div></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>Which change would carry the most risk if the output were wrong: (A) read the delivery date from an approved source, (B) save a draft for a human to inspect, (C) send the message and update the issue record automatically?</p><p class="answers">C. It has externally visible and operational effects. A wrong draft under review can be corrected; a wrong sent message cannot be unsent. Blast radius: reading is small, sending is large.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Define the information and the permitted action before choosing any interface technology. We still do not know whether Meridian uses an API, a database view or a file, and we have not earned the right to guess.</li><li>Two requests from senior people in the Class 3 request log (reply to customers directly; update the issue record automatically) are exactly option C. They are not out of scope; they are not permitted. Different category.</li></ul></div></div></section><section class="step" id="2.4"><header class="stephead"><label class="tick"><input type="checkbox" data-key="2.4"><span></span></label><h3><span class="stepno">2.4</span> The Support Case Record in one breath</h3><span class="mins">1 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>The real unit of work is one support case, from recorded question to recorded human decision. Its record needs three kinds of field, kept apart.</p></div></div><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Kind</th><th>Fields</th><th>Owner</th></tr></thead><tbody><tr><td>Facts</td><td>case_id, order_id, product, customer_question, delivery_date, issue_status, issue_details, policy_version</td><td>Supplied sources</td></tr><tr><td>Generated suggestions</td><td>draft_reply, evidence_refs, missing_information, review_status</td><td>The prototype</td></tr><tr><td>Human-owned</td><td>human_review_decision, reviewed_by, reviewed_at, final_action</td><td>Human reviewer / review log</td></tr></tbody></table></div></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>The record keeps source evidence separate from generated output, makes missing information visible instead of hiding it in prose, and preserves the human decision after the draft.</li><li>Passing three cases proves a traceable proposal for these three cases. It does not prove production readiness, and nobody has measured a baseline, so nobody may claim time saved.</li></ul></div></div></section></section>
+<section class="lab" id="lab3" data-start="24" data-end="40"><header class="labhead"><div class="clock"><span>24:00</span><span class="arrow">→</span><span>40:00</span></div><div><div class="labkicker">Lab 3 · Class 4</div><h2>Control the AI step and extend the prototype</h2></div></header><section class="step" id="3.1"><header class="stephead"><label class="tick"><input type="checkbox" data-key="3.1"><span></span></label><h3><span class="stepno">3.1</span> The Context Pack and who-does-what, fast</h3><span class="mins">2 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Read this instruction: <em>Review this return case and tell us what to do.</em> What would the model have to guess? Which case, which rule, whether 'review' means summarise or approve, what shape to answer in. Here is the controlled version for C2.</p></div></div><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Context Pack part</th><th>Controlled version for C2</th></tr></thead><tbody><tr><td>Task</td><td>Review the supplied Support Case Record and prepare a draft for human review.</td></tr><tr><td>Evidence</td><td>Use only the identified C2 evidence sources and policy version CLASSROOM-1.</td></tr><tr><td>Definitions</td><td>Keep recorded facts, missing information and differing information separate.</td></tr><tr><td>Boundaries</td><td>Do not approve or reject a return, issue a refund, send a message or change a record.</td></tr><tr><td>Missing information</td><td>If a required fact is unavailable, name it and do not make the dependent conclusion.</td></tr><tr><td>Output contract</td><td>Return the supplied Case Review structure.</td></tr></tbody></table></div></div></div><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Context engineering is deciding what the model receives. It is broader than wording a prompt. A good instruction cannot repair missing evidence or an absent decision boundary. And not every step needs a model:</p></div></div><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Task</th><th>Best choice</th><th>Why</th></tr></thead><tbody><tr><td>Check whether delivery_date is empty</td><td>Normal code</td><td>Exact and fixed</td></tr><tr><td>Prepare polite draft wording</td><td>AI-assisted drafting</td><td>Many wordings satisfy one controlled requirement</td></tr><tr><td>Compare the customer's request with the Issue Record wording</td><td>AI-assisted comparison (with the record as authority)</td><td>Different words, related meanings</td></tr><tr><td>Approve a refund</td><td>Authorised human</td><td>Carries business authority</td></tr></tbody></table></div></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>The controlled version is safer because the evidence and boundaries are visible, not because it has more words.</li><li>AI never becomes the default. Each task earns its owner: exact checks in code, variable language to a model, business authority to a human.</li></ul></div></div></section><section class="step" id="3.2"><header class="stephead"><label class="tick"><input type="checkbox" data-key="3.2"><span></span></label><h3><span class="stepno">3.2</span> Make the requirement executable</h3><span class="mins">1 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>The Class 3 record is now data: evidence_map.json adds a source ID to every field without changing a single case value. And the Class 4 output contract is now a test file.</p></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><p>Creates evidence_map.json and tests/test_case_review.py.</p><details class="codewrap"><summary><span class="sumtitle">evidence_map.json · tests/test_case_review.py</span><span class="sumsub">148 lines · click to view</span><button class="copy copy-sum" type="button" data-target="next">Copy whole block</button></summary><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">cat &gt; evidence_map.json &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+{
+  &quot;policy_version&quot;: &quot;CLASSROOM-1&quot;,
+  &quot;policy_source_id&quot;: &quot;policy_register:CLASSROOM-1&quot;,
+  &quot;cases&quot;: {
+    &quot;C1&quot;: {
+      &quot;case_id&quot;: &quot;support_queue:C1&quot;,
+      &quot;order_id&quot;: &quot;support_queue:C1&quot;,
+      &quot;customer_question&quot;: &quot;support_queue:C1&quot;,
+      &quot;product&quot;: &quot;order_record:MR-1042&quot;,
+      &quot;delivery_date&quot;: &quot;order_record:MR-1042&quot;,
+      &quot;issue_status&quot;: &quot;issue_record:C1&quot;,
+      &quot;issue_details&quot;: &quot;issue_record:C1&quot;
+    },
+    &quot;C2&quot;: {
+      &quot;case_id&quot;: &quot;support_queue:C2&quot;,
+      &quot;order_id&quot;: &quot;support_queue:C2&quot;,
+      &quot;customer_question&quot;: &quot;support_queue:C2&quot;,
+      &quot;product&quot;: &quot;order_record:MR-1088&quot;,
+      &quot;delivery_date&quot;: &quot;order_record:MR-1088&quot;,
+      &quot;issue_status&quot;: &quot;issue_record:C2&quot;,
+      &quot;issue_details&quot;: &quot;issue_record:C2&quot;
+    },
+    &quot;C3&quot;: {
+      &quot;case_id&quot;: &quot;support_queue:C3&quot;,
+      &quot;order_id&quot;: &quot;support_queue:C3&quot;,
+      &quot;customer_question&quot;: &quot;support_queue:C3&quot;,
+      &quot;product&quot;: &quot;order_record:MR-1126&quot;,
+      &quot;delivery_date&quot;: &quot;order_record:MR-1126&quot;,
+      &quot;issue_status&quot;: &quot;issue_record:C3&quot;,
+      &quot;issue_details&quot;: &quot;issue_record:C3&quot;
+    }
+  }
+}
+__MERIDIAN_EOF__
+
+cat &gt; tests/test_case_review.py &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+&quot;&quot;&quot;Class 4 acceptance tests: evidence-linked Case Review output.
+
+The four Class 2 fields keep their meaning and type. Six fields are added.
+Every source_id must come from evidence_map.json. No source ID may be invented.
+&quot;&quot;&quot;
+import json
+import os
+import sys
+
+import pytest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+import app  # noqa: E402
+
+NEW_FIELDS = [&quot;case_id&quot;, &quot;case_summary&quot;, &quot;known_facts&quot;, &quot;evidence_links&quot;,
+              &quot;conflicting_information&quot;, &quot;human_action_required&quot;]
+RESOLVED_CLAIMS = [&quot;issue is resolved&quot;, &quot;has been resolved&quot;, &quot;is now resolved&quot;, &quot;marked as resolved&quot;]
+WINDOW_CLAIMS = [&quot;inside the return window&quot;, &quot;outside the return window&quot;, &quot;within the return window&quot;,
+                 &quot;within two days&quot;, &quot;within the two-day&quot;, &quot;eligible for a return&quot;]
+
+
+@pytest.fixture(autouse=True)
+def template_mode(monkeypatch):
+    monkeypatch.setenv(&quot;MERIDIAN_MODEL_MODE&quot;, &quot;template&quot;)
+
+
+@pytest.fixture(scope=&quot;module&quot;)
+def evidence_map():
+    with open(os.path.join(ROOT, &quot;evidence_map.json&quot;), encoding=&quot;utf-8&quot;) as f:
+        return json.load(f)
+
+
+def allowed_sources(evidence_map, case_id):
+    return set(evidence_map[&quot;cases&quot;][case_id].values()) | {evidence_map[&quot;policy_source_id&quot;]}
+
+
+def all_text(result):
+    return json.dumps(result).lower()
+
+
+def generated_text(result):
+    &quot;&quot;&quot;Generated wording only; quoted customer words are evidence, not claims.&quot;&quot;&quot;
+    return &quot; &quot;.join([result[&quot;draft_reply&quot;], result.get(&quot;case_summary&quot;, &quot;&quot;),
+                     result.get(&quot;human_action_required&quot;, &quot;&quot;)]).lower()
+
+
+@pytest.mark.parametrize(&quot;case_id&quot;, [&quot;C1&quot;, &quot;C2&quot;, &quot;C3&quot;])
+def test_new_fields_present_and_old_fields_unchanged(case_id):
+    result = app.review_case(case_id)
+    for field in NEW_FIELDS:
+        assert field in result, f&quot;{field} missing&quot;
+    assert result[&quot;case_id&quot;] == case_id
+    assert isinstance(result[&quot;draft_reply&quot;], str)
+    assert all(isinstance(p, str) and p.startswith(&quot;P&quot;) for p in result[&quot;evidence_refs&quot;])
+    assert all(isinstance(m, str) for m in result[&quot;missing_information&quot;])
+    assert result[&quot;review_status&quot;] in {&quot;READY_FOR_HUMAN_REVIEW&quot;, &quot;NEEDS_INFORMATION&quot;, &quot;BLOCKED&quot;}
+    assert isinstance(result[&quot;human_action_required&quot;], str) and result[&quot;human_action_required&quot;]
+
+
+@pytest.mark.parametrize(&quot;case_id&quot;, [&quot;C1&quot;, &quot;C2&quot;, &quot;C3&quot;])
+def test_every_source_id_is_supplied_not_invented(case_id, evidence_map):
+    result = app.review_case(case_id)
+    allowed = allowed_sources(evidence_map, case_id)
+    assert result[&quot;known_facts&quot;], &quot;known_facts must not be empty&quot;
+    for fact in result[&quot;known_facts&quot;]:
+        assert set(fact) &gt;= {&quot;field&quot;, &quot;value&quot;, &quot;source_id&quot;}
+        assert fact[&quot;source_id&quot;] in allowed, f&quot;invented source {fact[&#x27;source_id&#x27;]}&quot;
+    assert result[&quot;evidence_links&quot;], &quot;evidence_links must not be empty&quot;
+    for link in result[&quot;evidence_links&quot;]:
+        assert set(link) &gt;= {&quot;claim&quot;, &quot;source_id&quot;}
+        assert link[&quot;source_id&quot;] in allowed, f&quot;invented source {link[&#x27;source_id&#x27;]}&quot;
+
+
+def test_c1_known_facts_carry_the_delivery_date_source():
+    result = app.review_case(&quot;C1&quot;)
+    facts = {f[&quot;field&quot;]: f for f in result[&quot;known_facts&quot;]}
+    assert facts[&quot;delivery_date&quot;][&quot;value&quot;] == &quot;2026-09-12&quot;
+    assert facts[&quot;delivery_date&quot;][&quot;source_id&quot;] == &quot;order_record:MR-1042&quot;
+    assert facts[&quot;issue_status&quot;][&quot;source_id&quot;] == &quot;issue_record:C1&quot;
+    assert result[&quot;conflicting_information&quot;] == []
+    assert result[&quot;review_status&quot;] == &quot;READY_FOR_HUMAN_REVIEW&quot;
+
+
+def test_c2_missing_date_stays_visible_and_no_window_conclusion():
+    result = app.review_case(&quot;C2&quot;)
+    assert result[&quot;review_status&quot;] == &quot;NEEDS_INFORMATION&quot;
+    assert &quot;delivery_date&quot; in result[&quot;missing_information&quot;]
+    assert &quot;delivery_date&quot; not in {f[&quot;field&quot;] for f in result[&quot;known_facts&quot;]}, \
+        &quot;a missing value must not appear as a known fact&quot;
+    assert not any(c in all_text(result) for c in WINDOW_CLAIMS)
+    assert &quot;delivery date&quot; in result[&quot;human_action_required&quot;].lower()
+
+
+def test_c2_gate_still_runs_before_the_model(monkeypatch):
+    calls = []
+    monkeypatch.setattr(app, &quot;draft_with_model&quot;, lambda ctx: calls.append(ctx) or &quot;x&quot;)
+    app.review_case(&quot;C2&quot;)
+    assert calls == []
+
+
+def test_c3_conflict_is_preserved_not_resolved():
+    result = app.review_case(&quot;C3&quot;)
+    assert result[&quot;conflicting_information&quot;], &quot;C3 must keep the request-vs-record difference visible&quot;
+    conflict_text = json.dumps(result[&quot;conflicting_information&quot;]).lower()
+    assert &quot;support_queue:c3&quot; in conflict_text and &quot;issue_record:c3&quot; in conflict_text, \
+        &quot;both sources must be named&quot;
+    assert &quot;open&quot; in conflict_text
+    assert not any(c in generated_text(result) for c in RESOLVED_CLAIMS)
+    assert result[&quot;review_status&quot;] == &quot;READY_FOR_HUMAN_REVIEW&quot;
+__MERIDIAN_EOF__</code></pre></details></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python -m json.tool evidence_map.json | head -14
+python -m pytest -q</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>The JSON is valid. The suite is red again: the six new fields do not exist yet.</p><pre class="out"><code>9 failed, 7 passed in 0.15s</code></pre></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Every source ID points to a supplied classroom artefact. It does not prove a real Meridian system exists.</li><li>Red first, again. The requirement is written down where the agent cannot paraphrase it away.</li></ul></div></div></section><section class="step" id="3.3"><header class="stephead"><label class="tick"><input type="checkbox" data-key="3.3"><span></span></label><h3><span class="stepno">3.3</span> Stage 1: inspect before changing</h3><span class="mins">3 min</span></header><div class="cue cue-type"><div class="cue-label">Paste</div><div class="cue-body"><p>In Terminal B, paste the inspection prompt. It must stop and wait.</p><div class="codewrap"><div class="codehead"><span class="where">Terminal B · inside claude</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-text">Inspect the existing Meridian support prototype. Ignore the .venv folder. Read the files that load case information, check required fields, create the model request, return structured output and test the behaviour. Also read evidence_map.json and the new tests in tests/test_case_review.py.
+
+Do not change any file yet. Explain in simple language:
+1. Where each of those behaviours currently lives.
+2. How the existing four output fields are represented.
+3. The smallest change needed to add source-linked case review fields without changing C1, C2 or C3 facts.
+4. Which checks should remain normal code.
+5. Which tests should prove that old behaviour still works.
+
+Stop and wait for approval.</code></pre></div></div></div><div class="cue cue-do"><div class="cue-label">Do</div><div class="cue-body"><p>While it explains, check the plan against this list: it found the existing files rather than inventing a new app; it keeps draft_reply, evidence_refs, missing_information, review_status; the delivery-date gate stays in code before the model call; no database, web UI, RAG, agents or real integration; it names tests and a way to inspect real outputs.</p></div></div><div class="cue cue-type"><div class="cue-label">Paste</div><div class="cue-body"><p>Only if needed:</p><div class="codewrap"><div class="codehead"><span class="where">Terminal B · inside claude</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-text">Keep the change inside the existing command-line prototype. Do not add new frameworks or systems. Revise the plan to the smallest compatible change and wait again.</code></pre></div></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Give a bounded task, inspect the plan, allow specific actions, verify the result. The tool's name matters less than this working pattern.</li><li>The FDE owns the requirement, the permitted files, the decision boundary and the acceptance evidence. The agent is the implementation assistant.</li></ul></div></div></section><section class="step" id="3.4"><header class="stephead"><label class="tick"><input type="checkbox" data-key="3.4"><span></span></label><h3><span class="stepno">3.4</span> Stage 2: the controlled change request</h3><span class="mins">4 min</span></header><div class="cue cue-type"><div class="cue-label">Paste</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal B · inside claude</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-text">Extend the existing prototype with an evidence-linked Case Review output. tests/test_case_review.py is the acceptance test; tests/test_app.py must keep passing.
+
+Preserve the current meaning and data type of draft_reply, evidence_refs, missing_information and review_status. Add case_id, case_summary, known_facts, evidence_links, conflicting_information and human_action_required.
+
+Use evidence_map.json for source IDs. Every known_fact must contain field, value and a supplied source_id. Every evidence_link must contain claim and a supplied source_id. Do not invent a source ID. A missing value is never a known fact.
+
+Keep fixed required-field checks in normal code before the model call. When delivery_date is missing, do not call the model for a return-window conclusion. Keep delivery_date in missing_information, set review_status to NEEDS_INFORMATION, and set human_action_required to confirming the delivery date from the agreed source.
+
+For C3, where the customer asks to confirm resolution but the Issue Record says open, put the difference in conflicting_information naming both source IDs (support_queue:C3 and issue_record:C3) and rule P3. Do not pick a side and do not say the issue is resolved.
+
+Do not send customer messages, approve returns, issue refunds or change records. Standard library only. Show the proposed file changes before editing. After approval, make the smallest change, run `python -m json.tool evidence_map.json`, run `python -m pytest -q`, and show the C1, C2 and C3 outputs.</code></pre></div></div></div><div class="cue cue-do"><div class="cue-label">Do</div><div class="cue-body"><p>Read the proposed diff before approving. Look for one thing above all: no invented source_id anywhere. Approve, and approve the commands it runs.</p></div></div><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Structured output helps software and people inspect the result. Evidence-linked output adds where each important fact came from. Neither proves the content is correct. A well-formed wrong answer is still wrong. Notice there is no confidence percentage: 92 percent would look precise and show nothing about whether the sources support the claim.</p></div></div></section><section class="step" id="3.5"><header class="stephead"><label class="tick"><input type="checkbox" data-key="3.5"><span></span></label><h3><span class="stepno">3.5</span> Stage 3: verify</h3><span class="mins">2 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python -m json.tool evidence_map.json &gt; /dev/null &amp;&amp; echo json-ok
+python -m pytest -q
+python app.py --case C2 2&gt;/dev/null
+python app.py --case C3 2&gt;/dev/null</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>16 passed. C2 still NEEDS_INFORMATION with no delivery_date among known_facts. C3 carries a conflicting_information entry that names both support_queue:C3 and issue_record:C3 and rule P3, and the draft never says resolved.</p><pre class="out"><code>16 passed in 0.11s
+
+&quot;conflicting_information&quot;: [
+  {
+    &quot;topic&quot;: &quot;issue_status&quot;,
+    &quot;customer_request&quot;: &quot;Customer asks for confirmation that the issue is resolved.&quot;,
+    &quot;request_source_id&quot;: &quot;support_queue:C3&quot;,
+    &quot;recorded_value&quot;: &quot;open&quot;,
+    &quot;record_source_id&quot;: &quot;issue_record:C3&quot;,
+    &quot;rule&quot;: &quot;P3&quot;
+  }
+],
+&quot;review_status&quot;: &quot;READY_FOR_HUMAN_REVIEW&quot;,
+&quot;human_action_required&quot;: &quot;Confirm the current issue status with the owner of the Issue Record and decide the reply. Do not confirm resolution while the record says open.&quot;</code></pre></div></div><div class="cue cue-fallback"><div class="cue-label">Fallback</div><div class="cue-body"><p>If the agent is still working at 36:00 or the suite is not green, paste the reference and rerun the verify commands. Everyone evaluates the same output next.</p><details class="codewrap"><summary><span class="sumtitle">app.py · Class 4 reference implementation</span><span class="sumsub">252 lines · click to view</span><button class="copy copy-sum" type="button" data-target="next">Copy whole block</button></summary><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">cat &gt; app.py &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+&quot;&quot;&quot;Meridian Retail support-draft prototype (Class 4: evidence-linked Case Review).
+
+Keeps the four Class 2 fields (draft_reply, evidence_refs, missing_information,
+review_status) with the same meaning and type, and adds:
+case_id, case_summary, known_facts, evidence_links, conflicting_information,
+human_action_required. Source IDs come only from evidence_map.json.
+
+It cannot send a message, approve a refund or change a record (P4).
+
+Model use:
+  MERIDIAN_MODEL_MODE = auto (default) | template | live
+  auto  -&gt; live model if ANTHROPIC_API_KEY is set, otherwise the template draft
+  MERIDIAN_MODEL = model id for live mode (default claude-sonnet-5)
+&quot;&quot;&quot;
+import argparse
+import json
+import os
+import re
+import sys
+
+REQUIRED_FIELDS = [&quot;delivery_date&quot;]  # fixed gate, checked in code before any model call
+ALLOWED_STATUS = {&quot;READY_FOR_HUMAN_REVIEW&quot;, &quot;NEEDS_INFORMATION&quot;, &quot;BLOCKED&quot;}
+FACT_FIELDS = [&quot;case_id&quot;, &quot;order_id&quot;, &quot;product&quot;, &quot;delivery_date&quot;, &quot;issue_status&quot;, &quot;issue_details&quot;]
+
+REFUND_CLAIMS = [&quot;refund has been approved&quot;, &quot;refund is approved&quot;, &quot;approved a refund&quot;,
+                 &quot;we have refunded&quot;, &quot;your refund will&quot;, &quot;refund approved&quot;]
+RESOLVED_CLAIMS = [&quot;issue is resolved&quot;, &quot;has been resolved&quot;, &quot;is now resolved&quot;, &quot;marked as resolved&quot;]
+WINDOW_CLAIMS = [&quot;inside the return window&quot;, &quot;outside the return window&quot;, &quot;within the return window&quot;,
+                 &quot;within two days&quot;, &quot;within the two-day&quot;, &quot;eligible for a return&quot;]
+
+
+# ---------------------------------------------------------------- inputs
+def load_cases(path=&quot;cases.json&quot;):
+    with open(path, encoding=&quot;utf-8&quot;) as f:
+        return {c[&quot;case_id&quot;]: c for c in json.load(f)}
+
+
+def load_policy(path=&quot;policy.md&quot;):
+    text = open(path, encoding=&quot;utf-8&quot;).read()
+    version = re.search(r&quot;policy_version:\s*(\S+)&quot;, text)
+    rules = dict(re.findall(r&quot;^(P\d)\.\s+(.*)$&quot;, text, flags=re.M))
+    return {&quot;policy_version&quot;: version.group(1) if version else &quot;UNKNOWN&quot;, &quot;rules&quot;: rules}
+
+
+def load_evidence_map(path=&quot;evidence_map.json&quot;):
+    with open(path, encoding=&quot;utf-8&quot;) as f:
+        return json.load(f)
+
+
+# ---------------------------------------------------------------- fixed checks (normal code)
+def check_required_fields(case):
+    return [f for f in REQUIRED_FIELDS if case.get(f) in (None, &quot;&quot;, [])]
+
+
+def boundary_violations(draft, case, missing):
+    text = draft.lower()
+    problems = [c for c in REFUND_CLAIMS if c in text]
+    if case.get(&quot;issue_status&quot;) == &quot;open&quot;:
+        problems += [c for c in RESOLVED_CLAIMS if c in text]
+    if &quot;delivery_date&quot; in missing:
+        problems += [c for c in WINDOW_CLAIMS if c in text]
+    return problems
+
+
+def known_facts_for(case, sources):
+    &quot;&quot;&quot;Recorded values paired with a supplied source ID. Missing values are not facts.&quot;&quot;&quot;
+    facts = []
+    for field in FACT_FIELDS:
+        value = case.get(field)
+        if value in (None, &quot;&quot;):
+            continue
+        if field in sources:  # never invent a source ID
+            facts.append({&quot;field&quot;: field, &quot;value&quot;: value, &quot;source_id&quot;: sources[field]})
+    return facts
+
+
+def evidence_links_for(case, sources):
+    links = [{&quot;claim&quot;: f&quot;The customer asks: {case[&#x27;customer_question&#x27;]}&quot;, &quot;source_id&quot;: sources[&quot;customer_question&quot;]},
+             {&quot;claim&quot;: f&quot;The issue record status is {case[&#x27;issue_status&#x27;]}.&quot;, &quot;source_id&quot;: sources[&quot;issue_status&quot;]}]
+    if case.get(&quot;delivery_date&quot;):
+        links.append({&quot;claim&quot;: f&quot;The recorded delivery date is {case[&#x27;delivery_date&#x27;]}.&quot;,
+                      &quot;source_id&quot;: sources[&quot;delivery_date&quot;]})
+    return links
+
+
+def conflicts_for(case, sources):
+    &quot;&quot;&quot;Keep a customer request that differs from the supplied record visible. Do not pick a side.&quot;&quot;&quot;
+    asks_resolution = &quot;resolved&quot; in case[&quot;customer_question&quot;].lower()
+    if asks_resolution and case.get(&quot;issue_status&quot;) == &quot;open&quot;:
+        return [{
+            &quot;topic&quot;: &quot;issue_status&quot;,
+            &quot;customer_request&quot;: &quot;Customer asks for confirmation that the issue is resolved.&quot;,
+            &quot;request_source_id&quot;: sources[&quot;customer_question&quot;],
+            &quot;recorded_value&quot;: case[&quot;issue_status&quot;],
+            &quot;record_source_id&quot;: sources[&quot;issue_status&quot;],
+            &quot;rule&quot;: &quot;P3&quot;,
+        }]
+    return []
+
+
+# ---------------------------------------------------------------- the model step
+SYSTEM_PROMPT = (
+    &quot;You draft customer-support replies for a human reviewer at Meridian Retail. &quot;
+    &quot;Use ONLY the supplied case fields and policy rules. Do not approve or reject a return, &quot;
+    &quot;do not mention a refund decision, do not say an open issue is resolved, do not claim the request &quot;
+    &quot;is inside or outside any return window, and do not invent facts. &quot;
+    &quot;Write 2-4 plain sentences. Return only the reply text.&quot;
+)
+
+
+def template_draft(context):
+    case = context[&quot;case&quot;]
+    product, order_id = case[&quot;product&quot;], case[&quot;order_id&quot;]
+    if &quot;resolved&quot; in case[&quot;customer_question&quot;].lower() and case[&quot;issue_status&quot;] == &quot;open&quot;:
+        return (f&quot;Thank you for checking in about order {order_id}. Our records show this issue is still open: &quot;
+                f&quot;{case[&#x27;issue_details&#x27;].lower()}. A member of our team is reviewing it and will confirm the next &quot;
+                f&quot;step once there is an update.&quot;)
+    return (f&quot;Thank you for letting us know about the {product.lower()} on order {order_id} &quot;
+            f&quot;({case[&#x27;issue_details&#x27;].lower()}). The delivery date we have on file is {case[&#x27;delivery_date&#x27;]}. &quot;
+            f&quot;A member of our team will review whether the report can be referred for a return under our policy &quot;
+            f&quot;and will confirm the next step. No refund decision has been made yet.&quot;)
+
+
+def template_summary(case):
+    product, order_id = case[&quot;product&quot;].lower(), case[&quot;order_id&quot;]
+    if &quot;resolved&quot; in case[&quot;customer_question&quot;].lower():
+        return (f&quot;The customer asks for confirmation of resolution for the {product} on order {order_id}; &quot;
+                f&quot;the issue record says {case[&#x27;issue_status&#x27;]}.&quot;)
+    return f&quot;The customer asks whether the {product} on order {order_id} can be returned ({case[&#x27;issue_details&#x27;].lower()}).&quot;
+
+
+def live_draft(context):
+    import urllib.request
+    payload = {
+        &quot;model&quot;: os.environ.get(&quot;MERIDIAN_MODEL&quot;, &quot;claude-sonnet-5&quot;),
+        &quot;max_tokens&quot;: 300,
+        &quot;system&quot;: SYSTEM_PROMPT,
+        &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: json.dumps(context, indent=2)}],
+    }
+    req = urllib.request.Request(
+        &quot;https://api.anthropic.com/v1/messages&quot;,
+        data=json.dumps(payload).encode(&quot;utf-8&quot;),
+        headers={&quot;content-type&quot;: &quot;application/json&quot;,
+                 &quot;x-api-key&quot;: os.environ[&quot;ANTHROPIC_API_KEY&quot;],
+                 &quot;anthropic-version&quot;: &quot;2023-06-01&quot;},
+    )
+    with urllib.request.urlopen(req, timeout=40) as resp:
+        data = json.loads(resp.read().decode(&quot;utf-8&quot;))
+    return &quot;&quot;.join(b.get(&quot;text&quot;, &quot;&quot;) for b in data.get(&quot;content&quot;, []) if b.get(&quot;type&quot;) == &quot;text&quot;).strip()
+
+
+def draft_with_model(context):
+    &quot;&quot;&quot;Return proposed wording. Live model if configured, otherwise the labelled template.&quot;&quot;&quot;
+    mode = os.environ.get(&quot;MERIDIAN_MODEL_MODE&quot;, &quot;auto&quot;).lower()
+    use_live = mode == &quot;live&quot; or (mode == &quot;auto&quot; and os.environ.get(&quot;ANTHROPIC_API_KEY&quot;))
+    if use_live:
+        try:
+            text = live_draft(context)
+            print(f&quot;[model] live {os.environ.get(&#x27;MERIDIAN_MODEL&#x27;, &#x27;claude-sonnet-5&#x27;)}&quot;, file=sys.stderr)
+            return text
+        except Exception as exc:
+            print(f&quot;[model] live call failed ({exc}); using template draft&quot;, file=sys.stderr)
+    else:
+        print(&quot;[model] template draft (no live model configured)&quot;, file=sys.stderr)
+    return template_draft(context)
+
+
+# ---------------------------------------------------------------- the review
+def review_case(case_id, cases=None, policy=None, evidence_map=None):
+    cases = cases or load_cases()
+    policy = policy or load_policy()
+    evidence_map = evidence_map or load_evidence_map()
+    case = cases[case_id]
+    sources = evidence_map[&quot;cases&quot;][case_id]
+    missing = check_required_fields(case)
+    known_facts = known_facts_for(case, sources)
+    links = evidence_links_for(case, sources)
+    conflicts = conflicts_for(case, sources)
+
+    # Gate 1: missing required fact -&gt; ask for it, no return-window reasoning, no model call
+    if missing:
+        print(&quot;[model] not called: required field missing&quot;, file=sys.stderr)
+        return {
+            &quot;case_id&quot;: case_id,
+            &quot;case_summary&quot;: template_summary(case),
+            &quot;known_facts&quot;: known_facts,
+            &quot;evidence_refs&quot;: [&quot;P2&quot;, &quot;P4&quot;],
+            &quot;evidence_links&quot;: links,
+            &quot;missing_information&quot;: missing,
+            &quot;conflicting_information&quot;: conflicts,
+            &quot;draft_reply&quot;: (f&quot;Thank you for your message about the {case[&#x27;product&#x27;].lower()} on order &quot;
+                            f&quot;{case[&#x27;order_id&#x27;]}. To check whether it can be returned we need the delivery date &quot;
+                            f&quot;for this order. Could you confirm when it was delivered? A member of our team will &quot;
+                            f&quot;then review the request.&quot;),
+            &quot;review_status&quot;: &quot;NEEDS_INFORMATION&quot;,
+            &quot;human_action_required&quot;: &quot;Confirm the delivery date from the agreed source, then return the case for review.&quot;,
+        }
+
+    evidence_refs = [&quot;P1&quot;, &quot;P4&quot;] if &quot;return&quot; in case[&quot;customer_question&quot;].lower() else [&quot;P4&quot;]
+    if case[&quot;issue_status&quot;] == &quot;open&quot;:
+        evidence_refs.append(&quot;P3&quot;)
+    evidence_refs = sorted(set(evidence_refs))
+
+    context = {&quot;task&quot;: &quot;Draft a reply for human review. Do not decide the return or the refund.&quot;,
+               &quot;policy_version&quot;: policy[&quot;policy_version&quot;],
+               &quot;rules&quot;: {k: policy[&quot;rules&quot;][k] for k in evidence_refs if k in policy[&quot;rules&quot;]},
+               &quot;case&quot;: case,
+               &quot;known_facts&quot;: known_facts,
+               &quot;conflicting_information&quot;: conflicts}
+    draft = draft_with_model(context)
+
+    # Gate 2: check the wording against the boundaries after the model call
+    problems = boundary_violations(draft, case, missing)
+    if problems:
+        print(f&quot;[guard] draft violated boundaries {problems}; replaced with template&quot;, file=sys.stderr)
+        draft = template_draft(context)
+
+    if conflicts:
+        action = (&quot;Confirm the current issue status with the owner of the Issue Record and decide the reply. &quot;
+                  &quot;Do not confirm resolution while the record says open.&quot;)
+    else:
+        action = (&quot;Review whether the reported damage can be referred for return review under P1, &quot;
+                  &quot;then record the decision in the Human Review Log.&quot;)
+
+    return {
+        &quot;case_id&quot;: case_id,
+        &quot;case_summary&quot;: template_summary(case),
+        &quot;known_facts&quot;: known_facts,
+        &quot;evidence_refs&quot;: evidence_refs,
+        &quot;evidence_links&quot;: links,
+        &quot;missing_information&quot;: [],
+        &quot;conflicting_information&quot;: conflicts,
+        &quot;draft_reply&quot;: draft,
+        &quot;review_status&quot;: &quot;READY_FOR_HUMAN_REVIEW&quot;,
+        &quot;human_action_required&quot;: action,
+    }
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=&quot;Meridian support-draft prototype&quot;)
+    parser.add_argument(&quot;--case&quot;, required=True, help=&quot;case_id from cases.json, e.g. C1&quot;)
+    args = parser.parse_args(argv)
+    result = review_case(args.case)
+    assert result[&quot;review_status&quot;] in ALLOWED_STATUS
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+if __name__ == &quot;__main__&quot;:
+    sys.exit(main())
+__MERIDIAN_EOF__</code></pre></details></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>The agent may report that the change is complete, and the tests may confirm fixed properties. We still compare the case behaviour with the manual reference from Lab 2.</li><li>Do not spend time on prose style. Check structure, source IDs, missing information, review state and boundaries.</li></ul></div></div></section><section class="step" id="3.6"><header class="stephead"><label class="tick"><input type="checkbox" data-key="3.6"><span></span></label><h3><span class="stepno">3.6</span> Evaluate against the manual reference</h3><span class="mins">2 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>External evaluation, checking output against evidence outside the model's own opinion, beats asking the model whether its answer is good. Our reference is Lab 2 plus P1 to P4. Three groups, one case each, one pass-or-fail finding.</p></div></div><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Check</th><th>Question</th></tr></thead><tbody><tr><td>Fact accuracy</td><td>Do reported values match the supplied artefacts?</td></tr><tr><td>Evidence coverage</td><td>Does each important fact or claim point to a supplied source ID?</td></tr><tr><td>Missing information</td><td>Was required-but-unavailable information named?</td></tr><tr><td>Conflict preservation</td><td>Was differing information kept visible instead of one version chosen?</td></tr><tr><td>Policy discipline</td><td>Only P1 to P4, version CLASSROOM-1?</td></tr><tr><td>Review status</td><td>Is the case in the expected state?</td></tr><tr><td>Boundary compliance</td><td>No approval, refund, sending or record change?</td></tr><tr><td>Unsupported claims</td><td>Any fact or conclusion absent from the evidence?</td></tr></tbody></table></div></div></div><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Case</th><th>Expected behaviour from the Class 3 reference</th></tr></thead><tbody><tr><td>C1 complete</td><td>Evidence-linked draft for human review. May refer for return review; must not approve a refund or call the open issue resolved.</td></tr><tr><td>C2 missing date</td><td>Name delivery_date as missing, no inside-or-outside conclusion, NEEDS_INFORMATION.</td></tr><tr><td>C3 request vs record</td><td>Customer request and open status preserved as separate evidence. Not resolved. Human review visible.</td></tr></tbody></table></div></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Compare facts and behaviour, not sentence wording. What did the reference catch that a fluent answer could hide?</li></ul></div></div></section><section class="step" id="3.7"><header class="stephead"><label class="tick"><input type="checkbox" data-key="3.7"><span></span></label><h3><span class="stepno">3.7</span> Turn one failure into a permanent check</h3><span class="mins">2 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Prepared failure sample: on C2 an output said the request was inside the return window although the date was missing. Translate it into an acceptance statement: <em>when delivery_date is missing, the output must not state that the request is inside or outside the return window.</em> Then make it a test that fails when the rule is broken.</p></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><p>Creates tests/test_ratchet.py.</p><details class="codewrap"><summary><span class="sumtitle">tests/test_ratchet.py</span><span class="sumsub">31 lines · click to view</span><button class="copy copy-sum" type="button" data-target="next">Copy whole block</button></summary><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">cat &gt; tests/test_ratchet.py &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+&quot;&quot;&quot;Ratchet test added in Class 4, Section 9.
+
+Acceptance statement: when delivery_date is missing, the output must not state
+that the request is inside or outside the return window.
+&quot;&quot;&quot;
+import json
+import os
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import app  # noqa: E402
+
+FORBIDDEN = [&quot;inside the return window&quot;, &quot;outside the return window&quot;, &quot;within the return window&quot;,
+             &quot;within two days&quot;, &quot;within the two-day&quot;, &quot;eligible for a return&quot;, &quot;not eligible&quot;]
+
+
+@pytest.fixture(autouse=True)
+def template_mode(monkeypatch):
+    monkeypatch.setenv(&quot;MERIDIAN_MODEL_MODE&quot;, &quot;template&quot;)
+
+
+def test_missing_delivery_date_never_yields_a_return_window_conclusion():
+    result = app.review_case(&quot;C2&quot;)
+    assert &quot;delivery_date&quot; in result[&quot;missing_information&quot;]
+    text = json.dumps(result).lower()
+    hits = [p for p in FORBIDDEN if p in text]
+    assert hits == [], f&quot;return-window conclusion made without a delivery date: {hits}&quot;
+__MERIDIAN_EOF__</code></pre></details></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python -m pytest -q</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>17 passed. The check is now permanent.</p><pre class="out"><code>17 passed in 0.14s</code></pre></div></div><div class="cue cue-type"><div class="cue-label">Paste</div><div class="cue-body"><p>If Terminal B is free, you can hand the same step to the agent instead:</p><div class="codewrap"><div class="codehead"><span class="where">Terminal B · inside claude</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-text">A reviewer found this failure sample: on C2 the output said the request was inside the return window although delivery_date was missing. Turn it into a permanent acceptance statement: when delivery_date is missing, the output must never state that the request is inside or outside the return window. tests/test_ratchet.py now encodes it. Run the complete suite and show me the result. Change app.py only if the new test fails.</code></pre></div></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>The ratchet: once an important failure is found, add a lasting check so it is less likely to return unnoticed.</li><li>Be precise about what the test proves: the specified C2 behaviour under the tested input. Not model accuracy, not production readiness, not business impact.</li></ul></div></div></section></section>
+<section class="lab" id="lab4" data-start="40" data-end="55"><header class="labhead"><div class="clock"><span>40:00</span><span class="arrow">→</span><span>55:00</span></div><div><div class="labkicker">Lab 4 · Class 5</div><h2>From files received to data ready</h2></div></header><section class="step" id="4.1"><header class="stephead"><label class="tick"><input type="checkbox" data-key="4.1"><span></span></label><h3><span class="stepno">4.1</span> Land the assets and the pipeline</h3><span class="mins">1 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Classes 2 to 4 looked at one or two cases, like a doctor with one patient. Meridian now asks for patterns across many cases: which issue types most often go to human review. Different job: the records department. Five files and one small pipeline, standard library only.</p></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><p>Creates the five CSV files in data/. If you have the class5_assets folder, copying those five files into data/ is equivalent.</p><details class="codewrap"><summary><span class="sumtitle">data/*.csv · the five Class 5 files, byte-identical to class5_assets</span><span class="sumsub">60 lines · click to view</span><button class="copy copy-sum" type="button" data-target="next">Copy whole block</button></summary><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">mkdir -p data
+cat &gt; data/support_cases.csv &lt;&lt;&#x27;CSV_END&#x27;
+case_id,order_id,received_at,customer_question,case_type,review_status,extract_generated_at
+MCS-501,MR-501,2026-09-18T08:10:00Z,Can I return this jacket within the return window?,RETURN,PENDING,2026-09-18T10:00:00Z
+MCS-502,MR-502,2026-09-18T08:18:00Z,The backpack arrived damaged. What should I do?,DAMAGE,PENDING,2026-09-18T10:00:00Z
+MCS-503,MR-503,2026-09-18T08:24:00Z,Is this shirt still eligible for a return?,RETURN,PENDING,2026-09-18T10:00:00Z
+MCS-504,,2026-09-18T08:31:00Z,I want to return the shoes from my recent order.,RETURN,PENDING,2026-09-18T10:00:00Z
+MCS-505,MR-505,2026-09-18T08:43:00Z,How can I update the contact details on my account?,GENERAL,APPROVED_COMPLETE,2026-09-18T10:00:00Z
+MCS-510,MR-510,2026-09-18T08:55:00Z,Can I return this scarf?,RETURN,PENDING,2026-09-18T10:00:00Z
+MCS-510,MR-510,2026-09-18T08:55:00Z,Can I return this scarf?,RETURN,PENDING,2026-09-18T10:00:00Z
+,MR-511,2026-09-18T09:02:00Z,Where can I find the care instructions?,GENERAL,PENDING,2026-09-18T10:00:00Z
+MCS-506,MR-506,2026-09-18T09:10:00Z,Can I exchange these trousers for another size?,RETURN,APPROVED,2026-09-18T10:00:00Z
+MCS-507,MR-507,2026-09-18T09:19:00Z,The mug arrived cracked and I have a photo.,DAMAGE,PENDING,2026-09-18T10:00:00Z
+MCS-508,,2026-09-18T09:27:00Z,What material is the green sweater made from?,GENERAL,PENDING,2026-09-18T10:00:00Z
+MCS-509,MR-509,2026-09-18T09:36:00Z,I received the wrong colour cap.,DAMAGE,REJECTED,2026-09-18T10:00:00Z
+CSV_END
+cat &gt; data/orders.csv &lt;&lt;&#x27;CSV_END&#x27;
+order_id,product,order_date,delivery_date,payment_status,extract_generated_at
+MR-501,Blue jacket,2026-09-05,2026-09-10,PAID,2026-09-18T09:45:00Z
+MR-502,Travel backpack,2026-09-08,2026-09-15,PAID,2026-09-18T09:45:00Z
+MR-503,Cotton shirt,2026-09-09,17-09-2026,PAID,2026-09-18T09:45:00Z
+MR-505,Account service item,2026-09-01,2026-09-04,PAID,2026-09-18T09:45:00Z
+MR-506,Black trousers,2026-09-07,2026-09-12,PAID,2026-09-18T09:45:00Z
+MR-507,Ceramic mug,2026-09-11,2026-09-16,PAID,2026-09-18T09:45:00Z
+MR-509,Red cap,2026-09-10,2026-09-14,PAID,2026-09-18T09:45:00Z
+MR-510,Wool scarf,2026-09-06,2026-09-11,PAID,2026-09-18T09:45:00Z
+MR-511,Care guide,2026-09-12,2026-09-17,PAID,2026-09-18T09:45:00Z
+CSV_END
+cat &gt; data/issue_records.csv &lt;&lt;&#x27;CSV_END&#x27;
+case_id,issue_type,issue_details,reported_delivery_date,evidence_status,extract_generated_at
+MCS-501,RETURN_WINDOW,Customer asks about the standard return window,2026-09-10,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-502,DAMAGED_ITEM,Backpack seam is torn on arrival,2026-09-14,PHOTO_ATTACHED,2026-09-18T09:50:00Z
+MCS-503,LATE_RETURN,Customer asks whether the item is inside the return window,2026-09-17,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-504,RETURN_REQUEST,Customer wants to return shoes but supplied no order reference,,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-505,ACCOUNT_QUESTION,Customer asks to update account contact details,,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-506,SIZE_EXCHANGE,Customer requests a different trouser size,2026-09-12,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-507,DAMAGED_ITEM,Mug has a visible crack,2026-09-16,PHOTO_ATTACHED,2026-09-18T09:50:00Z
+MCS-508,PRODUCT_INFORMATION,Customer asks about sweater material,,NOT_REQUIRED,2026-09-18T09:50:00Z
+MCS-509,WRONG_ITEM,Delivered cap colour differs from the order,2026-09-14,PHOTO_ATTACHED,2026-09-18T09:50:00Z
+MCS-510,RETURN_WINDOW,Customer asks about returning a scarf,2026-09-11,NOT_REQUIRED,2026-09-18T09:50:00Z
+CSV_END
+cat &gt; data/human_reviews.csv &lt;&lt;&#x27;CSV_END&#x27;
+review_id,case_id,reviewer_role,decision,decision_reason,reviewed_at,extract_generated_at
+HR-901,MCS-501,Support lead,ALLOW_STANDARD_FLOW,Order and request match the current return rule,2026-09-16T14:00:00Z,2026-09-16T08:00:00Z
+HR-902,MCS-502,Operations reviewer,NEEDS_SOURCE_OWNER,Two systems report different delivery dates,2026-09-16T14:20:00Z,2026-09-16T08:00:00Z
+HR-903,MCS-507,Support lead,ALLOW_DAMAGE_FLOW,Photo evidence is attached and readable,2026-09-16T15:00:00Z,2026-09-16T08:00:00Z
+HR-904,MCS-508,Knowledge specialist,ANSWER_FROM_CATALOGUE,Material information is available in the catalogue,2026-09-16T15:30:00Z,2026-09-16T08:00:00Z
+CSV_END
+cat &gt; data/validation_rules.csv &lt;&lt;&#x27;CSV_END&#x27;
+rule_id,applies_to_file,field_name,rule_type,condition,failure_route,reason,enabled
+VR-001,support_cases.csv,case_id,required,case_id is present,REJECT,A case cannot be traced or connected reliably.,true
+VR-002,support_cases.csv,case_id,unique,&quot;case_id is unique in the incoming support load; both duplicate occurrences fail&quot;,REJECT,Publishing either occurrence could hide which row is intended.,true
+VR-003,support_cases.csv,order_id,conditional_required,order_id is present when case_type is RETURN or DAMAGE,REJECT,The required relationship cannot be established.,true
+VR-004,support_cases.csv,review_status,allowed_values,&quot;review_status is PENDING, APPROVED or REJECTED&quot;,REJECT,The downstream meaning is not agreed.,true
+VR-005,orders.csv,delivery_date,date_format,&quot;A present delivery_date is a valid calendar date in YYYY-MM-DD form; a failed purchase order blocks its linked case bundle&quot;,REJECT,A date cannot be compared consistently until it is valid.,true
+VR-006,orders.csv + issue_records.csv,delivery_date,cross_source_match,&quot;If order and issue sources both provide delivery dates, the values agree&quot;,HUMAN_REVIEW,The pipeline cannot decide source ownership.,true
+VR-007,all supplied files,required files and columns,schema,Every required source file and required column exists,PAUSE_LOAD,The intended question may depend on unavailable data.,true
+VR-008,operational files,extract_generated_at,freshness,extract_generated_at is within 24 hours of the fixed classroom run time,LOAD_WARNING,The intended question may depend on current data.,true
+VR-009,published outputs,content hash and record keys,idempotency,Rerunning the same file content and keys creates no additional trusted records,PAUSE_LOAD,Duplicate publication would change counts without new evidence.,true
+CSV_END</code></pre></details></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><p>Creates pipeline.py (the console as a command line) and its acceptance tests.</p><details class="codewrap"><summary><span class="sumtitle">pipeline.py · tests/test_pipeline.py</span><span class="sumsub">592 lines · click to view</span><button class="copy copy-sum" type="button" data-target="next">Copy whole block</button></summary><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">cat &gt; pipeline.py &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+&quot;&quot;&quot;Meridian data pipeline (Class 5) - command-line version of the Data Flow Console.
+
+Stages (each writes to out/ so you can run them one at a time):
+  load      read the five CSV files, show row counts and extract times   (ingestion)
+  raw       exact copy of every row + source_file, source_row_number, loaded_at   (lineage)
+  validate  apply validation_rules.csv, route every record: PUBLISH / REJECT / HUMAN_REVIEW,
+            plus file-level LOAD_WARNING and delivery-level PAUSE_LOAD
+  publish   write four trusted tables, one per grain, upsert by key (idempotent)
+  report    the load report: received, lost, routes, exceptions, freshness, rerun safety
+  run       all five stages in order
+  rerun     run everything again on the same files and count NEW trusted rows (VR-009)
+  drift     prepared failure: pretend order_id column is missing -&gt; PAUSE_LOAD (VR-007)
+  show      show &lt;raw|trusted&gt; &lt;table&gt;            e.g. show raw support_cases
+  trace     follow one case across the trusted tables   e.g. trace MCS-507
+  reset     delete out/ and start clean
+
+Meridian&#x27;s clock for this exercise is fixed: 2026-09-18 12:00 UTC.
+Standard library only. No pandas, no database, no SQL.
+&quot;&quot;&quot;
+import csv
+import hashlib
+import json
+import os
+import shutil
+import sys
+from datetime import datetime, timezone
+
+RUN_TIME = datetime(2026, 9, 18, 12, 0, tzinfo=timezone.utc)
+DATA_DIR = &quot;data&quot;
+OUT_DIR = &quot;out&quot;
+
+OPERATIONAL_FILES = [&quot;support_cases&quot;, &quot;orders&quot;, &quot;issue_records&quot;, &quot;human_reviews&quot;]
+REQUIRED_COLUMNS = {
+    &quot;support_cases&quot;: [&quot;case_id&quot;, &quot;order_id&quot;, &quot;received_at&quot;, &quot;customer_question&quot;, &quot;case_type&quot;,
+                      &quot;review_status&quot;, &quot;extract_generated_at&quot;],
+    &quot;orders&quot;: [&quot;order_id&quot;, &quot;product&quot;, &quot;order_date&quot;, &quot;delivery_date&quot;, &quot;payment_status&quot;, &quot;extract_generated_at&quot;],
+    &quot;issue_records&quot;: [&quot;case_id&quot;, &quot;issue_type&quot;, &quot;issue_details&quot;, &quot;reported_delivery_date&quot;, &quot;evidence_status&quot;,
+                      &quot;extract_generated_at&quot;],
+    &quot;human_reviews&quot;: [&quot;review_id&quot;, &quot;case_id&quot;, &quot;reviewer_role&quot;, &quot;decision&quot;, &quot;decision_reason&quot;, &quot;reviewed_at&quot;,
+                      &quot;extract_generated_at&quot;],
+}
+KEY_COLUMN = {&quot;support_cases&quot;: &quot;case_id&quot;, &quot;orders&quot;: &quot;order_id&quot;, &quot;issue_records&quot;: &quot;case_id&quot;,
+              &quot;human_reviews&quot;: &quot;review_id&quot;}
+ALLOWED_STATUS = {&quot;PENDING&quot;, &quot;APPROVED&quot;, &quot;REJECTED&quot;}
+NEEDS_ORDER = {&quot;RETURN&quot;, &quot;DAMAGE&quot;}
+FRESHNESS_HOURS = 24
+LINEAGE = [&quot;source_file&quot;, &quot;source_row_number&quot;, &quot;loaded_at&quot;]
+
+
+# ------------------------------------------------------------------ small helpers
+def read_csv(path):
+    with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        reader = csv.DictReader(f)
+        return list(reader.fieldnames or []), [dict(r) for r in reader]
+
+
+def write_csv(path, columns, rows):
+    os.makedirs(os.path.dirname(path) or &quot;.&quot;, exist_ok=True)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        w = csv.DictWriter(f, fieldnames=columns, extrasaction=&quot;ignore&quot;)
+        w.writeheader()
+        for r in rows:
+            w.writerow({c: r.get(c, &quot;&quot;) for c in columns})
+
+
+def parse_iso(ts):
+    try:
+        return datetime.fromisoformat(ts.replace(&quot;Z&quot;, &quot;+00:00&quot;))
+    except Exception:
+        return None
+
+
+def valid_date(text):
+    try:
+        datetime.strptime(text, &quot;%Y-%m-%d&quot;)
+        return True
+    except Exception:
+        return False
+
+
+def file_hash(path):
+    return hashlib.sha256(open(path, &quot;rb&quot;).read()).hexdigest()[:12]
+
+
+def table(rows, columns, max_width=42):
+    &quot;&quot;&quot;Plain-text table for the terminal.&quot;&quot;&quot;
+    if not rows:
+        return &quot;  (no rows)&quot;
+    def cut(v):
+        v = &quot;&quot; if v is None else str(v)
+        return v if len(v) &lt;= max_width else v[: max_width - 1] + &quot;…&quot;
+    widths = {c: max(len(c), *(len(cut(r.get(c, &quot;&quot;))) for r in rows)) for c in columns}
+    line = &quot;  &quot; + &quot;  &quot;.join(c.ljust(widths[c]) for c in columns)
+    sep = &quot;  &quot; + &quot;  &quot;.join(&quot;-&quot; * widths[c] for c in columns)
+    body = [&quot;  &quot; + &quot;  &quot;.join(cut(r.get(c, &quot;&quot;)).ljust(widths[c]) for c in columns) for r in rows]
+    return &quot;\n&quot;.join([line, sep] + body)
+
+
+def banner(title):
+    print(&quot;\n&quot; + &quot;=&quot; * 78 + f&quot;\n  {title}\n&quot; + &quot;=&quot; * 78)
+
+
+# ------------------------------------------------------------------ the pipeline
+class Pipeline:
+    def __init__(self, data_dir=DATA_DIR, out_dir=OUT_DIR, run_time=RUN_TIME, quiet=False):
+        self.data_dir, self.out_dir, self.run_time, self.quiet = data_dir, out_dir, run_time, quiet
+        self.sources = {}      # name -&gt; (columns, rows)
+        self.raw = {}          # name -&gt; (columns, rows with lineage)
+        self.results = []      # every validation result, PASS included
+        self.file_flags = []   # LOAD_WARNING / PAUSE_LOAD
+        self.routes = {}       # (table, source_row_number) -&gt; route
+        self.rules = []
+
+    def say(self, *a):
+        if not self.quiet:
+            print(*a)
+
+    # -- stage 1: load ------------------------------------------------------------
+    def load(self, override=None):
+        banner(&quot;STAGE 1  LOAD  (ingestion: files -&gt; working area)&quot;)
+        rows_out = []
+        for name in OPERATIONAL_FILES + [&quot;validation_rules&quot;]:
+            path = os.path.join(self.data_dir, f&quot;{name}.csv&quot;)
+            if not os.path.exists(path):
+                self.file_flags.append({&quot;file&quot;: f&quot;{name}.csv&quot;, &quot;route&quot;: &quot;PAUSE_LOAD&quot;, &quot;rule_id&quot;: &quot;VR-007&quot;,
+                                        &quot;received_value&quot;: &quot;file missing&quot;,
+                                        &quot;reason&quot;: &quot;Every required source file and required column must exist.&quot;})
+                continue
+            cols, rows = read_csv(path)
+            if override and name in override:          # prepared failure (schema drift)
+                cols, rows = override[name]
+            self.sources[name] = (cols, rows)
+            extract = rows[0].get(&quot;extract_generated_at&quot;, &quot;&quot;) if rows else &quot;&quot;
+            age = &quot;&quot;
+            if extract and parse_iso(extract):
+                age = f&quot;{(self.run_time - parse_iso(extract)).total_seconds() / 3600:.0f} h&quot;
+            rows_out.append({&quot;file&quot;: f&quot;{name}.csv&quot;, &quot;rows&quot;: len(rows), &quot;extract_generated_at&quot;: extract or &quot;(rule book)&quot;,
+                             &quot;age_at_run_time&quot;: age, &quot;content_hash&quot;: file_hash(path)})
+        self.rules = [r for r in self.sources.get(&quot;validation_rules&quot;, ([], []))[1] if r.get(&quot;enabled&quot;, &quot;true&quot;) == &quot;true&quot;]
+        self.say(table(rows_out, [&quot;file&quot;, &quot;rows&quot;, &quot;extract_generated_at&quot;, &quot;age_at_run_time&quot;, &quot;content_hash&quot;]))
+        self.say(f&quot;\n  Meridian&#x27;s clock for this run: {self.run_time.strftime(&#x27;%Y-%m-%d %H:%M UTC&#x27;)}&quot;)
+        self.say(&quot;  Files received ≠ data ready. Nothing has been checked yet.&quot;)
+        return rows_out
+
+    # -- stage 2: raw ----------------------------------------------------------------
+    def land_raw(self):
+        banner(&quot;STAGE 2  RAW  (exact copy + lineage: the crime-scene photograph)&quot;)
+        loaded_at = datetime.now(timezone.utc).strftime(&quot;%Y-%m-%dT%H:%M:%SZ&quot;)
+        recon = []
+        for name in OPERATIONAL_FILES:
+            if name not in self.sources:
+                continue
+            cols, rows = self.sources[name]
+            raw_rows = []
+            for i, r in enumerate(rows, start=1):
+                rr = dict(r)
+                rr.update({&quot;source_file&quot;: f&quot;{name}.csv&quot;, &quot;source_row_number&quot;: str(i), &quot;loaded_at&quot;: loaded_at})
+                raw_rows.append(rr)
+            self.raw[name] = (cols + LINEAGE, raw_rows)
+            write_csv(os.path.join(self.out_dir, f&quot;raw_{name}.csv&quot;), cols + LINEAGE, raw_rows)
+            recon.append({&quot;table&quot;: name, &quot;source_rows&quot;: len(rows), &quot;raw_rows&quot;: len(raw_rows),
+                          &quot;reconciled&quot;: &quot;yes&quot; if len(rows) == len(raw_rows) else &quot;NO&quot;})
+        self.say(&quot;  Source -&gt; raw reconciliation (did the same number come out as went in?)&quot;)
+        self.say(table(recon, [&quot;table&quot;, &quot;source_rows&quot;, &quot;raw_rows&quot;, &quot;reconciled&quot;]))
+        self.say(&quot;\n  Nothing fixed, nothing deleted. Three labels added beside each row:&quot;)
+        self.say(&quot;  source_file, source_row_number, loaded_at  -&gt;  written to out/raw_*.csv&quot;)
+        return recon
+
+    # -- stage 3: validate ---------------------------------------------------------------
+    def _result(self, rule_id, tbl, row, field, value, route, reason):
+        self.results.append({&quot;rule_id&quot;: rule_id, &quot;table&quot;: tbl, &quot;source_row_number&quot;: row.get(&quot;source_row_number&quot;, &quot;&quot;),
+                             &quot;record_key&quot;: row.get(KEY_COLUMN.get(tbl, &quot;&quot;), &quot;&quot;), &quot;field&quot;: field,
+                             &quot;received_value&quot;: value, &quot;route&quot;: route, &quot;reason&quot;: reason})
+
+    def validate(self):
+        banner(&quot;STAGE 3  VALIDATE  (apply the agreed data contract, the same way every time)&quot;)
+        # VR-007 schema: required files and columns
+        for name in OPERATIONAL_FILES:
+            if name not in self.sources:
+                continue
+            cols = self.sources[name][0]
+            missing = [c for c in REQUIRED_COLUMNS[name] if c not in cols]
+            if missing:
+                self.file_flags.append({&quot;file&quot;: f&quot;{name}.csv&quot;, &quot;route&quot;: &quot;PAUSE_LOAD&quot;, &quot;rule_id&quot;: &quot;VR-007&quot;,
+                                        &quot;received_value&quot;: f&quot;missing column(s): {&#x27;, &#x27;.join(missing)}&quot;,
+                                        &quot;reason&quot;: &quot;Every required source file and required column must exist.&quot;})
+        if any(f[&quot;route&quot;] == &quot;PAUSE_LOAD&quot; for f in self.file_flags):
+            self.say(&quot;  PAUSE_LOAD  the whole delivery cannot be trusted. Nothing is routed, nothing is published.&quot;)
+            self.say(table(self.file_flags, [&quot;file&quot;, &quot;rule_id&quot;, &quot;route&quot;, &quot;received_value&quot;, &quot;reason&quot;], 60))
+            return False
+
+        # VR-008 freshness: per operational file
+        for name in OPERATIONAL_FILES:
+            rows = self.raw[name][1]
+            extract = parse_iso(rows[0].get(&quot;extract_generated_at&quot;, &quot;&quot;)) if rows else None
+            age_h = (self.run_time - extract).total_seconds() / 3600 if extract else None
+            if age_h is None or age_h &gt; FRESHNESS_HOURS:
+                self.file_flags.append({&quot;file&quot;: f&quot;{name}.csv&quot;, &quot;route&quot;: &quot;LOAD_WARNING&quot;, &quot;rule_id&quot;: &quot;VR-008&quot;,
+                                        &quot;received_value&quot;: f&quot;extract_generated_at {rows[0].get(&#x27;extract_generated_at&#x27;, &#x27;?&#x27;)} &quot;
+                                                          f&quot;({age_h:.0f} h old)&quot; if age_h else &quot;no extract time&quot;,
+                                        &quot;reason&quot;: f&quot;File older than {FRESHNESS_HOURS} h at Meridian&#x27;s run time. &quot;
+                                                  &quot;Rows still flow; be careful what you claim from them.&quot;})
+
+        cases = self.raw[&quot;support_cases&quot;][1]
+        orders = {r[&quot;order_id&quot;]: r for r in self.raw[&quot;orders&quot;][1]}
+        issues = {r[&quot;case_id&quot;]: r for r in self.raw[&quot;issue_records&quot;][1]}
+
+        # VR-005 orders: delivery_date must be a real YYYY-MM-DD date
+        bad_orders = set()
+        for o in self.raw[&quot;orders&quot;][1]:
+            d = o.get(&quot;delivery_date&quot;, &quot;&quot;)
+            if d and not valid_date(d):
+                bad_orders.add(o[&quot;order_id&quot;])
+                self._result(&quot;VR-005&quot;, &quot;orders&quot;, o, &quot;delivery_date&quot;, d, &quot;REJECT&quot;,
+                             &quot;Not a valid YYYY-MM-DD date; blocks the linked case bundle.&quot;)
+            else:
+                self._result(&quot;VR-005&quot;, &quot;orders&quot;, o, &quot;delivery_date&quot;, d, &quot;PASS&quot;, &quot;&quot;)
+
+        # case-level rules
+        id_counts = {}
+        for c in cases:
+            id_counts[c.get(&quot;case_id&quot;, &quot;&quot;)] = id_counts.get(c.get(&quot;case_id&quot;, &quot;&quot;), 0) + 1
+        for c in cases:
+            cid, oid, ctype, status = c.get(&quot;case_id&quot;, &quot;&quot;), c.get(&quot;order_id&quot;, &quot;&quot;), c.get(&quot;case_type&quot;, &quot;&quot;), c.get(&quot;review_status&quot;, &quot;&quot;)
+            # VR-001 present
+            if not cid:
+                self._result(&quot;VR-001&quot;, &quot;support_cases&quot;, c, &quot;case_id&quot;, &quot;(blank)&quot;, &quot;REJECT&quot;,
+                             &quot;case_id missing: cannot be traced or connected. Never invent an ID.&quot;)
+            else:
+                self._result(&quot;VR-001&quot;, &quot;support_cases&quot;, c, &quot;case_id&quot;, cid, &quot;PASS&quot;, &quot;&quot;)
+            # VR-002 unique
+            if cid and id_counts[cid] &gt; 1:
+                self._result(&quot;VR-002&quot;, &quot;support_cases&quot;, c, &quot;case_id&quot;, cid, &quot;REJECT&quot;,
+                             f&quot;case_id appears {id_counts[cid]} times; both copies fail. Fix at the source.&quot;)
+            elif cid:
+                self._result(&quot;VR-002&quot;, &quot;support_cases&quot;, c, &quot;case_id&quot;, cid, &quot;PASS&quot;, &quot;&quot;)
+            # VR-003 conditional required
+            if ctype in NEEDS_ORDER and not oid:
+                self._result(&quot;VR-003&quot;, &quot;support_cases&quot;, c, &quot;order_id&quot;, &quot;(blank)&quot;, &quot;REJECT&quot;,
+                             f&quot;order_id required when case_type is {ctype}.&quot;)
+            else:
+                self._result(&quot;VR-003&quot;, &quot;support_cases&quot;, c, &quot;order_id&quot;, oid or &quot;(blank, not required)&quot;, &quot;PASS&quot;, &quot;&quot;)
+            # VR-004 allowed values
+            if status not in ALLOWED_STATUS:
+                self._result(&quot;VR-004&quot;, &quot;support_cases&quot;, c, &quot;review_status&quot;, status, &quot;REJECT&quot;,
+                             &quot;Value outside the contract (PENDING, APPROVED, REJECTED). Ask Meridian: should the contract change?&quot;)
+            else:
+                self._result(&quot;VR-004&quot;, &quot;support_cases&quot;, c, &quot;review_status&quot;, status, &quot;PASS&quot;, &quot;&quot;)
+            # VR-005 propagated: broken order blocks its case bundle
+            if oid in bad_orders:
+                self._result(&quot;VR-005&quot;, &quot;support_cases&quot;, c, &quot;order_id&quot;, oid, &quot;REJECT&quot;,
+                             f&quot;Linked order {oid} failed the delivery_date rule; the case is only as good as its proof.&quot;)
+            # VR-006 cross-source match
+            o, iss = orders.get(oid), issues.get(cid)
+            if o and iss and o.get(&quot;delivery_date&quot;) and iss.get(&quot;reported_delivery_date&quot;) and oid not in bad_orders:
+                if o[&quot;delivery_date&quot;] != iss[&quot;reported_delivery_date&quot;]:
+                    self._result(&quot;VR-006&quot;, &quot;support_cases&quot;, c, &quot;delivery_date&quot;,
+                                 f&quot;orders.csv={o[&#x27;delivery_date&#x27;]} | issue_records.csv={iss[&#x27;reported_delivery_date&#x27;]}&quot;,
+                                 &quot;HUMAN_REVIEW&quot;, &quot;Two valid dates disagree. Source of truth not decided; a person must choose.&quot;)
+                else:
+                    self._result(&quot;VR-006&quot;, &quot;support_cases&quot;, c, &quot;delivery_date&quot;, o[&quot;delivery_date&quot;], &quot;PASS&quot;, &quot;&quot;)
+
+        # route each case row: REJECT beats HUMAN_REVIEW beats PUBLISH
+        for c in cases:
+            key = (&quot;support_cases&quot;, c[&quot;source_row_number&quot;])
+            mine = [r for r in self.results if r[&quot;table&quot;] == &quot;support_cases&quot; and r[&quot;source_row_number&quot;] == c[&quot;source_row_number&quot;]]
+            if any(r[&quot;route&quot;] == &quot;REJECT&quot; for r in mine):
+                self.routes[key] = &quot;REJECT&quot;
+            elif any(r[&quot;route&quot;] == &quot;HUMAN_REVIEW&quot; for r in mine):
+                self.routes[key] = &quot;HUMAN_REVIEW&quot;
+            else:
+                self.routes[key] = &quot;PUBLISH&quot;
+        for o in self.raw[&quot;orders&quot;][1]:
+            self.routes[(&quot;orders&quot;, o[&quot;source_row_number&quot;])] = &quot;REJECT&quot; if o[&quot;order_id&quot;] in bad_orders else &quot;PUBLISH&quot;
+
+        write_csv(os.path.join(self.out_dir, &quot;validation_results.csv&quot;),
+                  [&quot;rule_id&quot;, &quot;table&quot;, &quot;source_row_number&quot;, &quot;record_key&quot;, &quot;field&quot;, &quot;received_value&quot;, &quot;route&quot;, &quot;reason&quot;],
+                  self.results)
+        exceptions = [r for r in self.results if r[&quot;route&quot;] != &quot;PASS&quot;]
+        write_csv(os.path.join(self.out_dir, &quot;exceptions.csv&quot;),
+                  [&quot;rule_id&quot;, &quot;table&quot;, &quot;source_row_number&quot;, &quot;record_key&quot;, &quot;field&quot;, &quot;received_value&quot;, &quot;route&quot;, &quot;reason&quot;],
+                  exceptions)
+        write_csv(os.path.join(self.out_dir, &quot;file_flags.csv&quot;), [&quot;file&quot;, &quot;rule_id&quot;, &quot;route&quot;, &quot;received_value&quot;, &quot;reason&quot;],
+                  self.file_flags)
+
+        # print: per-rule pass/fail, then the exceptions with rule, value, route, reason
+        summary = []
+        for rule in self.rules:
+            rid = rule[&quot;rule_id&quot;]
+            hits = [r for r in self.results if r[&quot;rule_id&quot;] == rid]
+            flags = [f for f in self.file_flags if f[&quot;rule_id&quot;] == rid]
+            summary.append({&quot;rule&quot;: rid, &quot;checks&quot;: rule[&quot;condition&quot;][:70], &quot;pass&quot;: sum(r[&quot;route&quot;] == &quot;PASS&quot; for r in hits),
+                            &quot;fail&quot;: sum(r[&quot;route&quot;] != &quot;PASS&quot; for r in hits) + len(flags),
+                            &quot;failure_route&quot;: rule[&quot;failure_route&quot;]})
+        self.say(table(summary, [&quot;rule&quot;, &quot;checks&quot;, &quot;pass&quot;, &quot;fail&quot;, &quot;failure_route&quot;], 72))
+        self.say(&quot;\n  Exceptions (every result shows the rule, the value received, the route and the reason):&quot;)
+        self.say(table(sorted(exceptions, key=lambda r: (r[&quot;route&quot;], r[&quot;rule_id&quot;])),
+                       [&quot;route&quot;, &quot;rule_id&quot;, &quot;table&quot;, &quot;source_row_number&quot;, &quot;record_key&quot;, &quot;received_value&quot;, &quot;reason&quot;], 58))
+        if self.file_flags:
+            self.say(&quot;\n  File-level flags:&quot;)
+            self.say(table(self.file_flags, [&quot;file&quot;, &quot;rule_id&quot;, &quot;route&quot;, &quot;received_value&quot;, &quot;reason&quot;], 60))
+        self.say(&quot;\n  Route summary for support cases:&quot;)
+        for route in [&quot;PUBLISH&quot;, &quot;HUMAN_REVIEW&quot;, &quot;REJECT&quot;]:
+            keys = sorted(c.get(&quot;case_id&quot;) or f&quot;(blank, row {c[&#x27;source_row_number&#x27;]})&quot; for c in cases
+                          if self.routes[(&quot;support_cases&quot;, c[&quot;source_row_number&quot;])] == route)
+            self.say(f&quot;    {route:&lt;13} {len(keys):&gt;2}  {&#x27;, &#x27;.join(keys)}&quot;)
+        return True
+
+    # -- stage 4: publish -------------------------------------------------------------------
+    def publish(self):
+        banner(&quot;STAGE 4  PUBLISH  (four trusted tables, one per grain, upsert by key)&quot;)
+        if any(f[&quot;route&quot;] == &quot;PAUSE_LOAD&quot; for f in self.file_flags):
+            self.say(&quot;  PAUSE_LOAD in force. Nothing published.&quot;)
+            return {}
+        cases = self.raw[&quot;support_cases&quot;][1]
+        published_case_ids = {c[&quot;case_id&quot;] for c in cases if self.routes[(&quot;support_cases&quot;, c[&quot;source_row_number&quot;])] == &quot;PUBLISH&quot;}
+        selections = {
+            &quot;support_cases&quot;: [c for c in cases if c[&quot;case_id&quot;] in published_case_ids],
+            &quot;orders&quot;: [o for o in self.raw[&quot;orders&quot;][1] if self.routes[(&quot;orders&quot;, o[&quot;source_row_number&quot;])] == &quot;PUBLISH&quot;],
+            &quot;issue_records&quot;: [i for i in self.raw[&quot;issue_records&quot;][1] if i[&quot;case_id&quot;] in published_case_ids],
+            &quot;human_reviews&quot;: list(self.raw[&quot;human_reviews&quot;][1]),   # rows valid; file carries a LOAD_WARNING
+        }
+        state_path = os.path.join(self.out_dir, &quot;state.json&quot;)
+        state = json.load(open(state_path)) if os.path.exists(state_path) else {&quot;tables&quot;: {}, &quot;runs&quot;: 0}
+        new_rows_total, lines = 0, []
+        for name, rows in selections.items():
+            cols = self.raw[name][0]
+            path = os.path.join(self.out_dir, f&quot;trusted_{name}.csv&quot;)
+            existing = read_csv(path)[1] if os.path.exists(path) else []
+            key = KEY_COLUMN[name]
+            by_key = {r[key]: r for r in existing}
+            before = len(by_key)
+            for r in rows:
+                by_key[r[key]] = r          # same key -&gt; same row, no duplicate
+            new_rows = len(by_key) - before
+            new_rows_total += new_rows
+            write_csv(path, cols, list(by_key.values()))
+            state[&quot;tables&quot;][name] = {&quot;keys&quot;: sorted(by_key), &quot;content_hash&quot;: file_hash(os.path.join(self.data_dir, f&quot;{name}.csv&quot;))}
+            lines.append({&quot;trusted_table&quot;: f&quot;trusted_{name}&quot;, &quot;one_row_is&quot;: {&quot;support_cases&quot;: &quot;one case&quot;, &quot;orders&quot;: &quot;one order&quot;,
+                          &quot;issue_records&quot;: &quot;one issue record&quot;, &quot;human_reviews&quot;: &quot;one review event&quot;}[name],
+                          &quot;rows_now&quot;: len(by_key), &quot;new_this_run&quot;: new_rows, &quot;written_to&quot;: path})
+        state[&quot;runs&quot;] += 1
+        state[&quot;last_new_rows&quot;] = new_rows_total
+        json.dump(state, open(state_path, &quot;w&quot;), indent=2)
+        self.say(table(lines, [&quot;trusted_table&quot;, &quot;one_row_is&quot;, &quot;rows_now&quot;, &quot;new_this_run&quot;, &quot;written_to&quot;]))
+        self.say(f&quot;\n  Run number {state[&#x27;runs&#x27;]}. New trusted rows this run: {new_rows_total}&quot;)
+        if state[&quot;runs&quot;] &gt; 1 and new_rows_total &gt; 0:
+            self.say(&quot;  VR-009 FAILED: the same files added rows on rerun -&gt; PAUSE_LOAD. Counts cannot be trusted.&quot;)
+        elif state[&quot;runs&quot;] &gt; 1:
+            self.say(&quot;  VR-009 PASS: rerunning the same files added 0 trusted rows (idempotent).&quot;)
+        self.say(&quot;  Rejected and human-review rows are still in out/exceptions.csv. Nothing vanished.&quot;)
+        return {l[&quot;trusted_table&quot;]: l[&quot;rows_now&quot;] for l in lines}
+
+    # -- stage 5: report -----------------------------------------------------------------------
+    def report(self):
+        banner(&quot;STAGE 5  LOAD REPORT  (read it in the order the data flowed)&quot;)
+        state_path = os.path.join(self.out_dir, &quot;state.json&quot;)
+        state = json.load(open(state_path)) if os.path.exists(state_path) else {}
+        cases = self.raw.get(&quot;support_cases&quot;, ([], []))[1]
+        counts = {route: sum(1 for c in cases if self.routes.get((&quot;support_cases&quot;, c[&quot;source_row_number&quot;])) == route)
+                  for route in [&quot;PUBLISH&quot;, &quot;HUMAN_REVIEW&quot;, &quot;REJECT&quot;]}
+        exceptions = [r for r in self.results if r[&quot;route&quot;] != &quot;PASS&quot;]
+        warnings = [f for f in self.file_flags if f[&quot;route&quot;] == &quot;LOAD_WARNING&quot;]
+        pauses = [f for f in self.file_flags if f[&quot;route&quot;] == &quot;PAUSE_LOAD&quot;]
+        lines = [
+            &quot;# Meridian load report&quot;,
+            f&quot;Run time (Meridian&#x27;s clock): {self.run_time.strftime(&#x27;%Y-%m-%d %H:%M UTC&#x27;)}&quot;,
+            &quot;&quot;,
+            &quot;## 1. Files received&quot;,
+            *[f&quot;- {n}.csv: {len(self.sources[n][1])} rows, extract {self.sources[n][1][0].get(&#x27;extract_generated_at&#x27;, &#x27;(rule book)&#x27;) if self.sources[n][1] else &#x27;-&#x27;}&quot;
+              for n in self.sources],
+            &quot;&quot;,
+            &quot;## 2. Nothing lost (source rows = raw rows)&quot;,
+            *[f&quot;- {n}: {len(self.sources[n][1])} = {len(self.raw[n][1])}&quot; for n in self.raw],
+            &quot;&quot;,
+            &quot;## 3. Routes (support cases)&quot;,
+            *[f&quot;- {r}: {counts[r]}&quot; for r in counts],
+            &quot;&quot;,
+            &quot;## 4. Why each exception&quot;,
+            *([f&quot;- {r[&#x27;route&#x27;]} {r[&#x27;rule_id&#x27;]} {r[&#x27;table&#x27;]} row {r[&#x27;source_row_number&#x27;]} ({r[&#x27;record_key&#x27;] or &#x27;no key&#x27;}): &quot;
+               f&quot;{r[&#x27;field&#x27;]}={r[&#x27;received_value&#x27;]} -&gt; {r[&#x27;reason&#x27;]}&quot; for r in exceptions] or [&quot;- none&quot;]),
+            &quot;&quot;,
+            &quot;## 5. Freshness&quot;,
+            *([f&quot;- {w[&#x27;file&#x27;]}: {w[&#x27;received_value&#x27;]} -&gt; LOAD_WARNING&quot; for w in warnings] or [&quot;- all files within 24 h&quot;]),
+            *[f&quot;- {p[&#x27;file&#x27;]}: {p[&#x27;received_value&#x27;]} -&gt; PAUSE_LOAD&quot; for p in pauses],
+            &quot;&quot;,
+            &quot;## 6. Rerun safety (VR-009)&quot;,
+            (f&quot;- runs so far: {state.get(&#x27;runs&#x27;, 0)}; new trusted rows on the last run: {state.get(&#x27;last_new_rows&#x27;, &#x27;-&#x27;)}&quot;
+             if state else &quot;- not yet tested: run `python pipeline.py rerun`&quot;),
+            &quot;&quot;,
+            &quot;## 7. Decision for Meridian&#x27;s question&quot;,
+            &quot;Question: which issue types are most often sent for (Meridian) human review?&quot;,
+            &quot;- &#x27;as of the review file dated 16 Sep 08:00&#x27; -&gt; can be answered, if the date is stated&quot;,
+            &quot;- &#x27;reviewing today&#x27; -&gt; cannot be answered; human_reviews.csv is 52 h old&quot;,
+            &quot;- &#x27;which cases did OUR pipeline hold, and why&#x27; -&gt; answered by out/exceptions.csv (different meaning of review!)&quot;,
+            &quot;Recommended: PARTIAL ACCEPT&quot;,
+        ]
+        text = &quot;\n&quot;.join(lines)
+        os.makedirs(self.out_dir, exist_ok=True)
+        open(os.path.join(self.out_dir, &quot;load_report.md&quot;), &quot;w&quot;, encoding=&quot;utf-8&quot;).write(text + &quot;\n&quot;)
+        self.say(text)
+        self.say(f&quot;\n  Written to {os.path.join(self.out_dir, &#x27;load_report.md&#x27;)}&quot;)
+        return text
+
+    # -- convenience ---------------------------------------------------------------------------
+    def run(self, override=None):
+        self.load(override)
+        self.land_raw()
+        ok = self.validate()
+        if ok:
+            self.publish()
+        self.report()
+        return ok
+
+
+# ------------------------------------------------------------------ command line
+def cmd_show(kind, name):
+    path = os.path.join(OUT_DIR, f&quot;{kind}_{name}.csv&quot;)
+    if not os.path.exists(path):
+        print(f&quot;{path} not found. Run the earlier stages first.&quot;)
+        return 1
+    cols, rows = read_csv(path)
+    show_cols = [c for c in cols if c not in (&quot;extract_generated_at&quot;, &quot;loaded_at&quot;, &quot;received_at&quot;, &quot;order_date&quot;, &quot;payment_status&quot;)]
+    banner(f&quot;{kind.upper()}  {name}  ({len(rows)} rows)  {path}&quot;)
+    print(table(rows, show_cols, 40))
+    return 0
+
+
+def cmd_trace(case_id):
+    banner(f&quot;TRACE  {case_id} across the trusted tables&quot;)
+    def load(name):
+        p = os.path.join(OUT_DIR, f&quot;trusted_{name}.csv&quot;)
+        return read_csv(p)[1] if os.path.exists(p) else []
+    case = [r for r in load(&quot;support_cases&quot;) if r[&quot;case_id&quot;] == case_id]
+    if not case:
+        print(f&quot;  {case_id} is not in trusted_support_cases. Check out/exceptions.csv for its route and reason.&quot;)
+        exc = [r for r in read_csv(os.path.join(OUT_DIR, &quot;exceptions.csv&quot;))[1] if r[&quot;record_key&quot;] == case_id] \
+            if os.path.exists(os.path.join(OUT_DIR, &quot;exceptions.csv&quot;)) else []
+        print(table(exc, [&quot;route&quot;, &quot;rule_id&quot;, &quot;received_value&quot;, &quot;reason&quot;], 60))
+        return 0
+    c = case[0]
+    print(f&quot;  case    : {c[&#x27;case_id&#x27;]}  {c[&#x27;case_type&#x27;]}  {c[&#x27;review_status&#x27;]}  \&quot;{c[&#x27;customer_question&#x27;]}\&quot;  [{c[&#x27;source_file&#x27;]} row {c[&#x27;source_row_number&#x27;]}]&quot;)
+    for o in [r for r in load(&quot;orders&quot;) if r[&quot;order_id&quot;] == c[&quot;order_id&quot;]]:
+        print(f&quot;  order   : {o[&#x27;order_id&#x27;]}  {o[&#x27;product&#x27;]}  delivered {o[&#x27;delivery_date&#x27;]}  [{o[&#x27;source_file&#x27;]} row {o[&#x27;source_row_number&#x27;]}]&quot;)
+    for i in [r for r in load(&quot;issue_records&quot;) if r[&quot;case_id&quot;] == case_id]:
+        print(f&quot;  issue   : {i[&#x27;issue_type&#x27;]}  \&quot;{i[&#x27;issue_details&#x27;]}\&quot;  customer says {i[&#x27;reported_delivery_date&#x27;] or &#x27;-&#x27;}  [{i[&#x27;source_file&#x27;]} row {i[&#x27;source_row_number&#x27;]}]&quot;)
+    reviews = [r for r in load(&quot;human_reviews&quot;) if r[&quot;case_id&quot;] == case_id]
+    for r in reviews:
+        print(f&quot;  review  : {r[&#x27;review_id&#x27;]}  {r[&#x27;reviewer_role&#x27;]}  {r[&#x27;decision&#x27;]}  \&quot;{r[&#x27;decision_reason&#x27;]}\&quot;  [{r[&#x27;source_file&#x27;]} row {r[&#x27;source_row_number&#x27;]}]&quot;)
+    if not reviews:
+        print(&quot;  review  : none recorded in human_reviews.csv (as of 16 Sep 08:00)&quot;)
+    return 0
+
+
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if not argv:
+        print(__doc__)
+        return 0
+    cmd, args = argv[0], argv[1:]
+    p = Pipeline()
+    if cmd == &quot;reset&quot;:
+        shutil.rmtree(OUT_DIR, ignore_errors=True)
+        print(&quot;out/ removed. Clean start.&quot;)
+        return 0
+    if cmd == &quot;load&quot;:
+        p.load(); return 0
+    if cmd == &quot;raw&quot;:
+        p.load(); p.land_raw(); return 0
+    if cmd == &quot;validate&quot;:
+        p.load(); p.land_raw(); p.validate(); return 0
+    if cmd == &quot;publish&quot;:
+        p.load(); p.land_raw(); p.validate() and p.publish(); return 0
+    if cmd == &quot;report&quot;:
+        p.load(); p.land_raw(); p.validate(); p.report(); return 0
+    if cmd == &quot;run&quot;:
+        return 0 if p.run() else 2
+    if cmd == &quot;rerun&quot;:
+        banner(&quot;RERUN  same files, same contract: does anything double? (VR-009)&quot;)
+        if not os.path.exists(os.path.join(OUT_DIR, &quot;state.json&quot;)):
+            print(&quot;  No previous run found. Run `python pipeline.py run` first.&quot;)
+            return 1
+        p.quiet = True
+        p.load(); p.land_raw(); p.validate()
+        p.quiet = False
+        p.publish()
+        return 0
+    if cmd == &quot;drift&quot;:
+        banner(&quot;PREPARED FAILURE  support_cases.csv arrives without the order_id column (in memory only)&quot;)
+        cols, rows = read_csv(os.path.join(DATA_DIR, &quot;support_cases.csv&quot;))
+        cols2 = [c for c in cols if c != &quot;order_id&quot;]
+        rows2 = [{k: v for k, v in r.items() if k != &quot;order_id&quot;} for r in rows]
+        p.out_dir = os.path.join(OUT_DIR, &quot;drift_scratch&quot;)
+        ok = p.run(override={&quot;support_cases&quot;: (cols2, rows2)})
+        shutil.rmtree(p.out_dir, ignore_errors=True)
+        print(&quot;\n  Your real CSV and your real out/ tables were not touched.&quot;)
+        return 0 if ok else 2
+    if cmd == &quot;show&quot; and len(args) == 2:
+        return cmd_show(args[0], args[1])
+    if cmd == &quot;trace&quot; and len(args) == 1:
+        return cmd_trace(args[0])
+    print(__doc__)
+    return 1
+
+
+if __name__ == &quot;__main__&quot;:
+    sys.exit(main())
+__MERIDIAN_EOF__
+
+cat &gt; tests/test_pipeline.py &lt;&lt;&#x27;__MERIDIAN_EOF__&#x27;
+&quot;&quot;&quot;Class 5 acceptance tests: the data contract routes the known rows the agreed way.&quot;&quot;&quot;
+import os
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+import pipeline  # noqa: E402
+
+
+def run(tmp_path):
+    p = pipeline.Pipeline(data_dir=os.path.join(ROOT, &quot;data&quot;), out_dir=str(tmp_path / &quot;out&quot;), quiet=True)
+    assert p.run() is True
+    return p
+
+
+def routes_by_case(p):
+    out = {}
+    for c in p.raw[&quot;support_cases&quot;][1]:
+        key = c[&quot;case_id&quot;] or f&quot;blank-row-{c[&#x27;source_row_number&#x27;]}&quot;
+        out[key] = p.routes[(&quot;support_cases&quot;, c[&quot;source_row_number&quot;])]
+    return out
+
+
+def test_nothing_is_lost_between_source_and_raw(tmp_path):
+    p = run(tmp_path)
+    for name in pipeline.OPERATIONAL_FILES:
+        assert len(p.sources[name][1]) == len(p.raw[name][1])
+
+
+def test_routes_match_the_agreed_contract(tmp_path):
+    p = run(tmp_path)
+    routes = routes_by_case(p)
+    assert {k for k, v in routes.items() if v == &quot;PUBLISH&quot;} == {&quot;MCS-501&quot;, &quot;MCS-506&quot;, &quot;MCS-507&quot;, &quot;MCS-508&quot;, &quot;MCS-509&quot;}
+    assert {k for k, v in routes.items() if v == &quot;HUMAN_REVIEW&quot;} == {&quot;MCS-502&quot;}
+    assert {k for k, v in routes.items() if v == &quot;REJECT&quot;} == {&quot;MCS-503&quot;, &quot;MCS-504&quot;, &quot;MCS-505&quot;, &quot;MCS-510&quot;, &quot;blank-row-8&quot;}
+    order_rejects = {r[&quot;record_key&quot;] for r in p.results if r[&quot;table&quot;] == &quot;orders&quot; and r[&quot;route&quot;] == &quot;REJECT&quot;}
+    assert order_rejects == {&quot;MR-503&quot;}
+
+
+def test_general_case_without_order_is_published(tmp_path):
+    # VR-003 is conditional: a GENERAL question needs no order.
+    assert routes_by_case(run(tmp_path))[&quot;MCS-508&quot;] == &quot;PUBLISH&quot;
+
+
+def test_meridians_rejected_is_valid_data_not_our_reject(tmp_path):
+    assert routes_by_case(run(tmp_path))[&quot;MCS-509&quot;] == &quot;PUBLISH&quot;
+
+
+def test_conflicting_dates_keep_both_values_and_sources(tmp_path):
+    p = run(tmp_path)
+    hit = [r for r in p.results if r[&quot;rule_id&quot;] == &quot;VR-006&quot; and r[&quot;route&quot;] == &quot;HUMAN_REVIEW&quot;]
+    assert len(hit) == 1 and hit[0][&quot;record_key&quot;] == &quot;MCS-502&quot;
+    assert &quot;2026-09-15&quot; in hit[0][&quot;received_value&quot;] and &quot;2026-09-14&quot; in hit[0][&quot;received_value&quot;]
+    assert &quot;orders.csv&quot; in hit[0][&quot;received_value&quot;] and &quot;issue_records.csv&quot; in hit[0][&quot;received_value&quot;]
+
+
+def test_stale_review_file_is_a_warning_not_a_reject(tmp_path):
+    p = run(tmp_path)
+    flags = {(f[&quot;file&quot;], f[&quot;route&quot;]) for f in p.file_flags}
+    assert (&quot;human_reviews.csv&quot;, &quot;LOAD_WARNING&quot;) in flags
+    assert not any(f[&quot;route&quot;] == &quot;PAUSE_LOAD&quot; for f in p.file_flags)
+
+
+def test_rerun_adds_zero_trusted_rows(tmp_path):
+    run(tmp_path)
+    p2 = pipeline.Pipeline(data_dir=os.path.join(ROOT, &quot;data&quot;), out_dir=str(tmp_path / &quot;out&quot;), quiet=True)
+    p2.load(); p2.land_raw(); p2.validate(); p2.publish()
+    import json
+    state = json.load(open(tmp_path / &quot;out&quot; / &quot;state.json&quot;))
+    assert state[&quot;runs&quot;] == 2 and state[&quot;last_new_rows&quot;] == 0
+
+
+def test_missing_required_column_pauses_the_load(tmp_path):
+    cols, rows = pipeline.read_csv(os.path.join(ROOT, &quot;data&quot;, &quot;support_cases.csv&quot;))
+    cols2 = [c for c in cols if c != &quot;order_id&quot;]
+    rows2 = [{k: v for k, v in r.items() if k != &quot;order_id&quot;} for r in rows]
+    p = pipeline.Pipeline(data_dir=os.path.join(ROOT, &quot;data&quot;), out_dir=str(tmp_path / &quot;out&quot;), quiet=True)
+    assert p.run(override={&quot;support_cases&quot;: (cols2, rows2)}) is False
+    assert any(f[&quot;route&quot;] == &quot;PAUSE_LOAD&quot; and f[&quot;rule_id&quot;] == &quot;VR-007&quot; for f in p.file_flags)
+    assert not os.path.exists(tmp_path / &quot;out&quot; / &quot;trusted_support_cases.csv&quot;)
+__MERIDIAN_EOF__</code></pre></details></div></div><div class="cue cue-note"><div class="cue-label">Note</div><div class="cue-body"><p>Meridian's clock in this exercise is fixed at 18 September 2026, 12:00 UTC. Every freshness result uses that, not today's date.</p></div></div></section><section class="step" id="4.2"><header class="stephead"><label class="tick"><input type="checkbox" data-key="4.2"><span></span></label><h3><span class="stepno">4.2</span> The counting game, then load</h3><span class="mins">2 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python pipeline.py load</code></pre></div></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>Twelve rows. How many support cases did Meridian receive today? One number.</p><p class="answers">12 counted rows. 11 noticed MCS-510 twice. 10 also noticed the row with no case_id. Everybody is right, depending on what they assumed, and that is the problem. Which number goes in the leadership deck?</p></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>Five files, row counts 12 / 9 / 10 / 4 / 9, extract times, and one age that stands out: 52 hours.</p><pre class="out"><code>support_cases.csv     12    2026-09-18T10:00:00Z  2 h
+orders.csv            9     2026-09-18T09:45:00Z  2 h
+issue_records.csv     10    2026-09-18T09:50:00Z  2 h
+human_reviews.csv     4     2026-09-16T08:00:00Z  52 h
+validation_rules.csv  9     (rule book)</code></pre></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Grain: what does one row represent? One row = one support case. One customer can raise many cases; one order can have many cases; one case can be reviewed more than once. Mixing these changes the count.</li><li>Files received ≠ data ready. Moving data into a working area is ingestion; nothing has been checked yet.</li></ul></div></div></section><section class="step" id="4.3"><header class="stephead"><label class="tick"><input type="checkbox" data-key="4.3"><span></span></label><h3><span class="stepno">4.3</span> Take the crime-scene photograph</h3><span class="mins">2 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python pipeline.py raw
+python pipeline.py show raw support_cases</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>12 = 12, 9 = 9, 10 = 10, 4 = 4. The twins are still twins, the nameless row is still nameless (source row 8), MCS-505 still says APPROVED_COMPLETE, and three new columns sit beside the data: source_file, source_row_number, loaded_at.</p></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>Why do we need source_row_number when we already have case_id?</p><p class="answers">Because one row has no case_id. Without a row number there is no way to point at it.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Raw does not mean trusted. Raw means preserved evidence. Copy exactly as received, fix nothing, add lineage beside the data, not instead of it.</li><li>Reconciliation is counting luggage at the belt: the same number must come out as went in, or every later number is wrong.</li></ul></div></div></section><section class="step" id="4.4"><header class="stephead"><label class="tick"><input type="checkbox" data-key="4.4"><span></span></label><h3><span class="stepno">4.4</span> Predict, then run the rule book</h3><span class="mins">4 min</span></header><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>We have already discussed the twins, the nameless row, the return with no receipt, the odd status, the wrong date format and the two dates. Predict the four rows we have not touched, plus one file. P publish, R reject, H human review, W load warning.</p></div></div><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>#</th><th>Row</th><th>Details</th><th>Your prediction</th></tr></thead><tbody><tr><td>1</td><td>MCS-506</td><td>Exchange trousers. RETURN, order MR-506, APPROVED. Dates agree (2026-09-12).</td><td>P / R / H / W</td></tr><tr><td>2</td><td>MCS-507</td><td>Cracked mug with photo. DAMAGE, order MR-507, PENDING. Dates agree (2026-09-16).</td><td>P / R / H / W</td></tr><tr><td>3</td><td>MCS-508</td><td>Sweater material. GENERAL, no order_id, PENDING.</td><td>P / R / H / W</td></tr><tr><td>4</td><td>MCS-509</td><td>Wrong colour cap. DAMAGE, order MR-509, REJECTED. Dates agree (2026-09-14).</td><td>P / R / H / W</td></tr><tr><td>5</td><td>human_reviews.csv</td><td>Created 16 Sep 08:00. Meridian's clock: 18 Sep 12:00.</td><td>P / R / H / W</td></tr></tbody></table></div></div></div><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python pipeline.py validate</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>Every result shows the rule, the value received, the route and the reason. Then the route summary.</p><pre class="out"><code>Route summary for support cases:
+  PUBLISH        5  MCS-501, MCS-506, MCS-507, MCS-508, MCS-509
+  HUMAN_REVIEW   1  MCS-502
+  REJECT         6  (blank, row 8), MCS-503, MCS-504, MCS-505, MCS-510, MCS-510
+
+File-level flags:
+  human_reviews.csv  VR-008  LOAD_WARNING  52 h old</code></pre></div></div><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>Row 3, MCS-508: publish, not reject. The order rule is conditional: RETURN or DAMAGE only. Nobody needs a bill to ask what a sweater is made of. Row 4, MCS-509: publish. It says REJECTED, but whose REJECTED? Meridian's decision about the customer's request: valid data. Our REJECT route is our decision about the data row. Same word, different meaning.</p></div></div><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Rule</th><th>Checks</th><th>If broken</th><th>Row that breaks it</th></tr></thead><tbody><tr><td>VR-001</td><td>case_id is present</td><td>REJECT</td><td>the nameless row (MR-511)</td></tr><tr><td>VR-002</td><td>case_id appears once</td><td>REJECT both copies</td><td>the twins (MCS-510)</td></tr><tr><td>VR-003</td><td>order_id present when RETURN or DAMAGE</td><td>REJECT</td><td>return with no receipt (MCS-504)</td></tr><tr><td>VR-004</td><td>review_status in PENDING / APPROVED / REJECTED</td><td>REJECT</td><td>unagreed status (MCS-505)</td></tr><tr><td>VR-005</td><td>delivery_date is a real YYYY-MM-DD</td><td>REJECT order + its case</td><td>the shirt (MR-503 / MCS-503)</td></tr><tr><td>VR-006</td><td>delivery dates agree across orders and issues</td><td>HUMAN_REVIEW</td><td>the backpack (MCS-502)</td></tr><tr><td>VR-007</td><td>required files and columns exist</td><td>PAUSE_LOAD</td><td>we break it on purpose</td></tr><tr><td>VR-008</td><td>each file under 24 h old</td><td>LOAD_WARNING</td><td>human_reviews.csv</td></tr><tr><td>VR-009</td><td>rerun adds zero trusted rows</td><td>PAUSE_LOAD</td><td>we test it</td></tr></tbody></table></div></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>A data contract is the answer key: fields, formats, and what happens when a row breaks a rule, agreed before the data arrives, so the result does not depend on who ran the pipeline that day.</li><li>REJECT = the value is outside the rule book. HUMAN_REVIEW = the values are inside the rule book but sources disagree. LOAD_WARNING = a whole file has a problem. PAUSE_LOAD = the whole delivery cannot be trusted.</li><li>Source of truth is decided per fact by the business, not by our code, not by the newest value, not by what makes our job easier. MCS-502 keeps both dates and both sources and waits for a person. Meridian's own reviewer said NEEDS_SOURCE_OWNER.</li><li>One row passed every rule and is still fishy: MCS-509 is DAMAGE in one file and WRONG_ITEM in another. Trusted means 'passed the rules we agreed', not 'guaranteed true'. Confirm with Meridian, then add a rule. Same ratchet as Lab 3.</li></ul></div></div></section><section class="step" id="4.5"><header class="stephead"><label class="tick"><input type="checkbox" data-key="4.5"><span></span></label><h3><span class="stepno">4.5</span> Publish four tables, one per grain, and follow one case</h3><span class="mins">2 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python pipeline.py publish
+python pipeline.py trace MCS-507
+python pipeline.py trace MCS-502</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>trusted_support_cases 5 · trusted_orders 8 · trusted_issue_records 5 · trusted_human_reviews 4. MCS-507 walks case → order MR-507 (Ceramic mug) → issue DAMAGED_ITEM → review HR-903, with lineage on every row. MCS-502 is not in the trusted table and the trace shows why.</p><pre class="out"><code>case    : MCS-507  DAMAGE  PENDING  &quot;The mug arrived cracked and I have a photo.&quot;  [support_cases.csv row 10]
+order   : MR-507  Ceramic mug  delivered 2026-09-16  [orders.csv row 6]
+issue   : DAMAGED_ITEM  &quot;Mug has a visible crack&quot;  customer says 2026-09-16  [issue_records.csv row 7]
+review  : HR-903  Support lead  ALLOW_DAMAGE_FLOW  [human_reviews.csv row 3]</code></pre></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>Why four tables? One big table with case, order, issue and review in one row would be easier to read.</p><p class="answers">If MCS-501 gets a second review tomorrow, the big table has two rows for one case and anyone counting rows counts it twice. Keep tables separate, one per grain, connect later with case_id and order_id.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Grain protects the final numbers, not just the first count.</li><li>The rejected and human-review rows are all still in out/exceptions.csv with reasons. Nothing vanished.</li></ul></div></div></section><section class="step" id="4.6"><header class="stephead"><label class="tick"><input type="checkbox" data-key="4.6"><span></span></label><h3><span class="stepno">4.6</span> Run it twice, then change its shape</h3><span class="mins">2 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python pipeline.py rerun
+python pipeline.py drift</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>Rerun: 0 new trusted rows, VR-009 PASS. Drift: PAUSE_LOAD from VR-007, nothing routed, nothing published, your real files untouched.</p><pre class="out"><code>Run number 2. New trusted rows this run: 0
+VR-009 PASS: rerunning the same files added 0 trusted rows (idempotent).
+
+PAUSE_LOAD  the whole delivery cannot be trusted. Nothing is routed, nothing is published.
+support_cases.csv  VR-007  PAUSE_LOAD  missing column(s): order_id</code></pre></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Idempotency: running the same input again must not double anything. Jobs crash halfway and get restarted; a pipeline that doubles on rerun cannot be trusted for any count.</li><li>Schema drift: a renamed or missing column runs with no error and quietly links the wrong things. The safe move is pause, confirm with Meridian, then update mapping, rule book and tests together.</li></ul></div></div></section><section class="step" id="4.7"><header class="stephead"><label class="tick"><input type="checkbox" data-key="4.7"><span></span></label><h3><span class="stepno">4.7</span> Read the load report and decide</h3><span class="mins">2 min</span></header><div class="cue cue-type"><div class="cue-label">Type</div><div class="cue-body"><div class="codewrap"><div class="codehead"><span class="where">Terminal A · meridian/ · venv on</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">python pipeline.py report
+python -m pytest -q</code></pre></div></div></div><div class="cue cue-expect"><div class="cue-label">Expect</div><div class="cue-body"><p>The report in the order the data flowed: received, nothing lost, routes, why each exception, freshness, rerun safety, decision. And 25 passed: the rule book is also a test suite now.</p><pre class="out"><code>25 passed in 0.17s</code></pre></div></div><div class="cue cue-ask"><div class="cue-label">Ask</div><div class="cue-body"><p>Accept, partial accept, or pause? Two facts from the report to support it.</p><p class="answers">Partial accept. Nothing lost and rerun safe are true, and the review file is 52 hours old. 'Which issue types had a Meridian human review as of 16 Sep 08:00' can be answered with the date stated. 'What are reviewers reviewing today' cannot. 'Which cases did our pipeline hold, and why' is answered by the exceptions file, and that is a different meaning of human review.</p></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>Freshness is relative to the question. Yesterday's traffic is perfectly accurate for yesterday and useless for leaving for the airport now.</li><li>Two teams, one word. The pipeline's HUMAN_REVIEW route (our data conflict: MCS-502) is not Meridian's human reviews (their people: MCS-501, 502, 507, 508). Mixing them gives a confident, wrong answer.</li><li>An FDE does not say 'the data is good' or 'bad'. An FDE says: this data can answer this question, not that one.</li></ul></div></div></section></section>
+<section class="lab" id="close" data-start="55" data-end="60"><header class="labhead"><div class="clock"><span>55:00</span><span class="arrow">→</span><span>60:00</span></div><div><div class="labkicker">Lab 5 · Class 3 §11 and Class 5 §13</div><h2>The honest readout</h2></div></header><section class="step" id="5.1"><header class="stephead"><label class="tick"><input type="checkbox" data-key="5.1"><span></span></label><h3><span class="stepno">5.1</span> Read the four-part readout</h3><span class="mins">2 min</span></header><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><div class="tablewrap"><table><thead><tr><th>Part</th><th>What we can say after one hour</th></tr></thead><tbody><tr><td>What we found</td><td>One prototype drafts for human review and cannot act. Evidence for one case comes from four sources. The missing-information rule and the request-versus-record conflict are real controls, not edge cases. Twelve rows gave three different counts until a contract was agreed.</td></tr><tr><td>What we tested</td><td>Three synthetic cases (complete, missing, conflict) against a manual reference and 17 acceptance tests. Twelve synthetic rows against nine agreed rules, a rerun, and a deliberate schema break.</td></tr><tr><td>What remains unknown</td><td>Meridian's real systems, interfaces and owners. How often the delivery date is missing. Whether agents would adopt any of it. Any baseline for time or quality. Model accuracy on cases we did not test.</td></tr><tr><td>What we recommend</td><td>Proceed with conditions: an owner and a confirmed source for every required field, a decided source of truth for delivery date, a fresh human_reviews file, and measurement of how often information is missing, before any integration is scoped.</td></tr></tbody></table></div></div></div><div class="cue cue-learn"><div class="cue-label">Learn</div><div class="cue-body"><ul><li>An omission damages trust more than an overstatement. Unknowns belong inside the report, not after it.</li><li>Keep the claim smaller than the evidence.</li></ul></div></div></section><section class="step" id="5.2"><header class="stephead"><label class="tick"><input type="checkbox" data-key="5.2"><span></span></label><h3><span class="stepno">5.2</span> Four learnings, one per lab</h3><span class="mins">2 min</span></header><div class="cue cue-show"><div class="cue-label">Show</div><div class="cue-body"><ol class="finale">
+<li><b>Lab 1.</b> A prototype is a communication artefact. Tests are the acceptance evidence, not the agent's word. Builder AI and runtime AI are different jobs.</li>
+<li><b>Lab 2.</b> Trace every fact to a source and a rule. Missing information is a state with a next step. Read the evidence; people take the action.</li>
+<li><b>Lab 3.</b> Give the model the smallest complete context. Fixed checks stay in code, authority stays human. Evaluate against external evidence, and turn every confirmed failure into a permanent check.</li>
+<li><b>Lab 4.</b> Before anyone counts or queries, agree what one row means, preserve the raw copy, apply one contract the same way every time, keep failures visible with reasons, and state which questions the result can honestly answer.</li>
+</ol></div></div><div class="cue cue-say"><div class="cue-label">Say</div><div class="cue-body"><p>The FDE's job is not to make the model sound certain. It is to give the model the right evidence, keep authority in the right place, and make the result easy to check.</p></div></div></section></section>
+
+<section class="appendix" id="appendix">
+<h2>If something goes wrong</h2>
+<div class="tablewrap"><table><thead><tr><th>Symptom</th><th>What to do</th></tr></thead><tbody><tr><td><code>python3: command not found</code> / Windows</td><td>Use <code>python</code> instead of <code>python3</code>, and <code>.venv\Scripts\activate</code>. The <code>cat &lt;&lt; ... </code> paste blocks need Git Bash or WSL on Windows; PowerShell cannot run them. Or unzip the reference repo below and skip every paste block.</td></tr><tr><td>pip is blocked (externally-managed-environment)</td><td>The setup block already uses a venv, which avoids this. If pip has no network, unzip the reference repo; pytest is the only dependency, and every <code>python app.py</code> / <code>python pipeline.py</code> command works without it.</td></tr><tr><td>Claude Code / OpenCode not installed</td><td>Use the Fallback cues in 1.4 and 3.5. Narrate the supervision loop (inspect, plan, approve, edit, test, review) while pasting.</td></tr><tr><td>The agent proposes a database, web UI, RAG or new framework</td><td>Paste the revise prompt from 3.3. If it happens twice, use the fallback; the room's time matters more than the agent's plan.</td></tr><tr><td>The agent says tests pass but <code>python -m pytest -q</code> does not</td><td>Read the failure aloud: it is evidence. Do not replace the output with a success statement. Use the fallback and move on.</td></tr><tr><td>Live model wording differs from the Expect boxes</td><td>Expected when ANTHROPIC_API_KEY is set. The tests check boundaries (no refund approval, no 'resolved', no return-window claim), not sentences. Say so: that is exactly why we evaluate behaviour, not prose.</td></tr><tr><td>Pipeline numbers differ from the Expect boxes</td><td>Check that <code>data/</code> holds exactly the five files (hashes: support 27186997…, orders b2809d69…, issues a76b81a3…, reviews 18322136…, rules 380a8f32…). <code>python pipeline.py reset</code> then <code>run</code>.</td></tr><tr><td>Running long</td><td>Hard stops at 15:00 and 40:00. In Lab 2 keep 2.2 (the exceptions) and drop 2.4. In Lab 4 keep 4.4 (predict and validate) and 4.7 (decide); drop 4.6 if needed.</td></tr></tbody></table></div>
+<h3>Final folder</h3>
+<pre class="out"><code>meridian/
+  app.py                 Class 2 baseline, extended in Class 4
+  cases.json             C1, C2, C3
+  policy.md              P1 to P4, CLASSROOM-1
+  evidence_map.json      source IDs per field (Class 4)
+  pipeline.py            Class 5 pipeline (load, raw, validate, publish, report, rerun, drift, trace)
+  data/                  the five Class 5 CSV files
+  out/                   raw_*.csv, validation_results.csv, exceptions.csv, trusted_*.csv, load_report.md, state.json
+  tests/                 test_app.py (6) · test_case_review.py (10) · test_ratchet.py (1) · test_pipeline.py (8)</code></pre>
+<h3>What each command proves</h3>
+<div class="tablewrap"><table><thead><tr><th>Command</th><th>Proves</th><th>Does not prove</th></tr></thead><tbody><tr><td><code>python -m pytest -q</code></td><td>The fixed properties in the tests hold for the tested inputs</td><td>Model accuracy, production readiness, business impact</td></tr><tr><td><code>python app.py --case C2</code></td><td>The missing-date gate runs in code before any model call</td><td>Behaviour on a case we did not supply</td></tr><tr><td><code>python pipeline.py validate</code></td><td>Twelve known rows route the agreed way under nine agreed rules</td><td>That the rule book catches everything (MCS-509 shows it does not)</td></tr><tr><td><code>python pipeline.py rerun</code></td><td>The same input adds zero trusted rows</td><td>Behaviour when the input changes</td></tr><tr><td><code>python pipeline.py report</code></td><td>What was received, lost, routed, held, and how fresh it is</td><td>That the data is 'good'; only which questions it can answer</td></tr></tbody></table></div></section>
+</main>
+</div>
+<script>
+(function(){
+  var store = {get:function(k){try{return localStorage.getItem(k)}catch(e){return null}}, set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}, del:function(k){try{localStorage.removeItem(k)}catch(e){}}};
+  // copy buttons
+  function copyText(t, btn){
+    var done=function(){btn.classList.add('ok'); var old=btn.textContent; btn.textContent='Copied'; setTimeout(function(){btn.classList.remove('ok'); btn.textContent=old;},1500);};
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done, function(){fallback(t,done)}); } else { fallback(t,done); }
+  }
+  function fallback(t,done){ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); done();}catch(e){} document.body.removeChild(ta); }
+  document.querySelectorAll('button.copy').forEach(function(btn){
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      var wrap = btn.closest('.codewrap');
+      var code = wrap ? wrap.querySelector('pre code') : null;
+      if(code) copyText(code.textContent, btn);
+    });
+  });
+  // step ticks
+  document.querySelectorAll('.tick input').forEach(function(cb){
+    var key='meridian-hour:'+cb.dataset.key; var step=cb.closest('.step');
+    if(store.get(key)==='1'){cb.checked=true; step.classList.add('done');}
+    cb.addEventListener('change', function(){ if(cb.checked){store.set(key,'1'); step.classList.add('done');} else {store.del(key); step.classList.remove('done');} });
+  });
+  // timer + live lab highlight
+  var startKey='meridian-hour:start'; var memStart=0; var el=document.getElementById('elapsed'); var startBtn=document.getElementById('start'); var resetBtn=document.getElementById('reset');
+  var labs=Array.prototype.slice.call(document.querySelectorAll('.lab[data-start]'));
+  function fmt(s){ var m=Math.floor(s/60), r=s%60; return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; }
+  function tick(){
+    var st=parseInt(store.get(startKey)||'0',10) || memStart;
+    if(!st){ el.textContent='00:00'; document.querySelectorAll('.railnav li').forEach(function(li){li.classList.remove('live')}); return; }
+    var s=Math.max(0,Math.floor((Date.now()-st)/1000)); el.textContent=fmt(s);
+    var m=s/60; document.querySelectorAll('.railnav li').forEach(function(li){ var a=li.querySelector('a'); var id=a.getAttribute('href').slice(1); var lab=document.getElementById(id); if(!lab||!lab.dataset.start){li.classList.remove('live');return;} var on=m>=parseFloat(lab.dataset.start)&&m<parseFloat(lab.dataset.end); li.classList.toggle('live',on); });
+  }
+  startBtn.addEventListener('click', function(){ if(!store.get(startKey) && !memStart){ memStart=Date.now(); store.set(startKey, String(memStart)); } tick(); });
+  resetBtn.addEventListener('click', function(){ store.del(startKey); memStart=0; Object.keys(localStorage||{}).forEach(function(k){ if(k.indexOf('meridian-hour:')===0) store.del(k); }); document.querySelectorAll('.tick input').forEach(function(cb){cb.checked=false; cb.closest('.step').classList.remove('done');}); tick(); });
+  setInterval(tick, 1000); tick();
+  // mobile menu
+  var menu=document.getElementById('menubtn'), rail=document.querySelector('.rail');
+  if(menu){ menu.addEventListener('click', function(){ rail.classList.toggle('open'); }); rail.querySelectorAll('a').forEach(function(a){a.addEventListener('click', function(){rail.classList.remove('open')})}); }
+})();
+</script>
+</body>
+</html>
