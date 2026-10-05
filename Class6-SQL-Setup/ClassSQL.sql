@@ -121,6 +121,128 @@ ORDER BY review_events DESC, triggered_rule_id;
 
 
 
+----- 05/10 
+SELECT COUNT(*) AS review_events FROM human_reviews;
+-- Take the two cases we know best, MCS-501 and MCS-502, 
+-- and put each case next to its reviews
+
+SELECT sc.case_id, sc.review_status, hr.review_id, hr.decision
+FROM support_cases sc
+LEFT JOIN human_reviews hr
+  ON hr.case_id = sc.case_id
+WHERE sc.case_id IN ('MCS-501', 'MCS-502');
+-- SQL Error [1052] [23000]: Column 'case_id' in field list is ambiguous
+
+SELECT sc.case_id, sc.review_status, hr.review_id, hr.decision
+FROM support_cases sc
+LEFT JOIN human_reviews hr
+  ON hr.case_id = sc.case_id
+WHERE sc.case_id IN ('MCS-501', 'MCS-502');
+
+-- Show me all 25,000 cases. Where a case has a review that names a
+-- validation rule, attach that review
+
+-- List all support cases, then attach human reviews whereever applicable, where 
+-- some validation rule was triggered 
+
+-- LEFT JOIN, with matching via caseId, and where clause saying triggered rule NOT NULL
+ 
+SELECT COUNT(*) AS rows_returned
+FROM support_cases sc
+LEFT JOIN human_reviews hr
+  ON hr.case_id = sc.case_id
+WHERE hr.triggered_rule_id IS NOT NULL;
+-- OUTPUT - 3564 
+
+-- Creating a joined table, that contains 25000 rows, with the human reviews 
+-- combined, post that filtering the rows which contain triggered rules
+
+
+-- REQUIREMENT -> take those human review rows,
+-- where triggered rules is NOT NULL, then do the LEFT JOIN.
+
+
+SELECT COUNT(DISTINCT sc.case_id) AS cases_kept,
+       COUNT(hr.review_id) AS rule_named_reviews
+FROM support_cases AS sc
+LEFT JOIN human_reviews AS hr
+  ON hr.case_id = sc.case_id
+  AND hr.triggered_rule_id IS NOT NULL;
+
+--  the issue, the review, and the rule
+-- Show me all 25,000 cases. Where a case has a review that names a
+-- validation rule, attach that review and showcase the rule as well 
+
+SELECT sc.case_id AS CaseId,
+		hr.review_id as ReviewId,
+		hr.triggered_rule_id as RuleId,
+		vr.condition_text as Rule
+FROM support_cases AS sc
+LEFT JOIN human_reviews AS hr
+  ON hr.case_id = sc.case_id
+  AND hr.triggered_rule_id IS NOT NULL
+INNER JOIN validation_rules vr 
+ ON hr.triggered_rule_id = vr.rule_id ;
+
+
+-- Which cases has nobody reviewed yet
+SELECT sc.case_id, sc.customer_question, hr.review_id
+FROM support_cases sc 
+LEFT JOIN human_reviews hr 
+ON sc.case_id  = hr.case_id
+WHERE hr.review_id IS NULL;
+
+SELECT COUNT(sc.case_id),COUNT(hr.review_id)
+FROM support_cases sc 
+LEFT JOIN human_reviews hr 
+ON sc.case_id  = hr.case_id
+WHERE hr.review_id IS NULL;
+
+
+-- SUB QUERIES 
+-- everything we can do with sub queries, can also be done via joins, 
+-- sub queries make it easier to write and understand 
+
+SELECT sc.case_id, sc.customer_question, hr.review_id
+FROM support_cases sc 
+LEFT JOIN human_reviews hr 
+ON sc.case_id  = hr.case_id
+WHERE hr.review_id IS NULL;
+
+
+SELECT COUNT(*) AS cases_without_review
+FROM support_cases AS sc
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM human_reviews AS hr
+  WHERE hr.case_id = sc.case_id
+);
+
+-- WITH keyword 
+
+-- WITH name AS ( rough-work query )
+-- > SELECT ... FROM name ...        <- one statement, no ; in between
+
+-- For each issue type, how many cases are there,
+--  and how many have at least one review
+
+WITH reviewed_case_ids AS (
+  SELECT DISTINCT case_id
+  FROM human_reviews
+)
+SELECT ir.issue_type,
+       COUNT(*) AS total_cases,
+       COUNT(rc.case_id) AS reviewed_cases
+FROM issue_records ir
+LEFT JOIN reviewed_case_ids rc
+  ON rc.case_id = ir.case_id
+GROUP BY ir.issue_type
+ORDER BY total_cases DESC, ir.issue_type;
+
+-- Which validation rule caused the route?"
+--  Meridian wants every rule in the answer, including rules that no review mentions
+
+
 
 
 
