@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FDE Class 8 Visual Lab</title>
+<style>
+  :root{
+    --bg:#f7f9fc;
+    --panel:#ffffff;
+    --ink:#172033;
+    --muted:#69758d;
+    --line:#dde3ed;
+    --soft:#f1f4f9;
+    --accent:#3157d5;
+    --accent-soft:#eef2ff;
+    --good:#087a55;
+    --good-soft:#eaf8f1;
+    --bad:#b42318;
+    --bad-soft:#fff0ee;
+    --amber:#8b5b00;
+    --amber-soft:#fff7e4;
+    --purple:#6e4fc4;
+    --purple-soft:#f3efff;
+    --shadow:0 14px 36px rgba(34,48,78,.08);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  button{font:inherit}
+  .app{max-width:1260px;margin:0 auto;padding:20px}
+
+  .hero{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:18px;
+    margin-bottom:14px;
+  }
+  .hero h1{margin:0;font-size:26px;line-height:1.1}
+  .hero p{margin:6px 0 0;color:var(--muted);font-size:14px}
+  .eyebrow{
+    margin-bottom:5px;
+    color:var(--accent);
+    font-size:11px;
+    font-weight:850;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+  .reset-all{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    border-radius:10px;
+    padding:9px 12px;
+    cursor:pointer;
+    font-weight:750;
+  }
+
+  .tabs{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .tab{
+    min-height:58px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:12px;
+    padding:10px 12px;
+    cursor:pointer;
+    color:var(--ink);
+    font-weight:800;
+    text-align:left;
+    transition:.15s ease;
+  }
+  .tab span{display:block;color:var(--muted);font-size:11px;font-weight:650;margin-top:3px}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .tab.active span{color:rgba(255,255,255,.8)}
+
+  .pane{display:none}
+  .pane.active{display:block}
+
+  .story{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .story-head{
+    padding:18px 22px 14px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+  }
+  .story-head h2{margin:0;font-size:22px}
+  .story-head p{margin:5px 0 0;color:var(--muted);font-size:13px;max-width:760px}
+  .step-pill{
+    flex:none;
+    border:1px solid var(--line);
+    background:var(--soft);
+    color:var(--muted);
+    border-radius:999px;
+    padding:6px 10px;
+    font-size:11px;
+    font-weight:800;
+  }
+
+  .stage{
+    min-height:470px;
+    padding:26px 26px 20px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:18px;
+  }
+  .visual{
+    min-height:320px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .takeaway{
+    margin-top:auto;
+    border-top:1px solid var(--line);
+    padding:14px 22px 15px;
+    background:#fbfcfe;
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:14px;
+    line-height:1.4;
+  }
+  .takeaway strong{
+    flex:none;
+    color:var(--accent);
+  }
+  .actionbar{
+    padding:14px 22px 18px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    border-radius:10px;
+    padding:10px 15px;
+    cursor:pointer;
+    font-weight:800;
+  }
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.good{background:var(--good);color:#fff;border-color:var(--good)}
+  .btn:disabled{opacity:.42;cursor:not-allowed}
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    border-radius:999px;
+    padding:5px 9px;
+    font-size:10px;
+    font-weight:850;
+    letter-spacing:.03em;
+  }
+  .pk{background:var(--amber-soft);color:var(--amber)}
+  .fk{background:var(--accent-soft);color:var(--accent)}
+  .ok{background:var(--good-soft);color:var(--good)}
+  .no{background:var(--bad-soft);color:var(--bad)}
+
+  /* TAB 1 */
+  .schema-scene{width:min(920px,100%);display:grid;grid-template-columns:.85fr 70px 1.45fr;gap:14px;align-items:center}
+  .entity{
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+    overflow:hidden;
+  }
+  .entity-title{
+    padding:11px 13px;
+    font-size:12px;
+    font-weight:850;
+    background:var(--soft);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+  }
+  .entity-row{
+    display:grid;
+    grid-template-columns:1fr 1fr 1.2fr;
+    gap:8px;
+    align-items:center;
+    padding:12px 13px;
+    border-top:1px solid #edf0f5;
+    font-size:12px;
+  }
+  .entity-row .name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:800}
+  .entity-row.issue-enter{animation:slideDown .4s ease both}
+  .entity-row.rejected{background:var(--bad-soft);animation:shake .45s ease both}
+  .entity-row.accepted{background:var(--good-soft)}
+  .connector{
+    height:2px;
+    background:#aeb8cc;
+    position:relative;
+  }
+  .connector:after{
+    content:"";
+    position:absolute;
+    right:-1px;
+    top:-4px;
+    border-left:8px solid #aeb8cc;
+    border-top:5px solid transparent;
+    border-bottom:5px solid transparent;
+  }
+  .schema-caption{text-align:center;color:var(--muted);font-size:12px;margin-top:8px}
+  .attempt-banner{
+    text-align:center;
+    border-radius:12px;
+    padding:10px 14px;
+    font-weight:850;
+    font-size:13px;
+    width:min(560px,100%);
+    margin:0 auto;
+  }
+  .attempt-banner.bad{background:var(--bad-soft);color:var(--bad);border:1px solid #ffd0ca}
+  .attempt-banner.good{background:var(--good-soft);color:var(--good);border:1px solid #c5e8d9}
+
+  /* TAB 2 */
+  .migration-scene{
+    width:min(940px,100%);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .sql-card{
+    border:1px solid #283149;
+    background:#111827;
+    color:#e8edfa;
+    border-radius:14px;
+    padding:13px 15px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12.5px;
+    line-height:1.5;
+    white-space:pre-wrap;
+  }
+  .sql-label{
+    color:#9db8ff;
+    font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+    font-size:10px;
+    font-weight:850;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-bottom:7px;
+  }
+  .db-table{
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .db-head,.db-row{
+    display:grid;
+    grid-template-columns:1fr 1.15fr 1.35fr .9fr;
+    gap:0;
+  }
+  .db-head>div{
+    padding:9px 11px;
+    background:var(--soft);
+    color:var(--muted);
+    font-size:10px;
+    font-weight:850;
+    text-transform:uppercase;
+  }
+  .db-row>div{
+    padding:10px 11px;
+    border-top:1px solid #edf0f5;
+    font-size:12px;
+  }
+  .db-row .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:750}
+  .db-row.flash{animation:flash .75s ease}
+  .transform{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .transform-box{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 13px;
+    background:#fff;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:12px;
+    font-weight:800;
+  }
+  .arrow{color:var(--muted);font-size:20px;font-weight:900}
+  .migration-note{text-align:center;color:var(--muted);font-size:12px}
+
+  /* TAB 3 */
+  .join-scene{width:min(930px,100%);display:flex;flex-direction:column;gap:16px}
+  .join-top{
+    display:grid;
+    grid-template-columns:1fr 90px 1fr;
+    gap:12px;
+    align-items:center;
+  }
+  .stack{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+    background:#fff;
+  }
+  .stack-title{font-size:11px;font-weight:850;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+  .chip{
+    border:1px solid var(--line);
+    border-left:4px solid var(--accent);
+    border-radius:10px;
+    padding:9px 10px;
+    margin-top:7px;
+    font-size:12px;
+    font-weight:800;
+    background:#fff;
+  }
+  .chip.review{border-left-color:var(--good)}
+  .join-symbol{text-align:center;font-size:28px;font-weight:900;color:var(--muted)}
+  .join-matrix{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+  .pair{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px;
+    background:#fff;
+    text-align:center;
+    font-size:11px;
+    font-weight:800;
+    animation:pop .28s ease both;
+  }
+  .join-result{
+    text-align:center;
+    font-size:20px;
+    font-weight:900;
+  }
+  .join-result .danger{color:var(--bad)}
+  .summary-strip{
+    display:grid;
+    grid-template-columns:1fr 60px 1fr;
+    gap:10px;
+    align-items:center;
+  }
+  .summary-box{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    text-align:center;
+    background:#fff;
+    font-size:12px;
+  }
+  .summary-box b{display:block;font-size:15px;margin-top:4px}
+  .fixed-card{
+    border:1px solid #c5e8d9;
+    background:var(--good-soft);
+    color:var(--good);
+    border-radius:13px;
+    padding:13px;
+    text-align:center;
+    font-weight:850;
+  }
+
+  /* TAB 4 */
+  .norm-scene{width:min(940px,100%);display:flex;flex-direction:column;gap:16px}
+  .orders-grid{
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .orders-head,.order-row{
+    display:grid;
+    grid-template-columns:.9fr 1.6fr 1fr;
+  }
+  .orders-head>div{
+    padding:9px 11px;
+    background:var(--soft);
+    color:var(--muted);
+    font-size:10px;
+    font-weight:850;
+    text-transform:uppercase;
+  }
+  .order-row>div{
+    padding:11px;
+    border-top:1px solid #edf0f5;
+    font-size:12px;
+  }
+  .order-row.conflict>div:last-child{
+    background:var(--bad-soft);
+    color:var(--bad);
+    font-weight:850;
+  }
+  .norm-split{
+    display:grid;
+    grid-template-columns:1.25fr 80px .9fr;
+    gap:12px;
+    align-items:center;
+  }
+  .product-card{
+    border:1px solid #c9d6ff;
+    background:var(--accent-soft);
+    border-radius:14px;
+    padding:14px;
+  }
+  .product-card .kicker{font-size:10px;color:var(--accent);font-weight:850;text-transform:uppercase;letter-spacing:.07em}
+  .product-card .name{font-weight:900;margin-top:6px}
+  .product-card .fact{margin-top:10px;font-size:12px}
+  .link-list{
+    display:grid;
+    gap:7px;
+  }
+  .link-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 10px;
+    background:#fff;
+    font-size:12px;
+  }
+  .link-row b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .anomaly-row{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .anomaly-btn{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:999px;
+    padding:8px 11px;
+    cursor:pointer;
+    font-size:11px;
+    font-weight:800;
+  }
+  .anomaly-btn.active{background:var(--bad-soft);color:var(--bad);border-color:#ffd0ca}
+
+  @keyframes slideDown{from{opacity:0;transform:translateY(-9px)}to{opacity:1;transform:none}}
+  @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+  @keyframes flash{0%,100%{background:#fff}45%{background:var(--good-soft)}}
+  @keyframes pop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none !important;transition:none !important}
+  }
+
+  @media (max-width:900px){
+    .tabs{grid-template-columns:1fr 1fr}
+    .schema-scene{grid-template-columns:1fr}
+    .connector{width:2px;height:34px;margin:0 auto}
+    .connector:after{right:-4px;top:auto;bottom:-1px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #aeb8cc;border-bottom:none}
+    .join-top,.norm-split{grid-template-columns:1fr}
+    .join-symbol,.norm-split>.arrow{transform:rotate(90deg)}
+  }
+  @media (max-width:620px){
+    .app{padding:10px}
+    .hero{align-items:flex-start;flex-direction:column}
+    .tabs{grid-template-columns:1fr}
+    .story-head{padding:15px}
+    .stage{padding:18px 14px}
+    .takeaway,.actionbar{padding-left:14px;padding-right:14px}
+    .join-matrix{grid-template-columns:1fr 1fr}
+    .db-head,.db-row{grid-template-columns:1fr 1fr}
+    .db-head>div:nth-child(3),.db-head>div:nth-child(4),
+    .db-row>div:nth-child(3),.db-row>div:nth-child(4){display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="fdeLab">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">FDE Class 8 • Meridian Retail</div>
+      <h1>Visual Data Model Lab</h1>
+      <p>One visual story at a time. Click to reveal what changes and why it matters.</p>
+    </div>
+    <button class="reset-all" id="resetCurrent" type="button">Reset tab</button>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" type="button" data-tab="schema">1. Old schema breaks<span>Why one case cannot hold two issues</span></button>
+    <button class="tab" type="button" data-tab="migration">2. Migration<span>Watch SQL change the table</span></button>
+    <button class="tab" type="button" data-tab="join">3. JOIN multiplication<span>Why totals suddenly become wrong</span></button>
+    <button class="tab" type="button" data-tab="normalization">4. Normalization<span>Put a fact with the thing it describes</span></button>
+  </div>
+
+  <!-- 1 -->
+  <section class="pane active" id="pane-schema">
+    <div class="story">
+      <div class="story-head">
+        <div>
+          <h2>One case. Two issues. Why does the old design fail?</h2>
+          <p>Follow the same case through the redesign.</p>
+        </div>
+        <div class="step-pill" id="schemaStepPill">Step 1 of 3</div>
+      </div>
+
+      <div class="stage">
+        <div class="visual" id="schemaVisual"></div>
+      </div>
+
+      <div class="takeaway"><strong>Key idea</strong><span id="schemaTakeaway"></span></div>
+      <div class="actionbar">
+        <button class="btn" id="schemaBack" type="button">Back</button>
+        <button class="btn primary" id="schemaNext" type="button"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="pane" id="pane-migration">
+    <div class="story">
+      <div class="story-head">
+        <div>
+          <h2>Read the SQL by watching the data change</h2>
+          <p>Each step shows the SQL and its visible effect in the same place.</p>
+        </div>
+        <div class="step-pill" id="migrationStepPill">Step 1 of 5</div>
+      </div>
+
+      <div class="stage">
+        <div class="visual" id="migrationVisual"></div>
+      </div>
+
+      <div class="takeaway"><strong>Key idea</strong><span id="migrationTakeaway"></span></div>
+      <div class="actionbar">
+        <button class="btn" id="migrationBack" type="button">Back</button>
+        <button class="btn primary" id="migrationNext" type="button"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="pane" id="pane-join">
+    <div class="story">
+      <div class="story-head">
+        <div>
+          <h2>The data is correct. The report can still be wrong.</h2>
+          <p>Watch one case multiply when two one-to-many child tables are joined.</p>
+        </div>
+        <div class="step-pill" id="joinStepPill">Step 1 of 3</div>
+      </div>
+
+      <div class="stage">
+        <div class="visual" id="joinVisual"></div>
+      </div>
+
+      <div class="takeaway"><strong>Key idea</strong><span id="joinTakeaway"></span></div>
+      <div class="actionbar">
+        <button class="btn" id="joinBack" type="button">Back</button>
+        <button class="btn primary" id="joinNext" type="button"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="pane" id="pane-normalization">
+    <div class="story">
+      <div class="story-head">
+        <div>
+          <h2>Where should a product fact live?</h2>
+          <p>Start with repeated product data, create a contradiction, then fix the ownership.</p>
+        </div>
+        <div class="step-pill" id="normStepPill">Step 1 of 3</div>
+      </div>
+
+      <div class="stage">
+        <div class="visual" id="normVisual"></div>
+      </div>
+
+      <div class="takeaway"><strong>Key idea</strong><span id="normTakeaway"></span></div>
+      <div class="actionbar">
+        <button class="btn" id="normBack" type="button">Back</button>
+        <button class="btn primary" id="normNext" type="button"></button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById('fdeLab');
+  if (!root || root.dataset.ready === '1') return;
+  root.dataset.ready = '1';
+
+  const $ = (sel) => root.querySelector(sel);
+  const $$ = (sel) => [...root.querySelectorAll(sel)];
+
+  let activeTab = 'schema';
+  let schemaStep = 0;
+  let migrationStep = 0;
+  let joinStep = 0;
+  let normStep = 0;
+
+  const tabs = ['schema','migration','join','normalization'];
+
+  function setTab(name){
+    activeTab = name;
+    $$('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    $$('.pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
+  }
+
+  $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+  function schemaMarkup(step){
+    if(step === 0){
+      return `
+        <div style="width:min(900px,100%)">
+          <div class="schema-scene">
+            <div class="entity">
+              <div class="entity-title">support_cases <span class="badge pk">PK</span></div>
+              <div class="entity-row"><span class="name">MCS-DEMO</span><span>support case</span><span>one row = one case</span></div>
+            </div>
+            <div class="connector"></div>
+            <div class="entity">
+              <div class="entity-title">issue_records <span><span class="badge pk">case_id = PK</span> <span class="badge fk">FK</span></span></div>
+              <div class="entity-row">
+                <span class="name">MCS-DEMO</span><span>LATE_DELIVERY</span><span>Issue 1</span>
+              </div>
+            </div>
+          </div>
+          <div class="schema-caption">Right now, case_id both identifies the issue row and links it to the case.</div>
+        </div>`;
+    }
+    if(step === 1){
+      return `
+        <div style="width:min(900px,100%)">
+          <div class="schema-scene">
+            <div class="entity">
+              <div class="entity-title">support_cases <span class="badge pk">PK</span></div>
+              <div class="entity-row"><span class="name">MCS-DEMO</span><span>support case</span><span>one row = one case</span></div>
+            </div>
+            <div class="connector"></div>
+            <div class="entity">
+              <div class="entity-title">issue_records <span><span class="badge pk">case_id = PK</span> <span class="badge fk">FK</span></span></div>
+              <div class="entity-row"><span class="name">MCS-DEMO</span><span>LATE_DELIVERY</span><span>Issue 1</span></div>
+              <div class="entity-row issue-enter rejected"><span class="name">MCS-DEMO</span><span>MISSING_ITEM</span><span>Issue 2</span></div>
+            </div>
+          </div>
+          <div class="attempt-banner bad">Rejected: MCS-DEMO is already being used as the primary key.</div>
+        </div>`;
+    }
+    return `
+      <div style="width:min(900px,100%)">
+        <div class="schema-scene">
+          <div class="entity">
+            <div class="entity-title">support_cases <span class="badge pk">PK</span></div>
+            <div class="entity-row"><span class="name">MCS-DEMO</span><span>support case</span><span>one row = one case</span></div>
+          </div>
+          <div class="connector"></div>
+          <div class="entity">
+            <div class="entity-title">issue_records <span><span class="badge pk">issue_id = PK</span> <span class="badge fk">case_id = FK</span></span></div>
+            <div class="entity-row accepted"><span class="name">ISS-DEMO-1</span><span>MCS-DEMO</span><span>LATE_DELIVERY</span></div>
+            <div class="entity-row accepted"><span class="name">ISS-DEMO-2</span><span>MCS-DEMO</span><span>MISSING_ITEM</span></div>
+          </div>
+        </div>
+        <div class="attempt-banner good">Accepted: different issue identities can point to the same case.</div>
+      </div>`;
+  }
+
+  const schemaTakeaways = [
+    'The old model makes case_id do two jobs: identify the issue row and point to its parent case.',
+    'A second issue needs the same case_id, but a primary key cannot repeat. The business requirement exposes a modelling problem.',
+    'Move row identity to issue_id. Keep case_id as the parent link. Now one case can own many issue rows.'
+  ];
+  const schemaActions = ['Try adding a second issue','Evolve the schema','Done'];
+
+  function renderSchema(){
+    $('#schemaVisual').innerHTML = schemaMarkup(schemaStep);
+    $('#schemaTakeaway').textContent = schemaTakeaways[schemaStep];
+    $('#schemaStepPill').textContent = `Step ${schemaStep+1} of 3`;
+    $('#schemaBack').disabled = schemaStep === 0;
+    $('#schemaNext').disabled = schemaStep === 2;
+    $('#schemaNext').textContent = schemaActions[schemaStep];
+  }
+
+  function migrationTable(step){
+    const rows = [
+      {case:'MCS-000001', type:'RETURN_REQUEST'},
+      {case:'MCS-000002', type:'RETURN_REQUEST'},
+      {case:'MCS-000003', type:'PHYSICAL_DAMAGE'}
+    ];
+    return `
+      <div class="db-table">
+        <div class="db-head"><div>issue_id</div><div>case_id</div><div>issue_type</div><div>row identity</div></div>
+        ${rows.map((r,i)=>{
+          const id = step >= 2 ? `ISS-${String(i+1).padStart(6,'0')}` : (step >= 1 ? 'NULL' : '—');
+          const identity = step >= 3 ? 'issue_id' : 'case_id';
+          return `<div class="db-row ${step===2?'flash':''}">
+            <div class="mono">${id}</div>
+            <div class="mono">${r.case}</div>
+            <div>${r.type}</div>
+            <div><span class="badge ${step>=3?'ok':'pk'}">${identity}</span></div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  function migrationMarkup(step){
+    const blocks = [
+      {
+        sql:`CREATE TEMPORARY TABLE class8_original_issue_evidence AS\nSELECT case_id, issue_type, issue_details,\n       reported_delivery_date, evidence_status, extract_generated_at\nFROM issue_records;`,
+        extra:`<div class="attempt-banner good">Before changing anything, keep the original evidence for comparison.</div>`
+      },
+      {
+        sql:`ALTER TABLE issue_records\nADD COLUMN issue_id VARCHAR(16) NULL FIRST;`,
+        extra:`<div class="migration-note">A new column exists, but old rows do not have IDs yet.</div>`
+      },
+      {
+        sql:`UPDATE issue_records\nSET issue_id = CONCAT('ISS-', SUBSTRING(case_id, 5));`,
+        extra:`<div class="transform">
+          <div class="transform-box">MCS-000001</div><div class="arrow">→</div>
+          <div class="transform-box">000001</div><div class="arrow">→</div>
+          <div class="transform-box">ISS-000001</div>
+        </div>`
+      },
+      {
+        sql:`ALTER TABLE issue_records\nADD INDEX idx_issue_records_case_id (case_id);\n\nALTER TABLE issue_records\nDROP PRIMARY KEY,\nMODIFY issue_id VARCHAR(16) NOT NULL,\nADD CONSTRAINT pk_issue_records PRIMARY KEY (issue_id);`,
+        extra:`<div class="attempt-banner good">The uniqueness rule has moved from case_id to issue_id.</div>`
+      },
+      {
+        sql:`SELECT issue_id, case_id, issue_type\nFROM issue_records\nWHERE case_id = 'MCS-000001'\nORDER BY issue_id;`,
+        extra:`<div class="db-table">
+          <div class="db-head"><div>issue_id</div><div>case_id</div><div>issue_type</div><div>result</div></div>
+          <div class="db-row"><div class="mono">ISS-000001</div><div class="mono">MCS-000001</div><div>RETURN_REQUEST</div><div><span class="badge ok">valid</span></div></div>
+          <div class="db-row flash"><div class="mono">ISSX-000001</div><div class="mono">MCS-000001</div><div>REFUND_DELAY</div><div><span class="badge ok">valid</span></div></div>
+        </div>`
+      }
+    ];
+    const b = blocks[step];
+    return `<div class="migration-scene">
+      <div class="sql-card"><div class="sql-label">SQL step ${step+1}</div>${b.sql}</div>
+      ${step < 4 ? migrationTable(step) : ''}
+      ${b.extra}
+    </div>`;
+  }
+
+  const migrationTakeaways = [
+    'Preserve what matters before you change it. Matching row counts later would not prove that the old issue details stayed unchanged.',
+    'Adding the column changes the structure, but not the identity rule. case_id is still the primary key at this point.',
+    'Backfill gives every existing row the new identity it will need before that column can become the primary key.',
+    'The decisive step is moving uniqueness from case_id to issue_id. That is what allows repeated case_id values.',
+    'Verification proves the new relationship can actually be represented: two different issues, one shared parent case.'
+  ];
+  const migrationActions = ['Add issue_id','Backfill old rows','Move the primary key','Verify result','Done'];
+
+  function renderMigration(){
+    $('#migrationVisual').innerHTML = migrationMarkup(migrationStep);
+    $('#migrationTakeaway').textContent = migrationTakeaways[migrationStep];
+    $('#migrationStepPill').textContent = `Step ${migrationStep+1} of 5`;
+    $('#migrationBack').disabled = migrationStep === 0;
+    $('#migrationNext').disabled = migrationStep === 4;
+    $('#migrationNext').textContent = migrationActions[migrationStep];
+  }
+
+  function joinMarkup(step){
+    if(step === 0){
+      return `<div class="join-scene">
+        <div class="join-top">
+          <div class="stack">
+            <div class="stack-title">issue_records</div>
+            <div class="chip">Issue A • MCS-DEMO</div>
+            <div class="chip">Issue B • MCS-DEMO</div>
+          </div>
+          <div class="join-symbol">JOIN<br><span style="font-size:10px;font-weight:700">ON case_id</span></div>
+          <div class="stack">
+            <div class="stack-title">human_reviews</div>
+            <div class="chip review">Review 1 • 40 min</div>
+            <div class="chip review">Review 2 • 52 min</div>
+            <div class="chip review">Review 3 • 30 min</div>
+          </div>
+        </div>
+        <div class="join-result">2 issues × 3 reviews = <span style="color:var(--muted)">?</span></div>
+      </div>`;
+    }
+    if(step === 1){
+      const pairs = [];
+      ['A','B'].forEach((issue,ii)=>[1,2,3].forEach((review,ri)=>{
+        const mins=[40,52,30][ri];
+        pairs.push(`<div class="pair" style="animation-delay:${(ii*3+ri)*.05}s">Issue ${issue} + Review ${review}<br><span style="color:var(--muted)">${mins} min</span></div>`);
+      }));
+      return `<div class="join-scene">
+        <div class="join-matrix">${pairs.join('')}</div>
+        <div class="join-result">2 × 3 = <span class="danger">6 joined rows</span></div>
+        <div class="attempt-banner bad">SUM(handling_minutes) after this join = 244 min instead of 122 min.</div>
+      </div>`;
+    }
+    return `<div class="join-scene">
+      <div class="summary-strip">
+        <div class="summary-box">issue_records<br><b>2 rows</b><span style="color:var(--muted)">GROUP BY case_id</span></div>
+        <div class="arrow">→</div>
+        <div class="summary-box">issue_summary<br><b>1 row per case</b></div>
+      </div>
+      <div class="summary-strip">
+        <div class="summary-box">human_reviews<br><b>3 rows</b><span style="color:var(--muted)">GROUP BY case_id</span></div>
+        <div class="arrow">→</div>
+        <div class="summary-box">review_summary<br><b>1 row per case</b></div>
+      </div>
+      <div class="fixed-card">Join the summaries → 1 case • 2 issues • 3 reviews • 122 minutes</div>
+    </div>`;
+  }
+
+  const joinTakeaways = [
+    'Both child tables contain multiple rows for the same case. Joining them directly on case_id creates every matching combination.',
+    'The six rows are not six stored cases. They are issue-review combinations. A successful query can still change the meaning of a report.',
+    'Calculate each child total at case grain first, then join the one-row-per-case summaries. The business total stays correct.'
+  ];
+  const joinActions = ['Run the JOIN','Repair the report','Done'];
+
+  function renderJoin(){
+    $('#joinVisual').innerHTML = joinMarkup(joinStep);
+    $('#joinTakeaway').textContent = joinTakeaways[joinStep];
+    $('#joinStepPill').textContent = `Step ${joinStep+1} of 3`;
+    $('#joinBack').disabled = joinStep === 0;
+    $('#joinNext').disabled = joinStep === 2;
+    $('#joinNext').textContent = joinActions[joinStep];
+  }
+
+  function normMarkup(step){
+    if(step === 0){
+      const rows = ['MR-101','MR-102','MR-103','MR-104'].map(id=>`
+        <div class="order-row"><div>${id}</div><div>USB-C Multi-Port Hub</div><div>Electronics</div></div>`).join('');
+      return `<div class="norm-scene">
+        <div class="orders-grid">
+          <div class="orders-head"><div>order_id</div><div>product_name</div><div>current_category</div></div>
+          ${rows}
+        </div>
+        <div class="migration-note">The same maintained product fact is copied into every order row.</div>
+      </div>`;
+    }
+    if(step === 1){
+      const rows = [
+        ['MR-101','Accessories'],
+        ['MR-102','Accessories'],
+        ['MR-103','Electronics'],
+        ['MR-104','Accessories']
+      ].map((r,i)=>`
+        <div class="order-row ${i===2?'conflict':''}"><div>${r[0]}</div><div>USB-C Multi-Port Hub</div><div>${r[1]}</div></div>`).join('');
+      return `<div class="norm-scene">
+        <div class="orders-grid">
+          <div class="orders-head"><div>order_id</div><div>product_name</div><div>current_category</div></div>
+          ${rows}
+        </div>
+        <div class="attempt-banner bad">Update anomaly: one product now has two “current” categories.</div>
+      </div>`;
+    }
+    const links = ['MR-101','MR-102','MR-103','MR-104'].map(id=>`
+      <div class="link-row"><span>${id}</span><b>P-101</b></div>`).join('');
+    return `<div class="norm-scene">
+      <div class="norm-split">
+        <div>
+          <div class="stack-title">orders now keep the relationship</div>
+          <div class="link-list">${links}</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="product-card">
+          <div class="kicker">products</div>
+          <div class="name">P-101 • USB-C Multi-Port Hub</div>
+          <div class="fact">current_category<br><b>Accessories</b></div>
+        </div>
+      </div>
+      <div class="fixed-card">Update the category once in products. Every order still points to the same product.</div>
+    </div>`;
+  }
+
+  const normTakeaways = [
+    'A maintained product fact is repeated across order rows. That makes consistency depend on updating every copy correctly.',
+    'The contradiction reveals the real question: does current_category describe an order, or the product itself?',
+    'Keep maintained product facts with the product. Repeating product_id in orders is useful because it expresses the relationship.'
+  ];
+  const normActions = ['Change the category','Normalize the model','Done'];
+
+  function renderNorm(){
+    $('#normVisual').innerHTML = normMarkup(normStep);
+    $('#normTakeaway').textContent = normTakeaways[normStep];
+    $('#normStepPill').textContent = `Step ${normStep+1} of 3`;
+    $('#normBack').disabled = normStep === 0;
+    $('#normNext').disabled = normStep === 2;
+    $('#normNext').textContent = normActions[normStep];
+  }
+
+  function wireStepper(prefix, getter, setter, max, render){
+    $('#' + prefix + 'Next').addEventListener('click', () => {
+      const v = getter();
+      if(v < max){ setter(v+1); render(); }
+    });
+    $('#' + prefix + 'Back').addEventListener('click', () => {
+      const v = getter();
+      if(v > 0){ setter(v-1); render(); }
+    });
+  }
+
+  wireStepper('schema',()=>schemaStep,v=>schemaStep=v,2,renderSchema);
+  wireStepper('migration',()=>migrationStep,v=>migrationStep=v,4,renderMigration);
+  wireStepper('join',()=>joinStep,v=>joinStep=v,2,renderJoin);
+  wireStepper('norm',()=>normStep,v=>normStep=v,2,renderNorm);
+
+  $('#resetCurrent').addEventListener('click', () => {
+    if(activeTab==='schema'){schemaStep=0;renderSchema();}
+    if(activeTab==='migration'){migrationStep=0;renderMigration();}
+    if(activeTab==='join'){joinStep=0;renderJoin();}
+    if(activeTab==='normalization'){normStep=0;renderNorm();}
+  });
+
+  root.addEventListener('keydown', (e) => {
+    if(e.target && ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+    if(['1','2','3','4'].includes(e.key)){
+      setTab(tabs[Number(e.key)-1]);
+      return;
+    }
+    if(e.key === 'ArrowRight'){
+      const btn = activeTab==='schema' ? $('#schemaNext')
+        : activeTab==='migration' ? $('#migrationNext')
+        : activeTab==='join' ? $('#joinNext')
+        : $('#normNext');
+      if(btn && !btn.disabled) btn.click();
+    }
+    if(e.key === 'ArrowLeft'){
+      const btn = activeTab==='schema' ? $('#schemaBack')
+        : activeTab==='migration' ? $('#migrationBack')
+        : activeTab==='join' ? $('#joinBack')
+        : $('#normBack');
+      if(btn && !btn.disabled) btn.click();
+    }
+  });
+
+  renderSchema();
+  renderMigration();
+  renderJoin();
+  renderNorm();
+})();
+</script>
+</body>
+</html>

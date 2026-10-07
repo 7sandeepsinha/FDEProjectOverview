@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FDE Class 8 - CTE Walkthrough</title>
+<style>
+:root{
+  --bg:#f7f9fc;--panel:#fff;--ink:#182033;--muted:#6b768c;--line:#dfe5ee;
+  --soft:#f2f5f9;--accent:#3157d5;--accent-soft:#eef2ff;
+  --good:#0a7a56;--good-soft:#eaf8f2;--bad:#b42318;--bad-soft:#fff0ee;
+  --shadow:0 14px 36px rgba(28,42,70,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button{font:inherit}
+.app{max-width:1160px;margin:0 auto;padding:22px}
+.header{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:14px}
+.eyebrow{color:var(--accent);font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+h1{margin:0;font-size:28px;line-height:1.12}
+.subtitle{margin:7px 0 0;color:var(--muted);font-size:14px}
+.progress{display:flex;gap:6px;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%;background:#cfd6e3}.dot.active{background:var(--accent)}.dot.done{background:var(--good)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.step-head{padding:18px 22px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.step-title{margin:0;font-size:21px}.step-desc{margin:5px 0 0;color:var(--muted);font-size:13px}
+.step-pill{flex:none;border-radius:999px;padding:6px 10px;background:var(--soft);border:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:800}
+.stage{padding:22px;min-height:590px;display:flex;flex-direction:column;gap:18px}
+.sql-panel{background:#111827;color:#e8edfa;border:1px solid #26314b;border-radius:14px;padding:15px 16px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;white-space:pre-wrap}
+.sql-label{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9db8ff;font-weight:850;margin-bottom:8px}
+.visual{flex:1;display:flex;align-items:center;justify-content:center}.visual-inner{width:min(960px,100%)}
+.caption{border-top:1px solid var(--line);background:#fbfcfe;padding:14px 22px 15px;font-size:14px;line-height:1.45}
+.caption strong{color:var(--accent);margin-right:6px}
+.controls{border-top:1px solid var(--line);padding:14px 22px 18px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:10px 15px;cursor:pointer;font-weight:800}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn:disabled{opacity:.42;cursor:not-allowed}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid-3{display:grid;grid-template-columns:1fr 70px 1fr;gap:14px;align-items:center}
+.table-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.table-title{padding:10px 12px;background:var(--soft);border-bottom:1px solid var(--line);font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.06em}
+.row{display:grid;grid-template-columns:1.15fr 1fr .8fr}.row.two{grid-template-columns:1.2fr 1fr}
+.row>div{padding:10px 11px;border-top:1px solid #edf0f5;font-size:12px}.row.header>div{border-top:none;background:#fafbfd;color:var(--muted);font-size:10px;font-weight:850;text-transform:uppercase}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:750}
+.chip{display:inline-block;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:850}
+.chip.issue{background:var(--accent-soft);color:var(--accent)}.chip.review{background:var(--good-soft);color:var(--good)}
+.arrow{text-align:center;font-size:26px;color:var(--muted);font-weight:900}
+.big-result{text-align:center;border-radius:14px;padding:14px;font-size:17px;font-weight:900}
+.big-result.bad{background:var(--bad-soft);color:var(--bad);border:1px solid #ffd1cc}.big-result.good{background:var(--good-soft);color:var(--good);border:1px solid #c6eadc}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.pair{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;text-align:center;font-size:12px;font-weight:800;animation:pop .3s ease both}
+.summary-box{border:1px solid var(--line);border-radius:14px;background:#fff;padding:14px;text-align:center}
+.summary-box .label{color:var(--muted);font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.05em}.summary-box .value{margin-top:7px;font-size:18px;font-weight:900}
+.operator{margin:14px auto 0;width:max-content;max-width:100%;padding:7px 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line);font-size:11px;font-weight:850;color:var(--muted)}
+.equation{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-weight:900}.equation .num{min-width:54px;padding:8px 10px;border-radius:10px;background:#fff;border:1px solid var(--line);text-align:center}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}.compare-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+.compare-card.bad{border-color:#ffd1cc;background:var(--bad-soft)}.compare-card.good{border-color:#c6eadc;background:var(--good-soft)}
+.compare-title{font-weight:900;margin-bottom:10px}.flow{display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;font-size:12px;font-weight:800}.flow-step{border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:9px 11px;background:rgba(255,255,255,.74);width:100%}
+.grain{margin-top:12px;text-align:center;font-size:13px;color:var(--muted)}.grain b{color:var(--ink)}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (max-width:800px){.grid-2,.compare{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.header{align-items:flex-start;flex-direction:column}}
+@media (max-width:560px){.app{padding:10px}.stage{padding:15px}.step-head,.caption,.controls{padding-left:15px;padding-right:15px}.row,.row.two{grid-template-columns:1fr 1fr}.row>div:nth-child(n+3){display:none}.pairs{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app" id="cteApp">
+  <div class="header">
+    <div>
+      <div class="eyebrow">FDE Class 8 • SQL walkthrough</div>
+      <h1>Why the CTE fixes the report</h1>
+      <p class="subtitle">Follow one case from multiplied rows to a correct case-level result.</p>
+    </div>
+    <div class="progress" aria-label="Progress">
+      <span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-head">
+      <div>
+        <h2 class="step-title" id="stepTitle"></h2>
+        <p class="step-desc" id="stepDesc"></p>
+      </div>
+      <div class="step-pill" id="stepPill"></div>
+    </div>
+
+    <div class="stage">
+      <div class="sql-panel" id="sqlPanel"></div>
+      <div class="visual"><div class="visual-inner" id="visual"></div></div>
+    </div>
+
+    <div class="caption"><strong>What to notice:</strong><span id="takeaway"></span></div>
+
+    <div class="controls">
+      <button class="btn" id="backBtn" type="button">Back</button>
+      <button class="btn primary" id="nextBtn" type="button"></button>
+      <button class="btn" id="restartBtn" type="button">Restart</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById('cteApp');
+  if (!root || root.dataset.ready === '1') return;
+  root.dataset.ready = '1';
+  const $ = s => root.querySelector(s);
+  let step = 0;
+
+  const steps = [
+    {
+      title:'1. Start with the problem',
+      desc:'The raw join is valid SQL, but it multiplies child rows.',
+      sql:`SELECT ir.issue_id, hr.review_id, hr.handling_minutes
+FROM issue_records AS ir
+JOIN human_reviews AS hr
+  ON hr.case_id = ir.case_id
+WHERE ir.case_id = 'MCS-000001';`,
+      takeaway:'Two issues × two reviews creates four combinations. Review minutes are repeated, so SUM becomes 184 instead of 92.',
+      next:'Build issue_summary',
+      visual:`<div class="grid-2">
+        <div class="table-card">
+          <div class="table-title">issue_records</div>
+          <div class="row two header"><div>case_id</div><div>issue</div></div>
+          <div class="row two"><div class="mono">MCS-000001</div><div><span class="chip issue">Issue A</span></div></div>
+          <div class="row two"><div class="mono">MCS-000001</div><div><span class="chip issue">Issue B</span></div></div>
+        </div>
+        <div class="table-card">
+          <div class="table-title">human_reviews</div>
+          <div class="row header"><div>case_id</div><div>review</div><div>minutes</div></div>
+          <div class="row"><div class="mono">MCS-000001</div><div><span class="chip review">Review 1</span></div><div>27</div></div>
+          <div class="row"><div class="mono">MCS-000001</div><div><span class="chip review">Review 2</span></div><div>65</div></div>
+        </div>
+      </div>
+      <div class="pairs">
+        <div class="pair">Issue A + Review 1 → 27 min</div>
+        <div class="pair" style="animation-delay:.05s">Issue A + Review 2 → 65 min</div>
+        <div class="pair" style="animation-delay:.10s">Issue B + Review 1 → 27 min</div>
+        <div class="pair" style="animation-delay:.15s">Issue B + Review 2 → 65 min</div>
+      </div>
+      <div class="big-result bad" style="margin-top:14px">SUM after raw join = 184 min</div>`
+    },
+    {
+      title:'2. First CTE: summarize issues',
+      desc:'Reduce many issue rows to one row per case before any join happens.',
+      sql:`WITH issue_summary AS (
+    SELECT case_id,
+           COUNT(*) AS issue_count
+    FROM issue_records
+    GROUP BY case_id
+)`,
+      takeaway:'GROUP BY case_id changes the grain. Two issue rows become one case-level summary row.',
+      next:'Build review_summary',
+      visual:`<div class="grid-3">
+        <div class="table-card">
+          <div class="table-title">issue_records</div>
+          <div class="row two header"><div>case_id</div><div>issue</div></div>
+          <div class="row two"><div class="mono">MCS-000001</div><div>Issue A</div></div>
+          <div class="row two"><div class="mono">MCS-000001</div><div>Issue B</div></div>
+          <div class="operator">GROUP BY case_id</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="summary-box">
+          <div class="label">issue_summary</div>
+          <div class="value mono">MCS-000001</div>
+          <div style="margin-top:8px"><span class="chip issue">issue_count = 2</span></div>
+        </div>
+      </div>
+      <div class="grain">Grain now: <b>one row = one case</b></div>`
+    },
+    {
+      title:'3. Second CTE: summarize reviews',
+      desc:'Count reviews and add their handling time before joining to anything else.',
+      sql:`review_summary AS (
+    SELECT case_id,
+           COUNT(*) AS review_count,
+           SUM(handling_minutes) AS total_handling_minutes
+    FROM human_reviews
+    GROUP BY case_id
+)`,
+      takeaway:'The review total is calculated while each review exists once. 27 + 65 = 92, so the correct total is preserved.',
+      next:'Join the summaries',
+      visual:`<div class="grid-3">
+        <div class="table-card">
+          <div class="table-title">human_reviews</div>
+          <div class="row header"><div>case_id</div><div>review</div><div>minutes</div></div>
+          <div class="row"><div class="mono">MCS-000001</div><div>Review 1</div><div>27</div></div>
+          <div class="row"><div class="mono">MCS-000001</div><div>Review 2</div><div>65</div></div>
+          <div class="operator">GROUP BY case_id</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="summary-box">
+          <div class="label">review_summary</div>
+          <div class="value mono">MCS-000001</div>
+          <div class="equation">
+            <span class="num">2 reviews</span>
+            <span class="num">27 + 65</span>
+            <span class="num">92 min</span>
+          </div>
+        </div>
+      </div>
+      <div class="grain">Grain now: <b>one row = one case</b></div>`
+    },
+    {
+      title:'4. Join the summaries, not the raw child rows',
+      desc:'Both intermediate results now have the same row meaning.',
+      sql:`SELECT sc.case_id,
+       COALESCE(i.issue_count, 0) AS issue_count,
+       COALESCE(r.review_count, 0) AS review_count,
+       r.total_handling_minutes
+FROM support_cases AS sc
+LEFT JOIN issue_summary AS i
+  ON i.case_id = sc.case_id
+LEFT JOIN review_summary AS r
+  ON r.case_id = sc.case_id
+WHERE sc.case_id = 'MCS-000001';`,
+      takeaway:'Because each summary already has one row per case, the final joins do not repeat the review total.',
+      next:'Compare wrong vs right',
+      visual:`<div class="grid-3">
+        <div class="summary-box">
+          <div class="label">issue_summary</div>
+          <div class="value mono">MCS-000001</div>
+          <div style="margin-top:8px"><span class="chip issue">2 issues</span></div>
+        </div>
+        <div class="arrow">+</div>
+        <div class="summary-box">
+          <div class="label">review_summary</div>
+          <div class="value mono">MCS-000001</div>
+          <div style="margin-top:8px"><span class="chip review">2 reviews • 92 min</span></div>
+        </div>
+      </div>
+      <div class="arrow" style="margin:12px 0;transform:none">↓</div>
+      <div class="big-result good">MCS-000001 • 2 issues • 2 reviews • 92 minutes</div>`
+    },
+    {
+      title:'5. The pattern to remember',
+      desc:'The difference is not syntax. It is the grain at which you join.',
+      sql:`-- Wrong idea
+raw issue rows  JOIN  raw review rows
+
+-- Correct idea
+issue_summary   JOIN  review_summary`,
+      takeaway:'Summarize each one-to-many child table to the report grain first. Then join those summaries.',
+      next:'Done',
+      visual:`<div class="compare">
+        <div class="compare-card bad">
+          <div class="compare-title">Wrong path</div>
+          <div class="flow">
+            <div class="flow-step">Raw issue rows</div>
+            <div>+</div>
+            <div class="flow-step">Raw review rows</div>
+            <div>↓</div>
+            <div class="flow-step">4 combinations</div>
+            <div>↓</div>
+            <div class="flow-step"><b>184 minutes</b></div>
+          </div>
+        </div>
+        <div class="compare-card good">
+          <div class="compare-title">Correct path</div>
+          <div class="flow">
+            <div class="flow-step">issue_summary • 1 row/case</div>
+            <div>+</div>
+            <div class="flow-step">review_summary • 1 row/case</div>
+            <div>↓</div>
+            <div class="flow-step">1 case-level row</div>
+            <div>↓</div>
+            <div class="flow-step"><b>92 minutes</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="grain" style="margin-top:16px"><b>Summarize first. Join later.</b></div>`
+    }
+  ];
+
+  function render(){
+    const s = steps[step];
+    $('#stepTitle').textContent = s.title;
+    $('#stepDesc').textContent = s.desc;
+    $('#stepPill').textContent = `Step ${step+1} of ${steps.length}`;
+    $('#sqlPanel').innerHTML = `<div class="sql-label">SQL in focus</div>${s.sql}`;
+    $('#visual').innerHTML = s.visual;
+    $('#takeaway').textContent = s.takeaway;
+    $('#backBtn').disabled = step === 0;
+    $('#nextBtn').disabled = step === steps.length - 1;
+    $('#nextBtn').textContent = s.next;
+    root.querySelectorAll('.dot').forEach((d,i)=>{
+      d.classList.toggle('active', i === step);
+      d.classList.toggle('done', i < step);
+    });
+  }
+
+  $('#nextBtn').addEventListener('click',()=>{ if(step < steps.length-1){ step++; render(); } });
+  $('#backBtn').addEventListener('click',()=>{ if(step > 0){ step--; render(); } });
+  $('#restartBtn').addEventListener('click',()=>{ step=0; render(); });
+  render();
+})();
+</script>
+</body>
+</html>
