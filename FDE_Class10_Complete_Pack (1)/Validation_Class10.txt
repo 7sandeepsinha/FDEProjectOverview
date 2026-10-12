@@ -1,0 +1,26 @@
+CLASS 10 VALIDATION RECORD
+Deterministic independent result model: 500000 observations / 25000 source cases.
+Q1 customer observation count: 60.
+Q2 ordered result length: 12.
+Date workload count: 3203.
+Exact date predicate identity sets matched, not only counts.
+Q1/Q2/date results stayed identical before and after all three indexes in the
+independent SQLite result model. This verifies logical results only.
+Live SQL embedded in teaching order; opaque A/B/P lookup references removed.
+Review IDs fit Meridian VARCHAR(14); case IDs fit VARCHAR(12).
+No executable DROP DATABASE or reference to the separate Class 9 lab.
+Schedule totals 135 minutes including 7-minute break.
+No MySQL server available. MySQL syntax/runtime, two-session InnoDB waits and
+MySQL optimiser choices are NOT execution-tested here. Rehearse actual server.
+Expected plans are conditional hypotheses. Timings are not fabricated.
+All 27 rendered pages visually inspected. No clipping, overlap or margin overflow.
+Final page count is within the requested 25-30-page range.
+Class 9 handoff reconciled topic by topic; essential concurrency demonstrations
+and every performance section in the supplied Class 10 outline retained.
+Recovery/idempotency/external-effect orientation distinguished from implementation.
+Timings form one continuous 135-minute schedule ending at 02:15.
+Revision checks: introduction precedes preflight and teaching data; independent
+connections appear immediately before the first overlapping-read experiment.
+Live INSERT and COMMIT run separately with an explicit success check in between.
+No preparation appendix or required README lookup remains in the delivery.
+All four quizzes retain C/A/D/B answers. All thirteen timing ranges are continuous.

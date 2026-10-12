@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transaction Animation</title>
+  <style>
+    :root{--bg:#f8fafc;--panel:#ffffff;--card:#ffffff;--text:#172033;--muted:#667085;--border:#d0d5dd;--accent:#2563eb;--accent-bg:#dbeafe;--success:#16a34a}
+    *{box-sizing:border-box} body{margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    #tx-flow{width:100%;max-width:900px;margin:0 auto}.stage{border:1px solid var(--border);border-radius:18px;background:var(--panel);padding:22px 18px 18px;min-height:430px}
+    .top{max-width:570px;margin:0 auto;text-align:center}.title{font-size:18px;font-weight:700}.caption{font-size:14px;color:var(--muted);margin-top:6px}
+    .status{display:inline-flex;margin-top:10px;padding:7px 13px;border:1px solid var(--border);border-radius:999px;background:var(--card);font-size:14px;font-weight:800;letter-spacing:.03em}
+    .tray{position:relative;max-width:570px;margin:38px auto 0;border:2px solid var(--border);border-top-width:5px;border-radius:0 0 18px 18px;background:var(--card);padding:52px 18px 22px;min-height:220px;transition:.35s ease}
+    .tray-label{position:absolute;top:-21px;left:50%;transform:translateX(-50%);padding:7px 17px;border:2px solid var(--border);border-radius:999px;background:var(--card);font-weight:800}
+    .tray-note{font-size:14px;color:var(--muted);text-align:center}.items{display:grid;gap:12px;margin-top:18px}.item{opacity:0;transform:translateY(-14px);border:1px solid var(--border);border-radius:14px;padding:14px 16px;background:var(--card);transition:.4s ease}.item.show{opacity:1;transform:translateY(0)}
+    .item-title{font-weight:800;margin-bottom:4px}.item-text{font-size:14px}.result{max-width:570px;margin:16px auto 0;min-height:58px;border:1px dashed var(--border);border-radius:14px;background:var(--card);padding:13px 15px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700}
+    .controls{max-width:570px;margin:18px auto 0;display:flex;gap:12px;justify-content:space-between}button{min-width:110px;min-height:44px;border-radius:12px;padding:10px 16px;font-weight:800;border:1px solid var(--border);background:var(--card);cursor:pointer}button.primary{background:var(--accent-bg);border-color:var(--accent)}button:disabled{opacity:.42;cursor:not-allowed}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+    .commit{outline:2px solid var(--success);outline-offset:2px}.rollback .item{opacity:.2;transform:translateY(8px)}.rollback{opacity:.82}@media(max-width:520px){body{padding:12px}.controls{gap:8px}button{min-width:96px}}@media(prefers-reduced-motion:reduce){.item,.tray{transition:none}}
+  </style>
+</head>
+<body>
+<div id="tx-flow">
+  <div class="stage">
+    <div class="top">
+      <div class="title">A transaction groups related database changes</div>
+      <div id="step-caption" class="caption">Step 1 of 6 — Begin the transaction</div>
+      <div id="status" class="status" aria-live="polite">NOT COMMITTED YET</div>
+    </div>
+    <div id="tray" class="tray" aria-label="Transaction tray">
+      <div class="tray-label">TRANSACTION</div>
+      <div id="tray-note" class="tray-note">The transaction is open. Nothing has been accepted yet.</div>
+      <div class="items">
+        <div id="case-item" class="item"><div class="item-title">1. Case update</div><div class="item-text">Current case → <strong>REVIEWED / NEEDS_INFO</strong></div></div>
+        <div id="event-item" class="item"><div class="item-title">2. Event insert</div><div class="item-text">Review event → <strong>A chose NEEDS_INFO</strong></div></div>
+      </div>
+    </div>
+    <div id="result" class="result" aria-live="polite">START TRANSACTION opens the group.</div>
+    <div class="controls"><button type="button" id="back">← Back</button><button type="button" id="next" class="primary">Next →</button></div>
+  </div>
+</div>
+<script>
+(() => {
+  const caption=document.getElementById('step-caption'),status=document.getElementById('status'),tray=document.getElementById('tray'),trayNote=document.getElementById('tray-note'),caseItem=document.getElementById('case-item'),eventItem=document.getElementById('event-item'),result=document.getElementById('result'),back=document.getElementById('back'),next=document.getElementById('next');
+  let step=0;
+  const steps=[
+    {caption:'Step 1 of 6 — Begin the transaction',status:'NOT COMMITTED YET',note:'The transaction is open. Nothing has been accepted yet.',result:'START TRANSACTION opens the group.',caseVisible:false,eventVisible:false,state:''},
+    {caption:'Step 2 of 6 — Add the case update',status:'NOT COMMITTED YET',note:'The first change is inside the transaction.',result:'The case update is visible here, but it has not been accepted yet.',caseVisible:true,eventVisible:false,state:''},
+    {caption:'Step 3 of 6 — Add the event insert',status:'NOT COMMITTED YET',note:'Both required changes are now inside the same transaction.',result:'Both changes are staged together. They are still NOT COMMITTED YET.',caseVisible:true,eventVisible:true,state:''},
+    {caption:'Step 4 of 6 — COMMIT path',status:'COMMITTED',note:'The complete transaction is accepted.',result:'COMMIT accepts both changes together.',caseVisible:true,eventVisible:true,state:'commit'},
+    {caption:'Step 5 of 6 — Return to the unfinished transaction',status:'NOT COMMITTED YET',note:'Before either ending, both changes are still unfinished.',result:'From this same point, the transaction could instead be cancelled.',caseVisible:true,eventVisible:true,state:''},
+    {caption:'Step 6 of 6 — ROLLBACK path',status:'ROLLED BACK',note:'The unfinished transaction is cancelled.',result:'ROLLBACK cancels both uncommitted changes.',caseVisible:true,eventVisible:true,state:'rollback'}
+  ];
+  function render(){const s=steps[step];caption.textContent=s.caption;status.textContent=s.status;trayNote.textContent=s.note;result.textContent=s.result;caseItem.classList.toggle('show',s.caseVisible);eventItem.classList.toggle('show',s.eventVisible);tray.classList.remove('commit','rollback');if(s.state)tray.classList.add(s.state);back.disabled=step===0;next.disabled=step===steps.length-1;}
+  back.addEventListener('click',()=>{if(step>0){step--;render();}});next.addEventListener('click',()=>{if(step<steps.length-1){step++;render();}});render();
+})();
+</script>
+</body>
+</html>

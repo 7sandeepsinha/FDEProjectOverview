@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Class 9 Live Lab · Transactions, locks and isolation levels</title>
+<style>
+:root{
+  --bg:#e8edef; --panel:#fbfcfc; --panel2:#f0f4f5; --ink:#15202a; --muted:#5a6876; --line:#d3dce1; --line2:#b6c3cc;
+  --a:#2456d6; --a-soft:#dbe5fc; --a-ink:#1a3d9c; --b:#a3246f; --b-soft:#f6dbeb; --b-ink:#7b1a53;
+  --ok:#16803f; --ok-soft:#d6efdf; --bad:#c62f3a; --bad-soft:#f9dadd; --warn:#a56a00; --warn-soft:#fcecb5;
+  --lock:#0e7a80; --lock-soft:#d0eced; --code:#eef3f5; --shadow:0 1px 2px rgba(10,30,45,.08),0 10px 28px -16px rgba(10,30,45,.35);
+  --kw:#8a35b8; --str:#b0521a; --num:#0a7a9a; --cmt:#7a8794; --fn:#1b7f5c;
+  --sans:"Avenir Next","Segoe UI","Helvetica Neue",ui-sans-serif,system-ui,sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d131a; --panel:#141c26; --panel2:#1a2430; --ink:#e3ebf2; --muted:#93a4b4; --line:#26323f; --line2:#364555;
+    --a:#7a9dff; --a-soft:#1b2a52; --a-ink:#aec3ff; --b:#f276b8; --b-soft:#4a1c37; --b-ink:#ffb4da;
+    --ok:#4ccb80; --ok-soft:#163a27; --bad:#ff6d76; --bad-soft:#4a1d23; --warn:#f2bb3d; --warn-soft:#42340f;
+    --lock:#48c6cd; --lock-soft:#11403f; --code:#0f1822; --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -14px rgba(0,0,0,.7);
+    --kw:#c79bff; --str:#ffa56b; --num:#6dd3f0; --cmt:#75879a; --fn:#6fe0b0; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d131a; --panel:#141c26; --panel2:#1a2430; --ink:#e3ebf2; --muted:#93a4b4; --line:#26323f; --line2:#364555;
+  --a:#7a9dff; --a-soft:#1b2a52; --a-ink:#aec3ff; --b:#f276b8; --b-soft:#4a1c37; --b-ink:#ffb4da;
+  --ok:#4ccb80; --ok-soft:#163a27; --bad:#ff6d76; --bad-soft:#4a1d23; --warn:#f2bb3d; --warn-soft:#42340f;
+  --lock:#48c6cd; --lock-soft:#11403f; --code:#0f1822; --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -14px rgba(0,0,0,.7);
+  --kw:#c79bff; --str:#ffa56b; --num:#6dd3f0; --cmt:#75879a; --fn:#6fe0b0; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{font-size:16px;scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:1rem/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:700;margin:0;letter-spacing:-.01em}
+h3{font-size:1.45rem} h4{font-size:1.1rem}
+p{margin:.35rem 0}
+code,pre{font-family:var(--mono)}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.muted{color:var(--muted)} .fine{font-size:.82rem}
+[hidden]{display:none!important}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;padding:.65rem 1.2rem;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+.brand h1{font-size:1.35rem;line-height:1.1}
+.brand .sub{display:block;color:var(--muted);font-size:.82rem;max-width:34rem}
+.tabs{display:flex;gap:.3rem;margin-left:auto;flex-wrap:wrap}
+.tab-btn{border:0;background:transparent;padding:.55rem 1rem;border-radius:.6rem;cursor:pointer;font-weight:650;color:var(--muted)}
+.tab-btn:hover{background:var(--panel2);color:var(--ink)}
+.tab-btn[aria-selected="true"]{background:var(--ink);color:var(--panel)}
+.tools{display:flex;gap:.35rem}
+main{padding:1rem 1.2rem 2.5rem;max-width:2000px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:.8rem;box-shadow:var(--shadow)}
+
+/* buttons / controls */
+.btn{border:1px solid var(--line2);background:var(--panel);padding:.45rem .9rem;border-radius:.55rem;cursor:pointer;font-weight:600;white-space:nowrap;transition:transform .08s,background .15s}
+.btn:hover:not(:disabled){background:var(--panel2)} .btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.btn.primary:hover:not(:disabled){background:var(--ink);filter:brightness(1.2)}
+.btn.run{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.run:hover:not(:disabled){background:var(--ok);filter:brightness(1.1)}
+.btn.ghost:hover:not(:disabled){background:var(--panel2)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.big{padding:.7rem 1.2rem;font-size:1.05rem}
+.btn.go,.btn.go:hover:not(:disabled){background:var(--ok);border-color:var(--ok);color:#fff} .btn.stop,.btn.stop:hover:not(:disabled){background:var(--bad);border-color:var(--bad);color:#fff} .btn.go:hover:not(:disabled),.btn.stop:hover:not(:disabled){filter:brightness(1.12)}
+.push{margin-left:auto}
+.sel{border:1px solid var(--line2);background:var(--panel);border-radius:.5rem;padding:.35rem .5rem;max-width:100%}
+.sel.big{font-size:1rem;padding:.5rem .7rem;min-width:18rem;font-weight:600}
+.chk{display:inline-flex;align-items:center;gap:.35rem;font-size:.88rem;color:var(--muted);cursor:pointer}
+.chk input{accent-color:var(--ink);width:1rem;height:1rem}
+.dot{display:inline-block;width:.8rem;height:.8rem;border-radius:50%;background:var(--muted)}
+.dot-A{background:var(--a)} .dot-B{background:var(--b)}
+.who{display:inline-grid;place-items:center;width:1.5rem;height:1.5rem;border-radius:.4rem;font:700 .8rem var(--sans);color:#fff;background:var(--muted);flex:none}
+.who-A{background:var(--a)} .who-B{background:var(--b)}
+.pill{display:inline-block;padding:.08rem .5rem;border-radius:99px;font-size:.74rem;font-weight:650;white-space:nowrap;margin:.1rem .2rem .1rem 0}
+.p-A{background:var(--a-soft);color:var(--a-ink)} .p-B{background:var(--b-soft);color:var(--b-ink)} .p-lock{background:var(--lock-soft);color:var(--lock)} .p-ok{background:var(--ok-soft);color:var(--ok)}
+.t-c{color:var(--cmt);font-style:italic} .t-s{color:var(--str)} .t-n{color:var(--num)} .t-k{color:var(--kw);font-weight:600} .t-f{color:var(--fn)}
+
+/* sub tabs */
+.subtabs{display:flex;gap:.4rem;margin-bottom:.9rem;flex-wrap:wrap}
+.subtab{border:1px solid var(--line2);background:var(--panel);padding:.5rem 1rem;border-radius:99px;cursor:pointer;font-weight:650}
+.subtab.on{background:var(--a);border-color:var(--a);color:#fff}
+.modebar{display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0 .9rem}
+.mode{border:1px solid var(--line2);background:var(--panel);padding:.4rem .85rem;border-radius:.55rem;cursor:pointer;font-weight:600}
+.mode.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+
+/* lab */
+.lessonbar{padding:.8rem 1rem;margin-bottom:.9rem}
+.lb-top{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap}
+.steps{display:flex;gap:.3rem;flex-wrap:wrap}
+.stp{display:inline-flex;align-items:center;gap:.25rem;padding:.12rem .5rem .12rem .15rem;border-radius:99px;font-size:.8rem;font-weight:700;border:1px solid var(--line2);color:var(--muted);background:var(--panel2)}
+.stp i{font-style:normal;display:grid;place-items:center;width:1.1rem;height:1.1rem;border-radius:50%;color:#fff;font-size:.65rem}
+.stp-A i{background:var(--a)} .stp-B i{background:var(--b)}
+.stp.done{opacity:.55} .stp.cur{border-color:var(--ink);color:var(--ink);background:var(--panel);box-shadow:0 0 0 2px var(--line2)}
+.lnote{margin-top:.6rem;padding:.65rem .9rem;border-radius:.6rem;background:var(--panel2);min-height:3.2rem;font-size:1.02rem}
+.lnote .ask b{color:var(--a-ink)} .lnote .expect{color:var(--ok);margin-top:.3rem} .lnote .expect b{color:var(--ok)}
+.lab-grid{display:grid;grid-template-columns:minmax(21rem,29%) 1fr;gap:.9rem;align-items:start}
+.dbpane{padding:.8rem;overflow-x:auto;position:sticky;top:calc(env(safe-area-inset-top,0px) + 4.6rem);max-height:calc(100vh - 6rem);overflow:auto}
+.pane-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem}
+.tbl{margin-bottom:.8rem}
+.tbl-h{display:flex;justify-content:space-between;align-items:baseline;padding:.15rem .1rem}
+.tn{font:700 .95rem var(--mono)} .cnt{font-size:.75rem;color:var(--muted)}
+.dbt{width:100%;border-collapse:collapse;font-size:.85rem;font-family:var(--mono);background:var(--panel2);border-radius:.5rem;overflow:hidden}
+.dbt th{text-align:left;font:600 .72rem var(--sans);color:var(--muted);padding:.3rem .45rem;border-bottom:1px solid var(--line)}
+.dbt td{padding:.3rem .45rem;border-bottom:1px solid var(--line);vertical-align:top}
+.dbt tr:last-child td{border-bottom:0}
+.dbt td.tags{white-space:normal;min-width:3rem}
+.dbt td.empty,td.empty{color:var(--muted);font-style:italic;text-align:center;font-family:var(--sans)}
+.nul{color:var(--muted);font-size:.8em}
+tr.pend-A{background:var(--a-soft)} tr.pend-B{background:var(--b-soft)}
+tr.del td{text-decoration:line-through;opacity:.75}
+tr.ghost td{border-top:1px dashed var(--line2)}
+s.was{color:var(--muted);margin-right:.35rem;text-decoration:line-through}
+b.now{font-weight:800} .now-A{color:var(--a-ink)} .now-B{color:var(--b-ink)}
+tr.flash{animation:flash 1.3s ease-out}
+@keyframes flash{0%{background:var(--ok-soft);box-shadow:inset 3px 0 0 var(--ok)}100%{background:transparent;box-shadow:inset 3px 0 0 transparent}}
+.legend{display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.4rem}
+.sessions{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;min-width:0}
+.sess{background:var(--panel);border:1px solid var(--line);border-radius:.8rem;box-shadow:var(--shadow);padding:.7rem;display:flex;flex-direction:column;gap:.5rem;min-width:0;border-top:4px solid var(--a)}
+.sess-B{border-top-color:var(--b)}
+.sess.spot{animation:spot 1s ease-out}
+@keyframes spot{0%{box-shadow:0 0 0 4px var(--a)}100%{box-shadow:var(--shadow)}}
+.sess-B.spot{animation-name:spotb}
+@keyframes spotb{0%{box-shadow:0 0 0 4px var(--b)}100%{box-shadow:var(--shadow)}}
+.s-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap}
+.s-title{display:flex;align-items:center;gap:.45rem;font-size:1.05rem} .conn{color:var(--muted);font-size:.78rem;font-family:var(--mono)}
+.s-ctl{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.badge{padding:.3rem .65rem;border-radius:.5rem;font-size:.82rem;font-weight:650}
+.badge.idle{background:var(--panel2);color:var(--muted)} .badge.open{background:var(--warn-soft);color:var(--warn)} .badge.wait{background:var(--lock-soft);color:var(--lock);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.6}}
+.editor{position:relative;height:10.5rem;border:1px solid var(--line2);border-radius:.55rem;background:var(--code);overflow:hidden}
+.editor pre,.editor textarea{position:absolute;inset:0;margin:0;padding:.65rem .8rem;font:.9rem/1.5 var(--mono);white-space:pre;overflow:auto;border:0;tab-size:2;letter-spacing:0;word-spacing:0}
+.editor pre{pointer-events:none;overflow:hidden;color:var(--ink)}
+.editor textarea{background:transparent;color:transparent;caret-color:var(--ink);resize:none;outline:none;-webkit-text-fill-color:transparent}
+.editor textarea::selection{background:rgba(70,120,255,.35);-webkit-text-fill-color:transparent}
+.editor:focus-within{border-color:var(--ink)}
+.tools-row{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}.tools-row .btn{padding:.4rem .7rem}
+.out{height:clamp(14rem,calc(100vh - 33rem),34rem);overflow:auto;border:1px solid var(--line);border-radius:.55rem;padding:.5rem;background:var(--panel2);display:flex;flex-direction:column;gap:.45rem}
+.out-empty{color:var(--muted);font-style:italic;padding:.6rem}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:.5rem;border-left:4px solid var(--line2);overflow:hidden;flex:none}
+.card.okc{border-left-color:var(--ok)} .card.err{border-left-color:var(--bad);background:var(--bad-soft)} .card.pending{border-left-color:var(--warn)}
+.card-h{display:flex;gap:.5rem;align-items:baseline;padding:.3rem .55rem;border-bottom:1px solid var(--line);font-size:.82rem}
+.card-h .q{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ico{font-weight:800}.card.okc .ico{color:var(--ok)} .card.err .ico{color:var(--bad)}
+.card-b{padding:.4rem .55rem;font-size:.9rem}
+.errmsg{color:var(--bad);font-weight:700;font-family:var(--mono);font-size:.85rem}
+.hint{margin-top:.3rem;font-size:.85rem;color:var(--ink)}
+.okmsg{color:var(--ok);font-weight:600} .foot{font-size:.74rem;color:var(--muted);margin-top:.25rem}
+.waitc{color:var(--lock);font-weight:650} .spin{color:var(--muted)}
+.note-stop{font-size:.82rem;color:var(--warn);padding:.2rem .4rem}
+.gridwrap{overflow:auto;max-width:100%}
+table.grid{border-collapse:collapse;font:.86rem var(--mono)}
+.grid th{background:var(--panel2);padding:.25rem .6rem;text-align:left;border:1px solid var(--line);font-weight:700;white-space:nowrap}
+.grid td{padding:.22rem .6rem;border:1px solid var(--line);white-space:nowrap}
+.grid td.num{text-align:right} .grid .rn{color:var(--muted);text-align:center;width:2rem}
+
+/* animations */
+.anim-head{margin-bottom:.4rem}
+.anim-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:.9rem;align-items:start}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:.8rem;box-shadow:var(--shadow);padding:1rem;min-height:22rem;display:flex;flex-direction:column;gap:.9rem}
+.side{display:flex;flex-direction:column;gap:.6rem;position:sticky;top:calc(env(safe-area-inset-top,0px) + 4.6rem)}
+.side-h{font:700 .78rem var(--sans);color:var(--muted)}
+.sqlpane{background:var(--panel);border:1px solid var(--line);border-radius:.7rem;padding:.5rem;max-height:20rem;overflow:auto;display:flex;flex-direction:column;gap:.4rem;min-height:6rem}
+.sq-empty{color:var(--muted);font-style:italic;padding:.4rem}
+.sq{display:grid;grid-template-columns:auto 1fr;gap:.2rem .5rem;align-items:start;border-left:3px solid var(--a);padding:.25rem .4rem;background:var(--panel2);border-radius:.3rem}
+.sq-B{border-left-color:var(--b)}
+.sq-code{margin:0;font:.84rem/1.45 var(--mono);white-space:pre-wrap;word-break:break-word}
+.sq>.sq-res,.sq>.gridwrap{grid-column:1/-1}
+.sq-res{font-size:.84rem;font-family:var(--mono)} .sq-res.err{color:var(--bad);font-weight:700} .sq-res.ok{color:var(--ok)} .sq-res.wait{color:var(--lock);font-weight:700}
+.caption{display:none;background:var(--ok-soft);border-left:5px solid var(--ok);padding:.7rem .9rem;border-radius:.5rem;font-size:1.02rem;animation:rise .35s ease-out}
+.caption.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.askline{font-size:1rem;color:var(--a-ink);min-height:1.4rem}
+.ctrl{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.end{color:var(--muted);font-style:italic}
+.phone{align-self:center;background:var(--ink);color:var(--panel);padding:.55rem 1.4rem;border-radius:2rem;font-weight:700}
+.bracket{position:relative;border:3px dashed var(--line2);border-radius:1rem;padding:1.9rem .8rem .8rem;transition:border-color .3s,background .3s}
+.bracket.open{border-color:var(--warn);background:var(--warn-soft)}
+.bracket.committed{border:3px solid var(--ok);background:var(--ok-soft)}
+.bracket.rolled{border-color:var(--bad);background:var(--bad-soft)}
+.br-label{position:absolute;top:.35rem;left:.8rem;font-weight:700;font-size:.9rem}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.wcard{background:var(--panel);border:2px solid var(--line2);border-radius:.7rem;padding:.6rem .7rem;transition:all .35s;display:flex;flex-direction:column;gap:.25rem}
+.wc-t{font-weight:700} .wc-s{font-size:.74rem;color:var(--muted)} .wc-b{font-size:.8rem;font-weight:700;color:var(--muted)}
+.wcard.staged{border-color:var(--warn);transform:translateY(-4px);box-shadow:0 8px 16px -10px var(--warn)} .wcard.staged .wc-b{color:var(--warn)}
+.wcard.done{border-color:var(--ok);background:var(--ok-soft)} .wcard.done .wc-b{color:var(--ok)}
+.wcard.cancelled{border-color:var(--bad);opacity:.6} .wcard.cancelled .wc-t{text-decoration:line-through} .wcard.cancelled .wc-b{color:var(--bad)}
+.wcard.failed{border-color:var(--bad);background:var(--bad-soft);animation:shake .45s} .wcard.failed .wc-b{color:var(--bad)}
+.wcard.skipped{border-style:dashed;opacity:.6}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.crash{display:none;position:absolute;right:1rem;top:-1.3rem;font-size:2.4rem} .crash.on{display:block;animation:pop .5s}
+.wins{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.win{border:1px solid var(--line2);border-radius:.7rem;overflow:hidden;background:var(--panel2)}
+.win-t{display:flex;gap:.45rem;align-items:center;padding:.4rem .7rem;font-weight:700;font-size:.88rem;border-bottom:1px solid var(--line);background:var(--panel)}
+.win-A .win-t{border-top:3px solid var(--a)} .win-B .win-t{border-top:3px solid var(--b)}
+.win-b{padding:.5rem .7rem;font-size:1.05rem}
+.w-row{display:flex;justify-content:space-between;padding:.15rem 0} .w-row b{font-family:var(--mono)} .w-row b.diff{background:var(--warn-soft);color:var(--warn);padding:0 .35rem;border-radius:.3rem}
+.w-row.total{margin-top:.3rem;border-top:1px solid var(--line);padding-top:.35rem} .w-row.total.bad b{color:var(--bad)} .w-row.total.bad{color:var(--bad);font-weight:700}
+.banner{display:none;padding:.7rem 1rem;border-radius:.6rem;font-weight:700} .banner.on{display:block;animation:rise .35s}
+.banner.ok{background:var(--ok-soft);color:var(--ok)} .banner.bad{background:var(--bad-soft);color:var(--bad)}
+.a2row{display:grid;grid-template-columns:1fr .85fr 1fr;gap:.8rem;align-items:stretch}
+.browser{border:1px solid var(--line2);border-radius:.7rem;overflow:hidden;background:var(--panel2);display:flex;flex-direction:column;position:relative;min-height:15rem}
+.bar{display:flex;gap:.45rem;align-items:center;padding:.4rem .7rem;background:var(--panel);border-bottom:1px solid var(--line);font-weight:700;font-size:.88rem}
+.br-A .bar{border-top:3px solid var(--a)} .br-B .bar{border-top:3px solid var(--b)}
+.stale{display:none;background:var(--warn-soft);color:var(--warn);font-weight:700;font-size:.82rem;padding:.3rem .7rem;animation:pulse 1.4s infinite} .stale.on{display:block}
+.page{padding:.9rem;flex:1;display:grid;place-items:center}
+.seat{text-align:center;display:flex;flex-direction:column;gap:.35rem;align-items:center}
+.seat.none{color:var(--muted);font-style:italic}
+.sid{font:800 1.5rem var(--serif)} .ver{font:700 .9rem var(--mono);color:var(--muted)}
+.chip{display:inline-block;padding:.15rem .7rem;border-radius:99px;font-weight:800;font-size:.85rem}
+.chip.AVAILABLE{background:var(--ok-soft);color:var(--ok)} .chip.BOOKED{background:var(--b-soft);color:var(--b-ink)}
+.bookbtn{margin-top:.3rem;background:var(--ink);color:var(--panel);padding:.45rem 1rem;border-radius:.5rem;font-weight:700} .bookbtn.off{opacity:.3}
+.toast{display:none;margin:.5rem;padding:.5rem .7rem;border-radius:.5rem;font-weight:650;font-size:.9rem} .toast.on{display:block;animation:rise .3s}
+.toast.ok{background:var(--ok-soft);color:var(--ok)} .toast.warn{background:var(--warn-soft);color:var(--warn)}
+.dbcard{border:2px solid var(--ink);border-radius:.7rem;padding:.7rem;background:var(--panel);display:flex;flex-direction:column;gap:.4rem;align-items:center}
+.db-t{font-weight:700;font-size:.82rem;color:var(--muted)} .who-b{font-size:.85rem}
+.bk{width:100%;padding:.25rem .5rem;border-radius:.4rem;background:var(--ok-soft);color:var(--ok);font:600 .85rem var(--mono)} .bk.bad{background:var(--bad-soft);color:var(--bad)} .bk.none{background:var(--panel2);color:var(--muted)}
+.a3row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;align-items:stretch}
+.lane{border:1px solid var(--line2);border-radius:.7rem;padding:.8rem;background:var(--panel2);display:flex;flex-direction:column;gap:.5rem}
+.lane-A{border-top:4px solid var(--a)} .lane-B{border-top:4px solid var(--b)}
+.lane-t{display:flex;align-items:center;gap:.45rem;font-weight:700}
+.lane-s{padding:.35rem .6rem;border-radius:.45rem;font-weight:650;font-size:.9rem;background:var(--panel);color:var(--muted)}
+.lane-s.open{background:var(--warn-soft);color:var(--warn)} .lane-s.wait{background:var(--lock-soft);color:var(--lock);animation:pulse 1.4s infinite}
+.keyhold{background:var(--lock-soft);color:var(--lock);padding:.35rem .6rem;border-radius:.45rem;font-weight:700;animation:pop .45s}
+.lane-n{font-size:.85rem;color:var(--muted)}
+.lockrow{border:2px solid var(--ink);border-radius:.7rem;padding:.8rem;background:var(--panel);display:flex;flex-direction:column;gap:.4rem;align-items:center;justify-content:center;text-align:center}
+.lk{font-size:3rem;filter:grayscale(1);opacity:.5;transition:all .3s} .lk.on{filter:none;opacity:1;animation:pop .45s}
+.seatc{display:flex;flex-direction:column;gap:.3rem;align-items:center} .lkt{font-weight:700;color:var(--lock)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+
+/* isolation */
+.iso{display:flex;flex-direction:column;gap:.9rem}
+.lvl-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem}
+.lvl{display:flex;flex-direction:column;gap:.15rem;text-align:left;padding:.8rem 1rem;border:2px solid var(--line);background:var(--panel);border-radius:.8rem;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,border-color .12s}
+.lvl:hover{transform:translateY(-2px)} .lvl b{font:800 1.7rem var(--serif);color:var(--muted)} .lvl .ln{font-weight:700;font-size:.85rem} .lvl .lt{font-size:.85rem;color:var(--muted)}
+.lvl.on{border-color:var(--ink);background:var(--panel2)} .lvl.on b{color:var(--ink)}
+.lvl-detail{padding:1rem 1.2rem}
+.d-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:1.4rem}
+.analogy{font-family:var(--serif);font-size:1.12rem;line-height:1.55;border-left:4px solid var(--line2);padding-left:.8rem;margin:.6rem 0}
+.d-sql{margin-bottom:.6rem} .d-sql pre{margin:.2rem 0;background:var(--code);padding:.6rem .8rem;border-radius:.5rem;font-size:.85rem;white-space:pre-wrap}
+.ans{display:flex;flex-wrap:wrap;gap:.35rem}
+.an{padding:.25rem .65rem;border-radius:.5rem;font-weight:700;font-size:.85rem} .an.possible{background:var(--bad-soft);color:var(--bad)} .an.prevented{background:var(--ok-soft);color:var(--ok)}
+.tl-host{padding:1rem 1.2rem}
+.tl-top{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.7rem} .tl-ctl{display:flex;gap:.4rem}
+.tl{--lab:8.5rem;position:relative;display:grid;grid-template-columns:var(--lab) repeat(7,1fr);grid-template-rows:auto repeat(3,minmax(4.6rem,auto));border:1px solid var(--line);border-radius:.6rem;overflow:hidden;background:var(--panel2)}
+.tl-h{padding:.3rem;text-align:center;font:700 .78rem var(--sans);color:var(--muted);border-bottom:1px solid var(--line)} .tl-h.now{color:var(--ink);background:var(--warn-soft)}
+.tl-r{display:flex;align-items:center;padding:.4rem .6rem;font-weight:700;font-size:.85rem;border-top:1px solid var(--line);background:var(--panel)}
+.tl-r1{border-left:4px solid var(--a)} .tl-r2{border-left:4px solid var(--b)} .tl-r0{border-left:4px solid var(--ink)}
+.tc{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:.3rem;display:flex;flex-direction:column;gap:.25rem;justify-content:center} .tc.now{background:rgba(255,200,60,.12)}
+.chip-ev{font-size:.78rem;line-height:1.25;padding:.25rem .45rem;border-radius:.45rem;font-weight:650;background:var(--panel);border:1px solid var(--line2)}
+.chip-ev.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)} .chip-ev.draft{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.chip-ev.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)} .chip-ev.wait{background:var(--lock-soft);border-color:transparent;color:var(--lock)} .chip-ev.lock{background:var(--lock-soft);border-color:transparent;color:var(--lock)}
+.chip-ev.pop{animation:pop .5s}
+.ph{position:absolute;top:0;bottom:0;width:3px;background:var(--ink);opacity:.8;left:calc(var(--lab) + (100% - var(--lab)) * (var(--c) + .5) / 7);transition:left .7s cubic-bezier(.5,0,.2,1);pointer-events:none;border-radius:2px} .ph.off{opacity:0}
+.tl-steps{list-style:none;margin:.8rem 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
+.tl-steps li{display:grid;grid-template-columns:auto 1fr;gap:.4rem;padding:.35rem .5rem;border:1px solid var(--line);border-radius:.5rem;opacity:.5;background:var(--panel)}
+.tl-steps li.now{opacity:1;border-color:var(--ink);box-shadow:0 0 0 2px var(--line2)} .tl-steps li.past{opacity:.85}
+.tl-steps .sq-code{font-size:.78rem}
+.tl-end{display:none;margin-top:.7rem;padding:.7rem 1rem;border-radius:.6rem;background:var(--panel2);border-left:5px solid var(--ink);font-size:1.02rem} .tl-end.on{display:block;animation:rise .4s}
+.matrix{padding:1rem 1.2rem;overflow:auto}
+.mx{border-collapse:collapse;width:100%;margin-top:.5rem}
+.mx th,.mx td{padding:.55rem .7rem;border:1px solid var(--line);text-align:left} .mx thead th{background:var(--panel2)} .mx th small{display:block;font-weight:500;color:var(--muted);font-size:.74rem}
+.mx td.possible{background:var(--bad-soft);color:var(--bad);font-weight:700} .mx td.prevented{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.mx tr.on th{background:var(--warn-soft)}
+.story{font-size:1.08rem;margin:0}
+.race-ctl{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.cmp,.board{padding:.8rem 1rem;overflow:auto}
+table.cmpt{width:100%;border-collapse:collapse;font-size:.88rem}
+.cmpt th,.cmpt td{border:1px solid var(--line);padding:.4rem .55rem;vertical-align:top;text-align:left}
+.cmpt thead th{background:var(--panel2)} .cmpt th small{display:block;font-weight:500;color:var(--muted);font-size:.68rem}
+.cmpt td.n{width:2rem;color:var(--muted);text-align:center} .cmpt td.w{width:2.2rem} .cmpt td.q{min-width:17rem} .cmpt td.q code{font-size:.8rem;white-space:pre-wrap;word-break:break-word}
+.cmpt tr.future{opacity:.45} .cmpt tr.curstep td.q{background:var(--warn-soft)}
+.cmpt td.c{font-family:var(--mono);font-size:.82rem;min-width:9rem}
+.cmpt td.c.idle{color:var(--muted)} .cmpt td.c.ok{color:var(--ok)} .cmpt td.c.read{color:var(--a-ink);font-weight:700} .cmpt td.c.err{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.cmpt td.c.wait{background:var(--lock-soft);color:var(--lock);font-weight:700;animation:pulse 1.4s infinite} .cmpt td.c.skip{color:var(--muted);font-style:italic}
+.cmpt td.c.late{background:var(--lock-soft)} .cmpt td.c.bad{background:var(--bad-soft)!important;color:var(--bad)!important;font-weight:800;animation:pop .5s}
+.cmpt tr.verdict td{font-weight:700;font-size:.85rem} .cmpt td.v.ok{background:var(--ok-soft);color:var(--ok)} .cmpt td.v.bad{background:var(--bad-soft);color:var(--bad)} .cmpt td.v.cost{background:var(--warn-soft);color:var(--warn)}
+.cmpt td.v{animation:rise .4s}
+
+@media (max-width:1250px){.lab-grid{grid-template-columns:1fr}.dbpane{position:static;max-height:none}.anim-grid{grid-template-columns:1fr}.side{position:static}.lvl-cards{grid-template-columns:repeat(2,1fr)}.d-grid{grid-template-columns:1fr}.tl-steps{grid-template-columns:1fr 1fr}}
+@media (max-width:820px){.sessions{grid-template-columns:1fr}.a2row,.a3row,.cards3,.wins{grid-template-columns:1fr}.top{gap:.5rem}.tabs{margin-left:0}.tl{--lab:5rem}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><h1>Class 9 live lab</h1><span class="sub">Making a save trustworthy. A simulated MySQL runs entirely in this page, so no server or second window is needed.</span></div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab-btn" role="tab" data-tab="lab" aria-selected="true">SQL lab</button>
+    <button class="tab-btn" role="tab" data-tab="anim" aria-selected="false">Animations</button>
+    <button class="tab-btn" role="tab" data-tab="iso" aria-selected="false">Isolation levels</button>
+  </nav>
+  <div class="tools">
+    <button class="btn" id="zoomOut" aria-label="Smaller text">A−</button>
+    <button class="btn" id="zoomIn" aria-label="Larger text">A+</button>
+    <button class="btn" id="themeBtn" aria-label="Switch light and dark theme">Light / dark</button>
+  </div>
+</header>
+<main>
+  <section id="tab-lab" aria-label="SQL lab"></section>
+  <section id="tab-anim" aria-label="Animations" hidden></section>
+  <section id="tab-iso" aria-label="Isolation levels" hidden></section>
+</main>
+<script>
+// ==ENGINE-START==
+'use strict';
+const LEVELS = ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE'];
+const SCHEMA = {
+  accounts: { pk: 'account_id', cols: ['account_id', 'owner_name', 'balance'] },
+  transfers: { pk: 'transfer_id', cols: ['transfer_id', 'from_account', 'to_account', 'amount', 'created_at'], auto: true },
+  seats: { pk: 'seat_id', cols: ['seat_id', 'status', 'booked_by', 'version'] },
+  bookings: { pk: 'booking_id', cols: ['booking_id', 'seat_id', 'customer', 'booked_at'], auto: true }
+};
+const TRX_COLS = ['trx_id', 'trx_state', 'trx_started', 'trx_mysql_thread_id', 'trx_rows_modified'];
+const DEC_COLS = new Set(['balance', 'amount']);
+const AGG = new Set(['COUNT', 'SUM', 'MAX', 'MIN', 'AVG']);
+const STOP_WORDS = new Set(['FROM', 'WHERE', 'GROUP', 'HAVING', 'ORDER', 'LIMIT', 'FOR', 'LOCK', 'AS', 'SET', 'VALUES', 'ON', 'AND', 'OR']);
+
+class SqlError extends Error {
+  constructor(code, msg, state) { super(msg); this.code = code; this.sqlstate = state || 'HY000'; }
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const nowStr = () => {
+  const d = new Date(); const p = (n) => String(n).padStart(2, '0');
+  return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+};
+const truthy = (v) => v !== null && v !== undefined && v !== false && v !== 0 && v !== '';
+
+/* ---------- tokenizer ---------- */
+function tokenize(s) {
+  const t = []; let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (/\s/.test(c) || c === ';') { i++; continue; }
+    if (c === "'" || c === '"') {
+      let j = i + 1, str = '';
+      while (j < s.length) {
+        if (s[j] === '\\' && j + 1 < s.length) { str += s[j + 1]; j += 2; continue; }
+        if (s[j] === c) { if (s[j + 1] === c) { str += c; j += 2; continue; } break; }
+        str += s[j++];
+      }
+      if (j >= s.length) throw new SqlError(1064, "You have an error in your SQL syntax; unterminated string literal", '42000');
+      t.push({ t: 'str', v: str }); i = j + 1; continue;
+    }
+    if (c === '`') {
+      const j = s.indexOf('`', i + 1);
+      if (j < 0) throw new SqlError(1064, 'You have an error in your SQL syntax; unterminated identifier', '42000');
+      const w = s.slice(i + 1, j); t.push({ t: 'id', v: w, u: w.toUpperCase() }); i = j + 1; continue;
+    }
+    if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(s[i + 1] || ''))) {
+      let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++;
+      t.push({ t: 'num', v: parseFloat(s.slice(i, j)) }); i = j; continue;
+    }
+    if (/[A-Za-z_@]/.test(c)) {
+      let j = i + 1; while (j < s.length && /[A-Za-z0-9_$.@]/.test(s[j])) j++;
+      const w = s.slice(i, j); t.push({ t: 'id', v: w, u: w.toUpperCase() }); i = j; continue;
+    }
+    const two = s.slice(i, i + 2);
+    if (['<=', '>=', '<>', '!=', ':='].includes(two)) { t.push({ t: 'op', v: two }); i += 2; continue; }
+    if ('=<>+-*/(),%'.includes(c)) { t.push({ t: 'op', v: c }); i++; continue; }
+    throw new SqlError(1064, "You have an error in your SQL syntax near '" + s.slice(i, i + 12) + "'", '42000');
+  }
+  return t;
+}
+
+/* ---------- script splitter (with ranges, for "run current statement") ---------- */
+function splitSqlRanges(text) {
+  const out = []; let cur = ''; let q = null; let segStart = -1;
+  const add = (ch, i) => { cur += ch; if (segStart < 0 && !/\s/.test(ch)) segStart = i; };
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i + 1];
+    if (q) {
+      add(c, i);
+      if (c === '\\' && i + 1 < text.length) { add(text[++i], i); continue; }
+      if (c === q) { if (n === q) { add(text[++i], i); } else q = null; }
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') { q = c; add(c, i); continue; }
+    if ((c === '-' && n === '-') || c === '#') { while (i < text.length && text[i] !== '\n') i++; cur += '\n'; continue; }
+    if (c === '/' && n === '*') { const j = text.indexOf('*/', i + 2); i = j < 0 ? text.length : j + 1; cur += ' '; continue; }
+    if (c === ';') {
+      if (cur.trim()) out.push({ start: segStart, end: i, text: cur.trim() });
+      cur = ''; segStart = -1; continue;
+    }
+    add(c, i);
+  }
+  if (cur.trim()) out.push({ start: segStart, end: text.length, text: cur.trim() });
+  return out;
+}
+const splitSql = (text) => splitSqlRanges(text).map((x) => x.text);
+
+/* ---------- parser ---------- */
+class Parser {
+  constructor(sql) { this.t = tokenize(sql); this.i = 0; }
+  get cur() { return this.t[this.i]; }
+  isKw(...ws) { const c = this.cur; return !!c && c.t === 'id' && ws.includes(c.u); }
+  isOp(o) { const c = this.cur; return !!c && c.t === 'op' && c.v === o; }
+  eatKw(w) { if (this.isKw(w)) { this.i++; return true; } return false; }
+  eatOp(o) { if (this.isOp(o)) { this.i++; return true; } return false; }
+  expKw(w) { if (!this.eatKw(w)) this.err(); }
+  expOp(o) { if (!this.eatOp(o)) this.err(); }
+  err() {
+    const c = this.cur;
+    throw new SqlError(1064, "You have an error in your SQL syntax; check the manual near '" + (c ? c.v : '<end of statement>') + "'", '42000');
+  }
+  ident() { const c = this.cur; if (!c || c.t !== 'id') this.err(); this.i++; return c.v; }
+  tokText(a, b) {
+    return this.t.slice(a, b).map((k) => (k.t === 'str' ? "'" + k.v + "'" : String(k.v))).join('').replace(/,/g, ', ');
+  }
+  tableName() {
+    const raw = this.ident(); const parts = raw.split('.'); const name = parts[parts.length - 1].toLowerCase();
+    if (name !== 'innodb_trx' && !SCHEMA[name]) throw new SqlError(1146, "Table 'class9_lab." + name + "' doesn't exist", '42S02');
+    return name;
+  }
+  parse() {
+    const c = this.cur;
+    if (!c) throw new SqlError(1065, 'Query was empty', '42000');
+    if (c.t !== 'id') this.err();
+    let ast;
+    switch (c.u) {
+      case 'SELECT': ast = this.pSelect(); break;
+      case 'INSERT': ast = this.pInsert(); break;
+      case 'UPDATE': ast = this.pUpdate(); break;
+      case 'DELETE': ast = this.pDelete(); break;
+      case 'START': this.i++; this.expKw('TRANSACTION'); ast = { type: 'start', snap: false };
+        if (this.eatKw('WITH')) { this.expKw('CONSISTENT'); this.expKw('SNAPSHOT'); ast.snap = true; } break;
+      case 'BEGIN': this.i++; ast = { type: 'start', snap: false }; break;
+      case 'COMMIT': this.i++; ast = { type: 'commit' }; break;
+      case 'ROLLBACK': this.i++; ast = { type: 'rollback' }; break;
+      case 'SET': ast = this.pSet(); break;
+      case 'USE': this.i++; this.ident(); ast = { type: 'noop', msg: 'Database changed' }; break;
+      case 'CREATE': case 'DROP': case 'ALTER': case 'TRUNCATE': case 'SHOW': case 'DESCRIBE': case 'EXPLAIN':
+        ast = { type: 'noop', msg: 'Simulator: the lab schema is pre-created, so this statement is skipped.' }; this.i = this.t.length; break;
+      default: this.err();
+    }
+    if (this.i < this.t.length) this.err();
+    return ast;
+  }
+  pLevel() {
+    if (this.eatKw('READ')) {
+      if (this.eatKw('UNCOMMITTED')) return 'READ UNCOMMITTED';
+      if (this.eatKw('COMMITTED')) return 'READ COMMITTED';
+      this.err();
+    }
+    if (this.eatKw('REPEATABLE')) { this.expKw('READ'); return 'REPEATABLE READ'; }
+    if (this.eatKw('SERIALIZABLE')) return 'SERIALIZABLE';
+    this.err();
+  }
+  pSet() {
+    this.i++;
+    if (this.isKw('SESSION', 'GLOBAL', 'LOCAL')) this.i++;
+    if (this.eatKw('TRANSACTION')) { this.expKw('ISOLATION'); this.expKw('LEVEL'); return { type: 'setlevel', level: this.pLevel() }; }
+    let name = this.ident(); name = name.replace(/^@@(session\.|global\.)?/i, '').toLowerCase();
+    if (!(this.eatOp('=') || this.eatOp(':='))) this.err();
+    const e = this.pExpr();
+    return { type: 'setvar', name, expr: e };
+  }
+  pSelect() {
+    this.expKw('SELECT'); this.eatKw('DISTINCT');
+    const items = [];
+    do {
+      if (this.isOp('*')) { this.i++; items.push({ star: true }); continue; }
+      const st = this.i; const e = this.pExpr(); const en = this.i; let alias = null;
+      if (this.eatKw('AS')) alias = this.ident();
+      else if (this.cur && this.cur.t === 'id' && !STOP_WORDS.has(this.cur.u)) alias = this.ident();
+      items.push({ e, alias, text: this.tokText(st, en) });
+    } while (this.eatOp(','));
+    let from = null;
+    if (this.eatKw('FROM')) {
+      from = this.tableName();
+      if (this.eatKw('AS')) this.ident(); else if (this.cur && this.cur.t === 'id' && !STOP_WORDS.has(this.cur.u)) this.ident();
+    }
+    let where = null; if (this.eatKw('WHERE')) where = this.pExpr();
+    let group = null; if (this.eatKw('GROUP')) { this.expKw('BY'); group = []; do { group.push(this.pExpr()); } while (this.eatOp(',')); }
+    let having = null; if (this.eatKw('HAVING')) having = this.pExpr();
+    let order = null;
+    if (this.eatKw('ORDER')) {
+      this.expKw('BY'); order = [];
+      do { const e = this.pExpr(); let desc = false; if (this.eatKw('DESC')) desc = true; else this.eatKw('ASC'); order.push({ e, desc }); } while (this.eatOp(','));
+    }
+    let limit = null; if (this.eatKw('LIMIT')) { const n = this.cur; if (!n || n.t !== 'num') this.err(); limit = n.v; this.i++; }
+    let lock = null;
+    if (this.eatKw('FOR')) { if (this.eatKw('UPDATE')) lock = 'X'; else if (this.eatKw('SHARE')) lock = 'S'; else this.err(); }
+    else if (this.eatKw('LOCK')) { this.expKw('IN'); this.expKw('SHARE'); this.expKw('MODE'); lock = 'S'; }
+    return { type: 'select', items, from, where, group, having, order, limit, lock };
+  }
+  pInsert() {
+    this.expKw('INSERT'); const ignore = this.eatKw('IGNORE'); this.expKw('INTO');
+    const table = this.tableName(); let cols = null;
+    if (this.eatOp('(')) { cols = []; do { cols.push(this.ident().split('.').pop().toLowerCase()); } while (this.eatOp(',')); this.expOp(')'); }
+    if (!this.eatKw('VALUES')) this.expKw('VALUE');
+    const rows = [];
+    do { this.expOp('('); const r = []; do { r.push(this.pExpr()); } while (this.eatOp(',')); this.expOp(')'); rows.push(r); } while (this.eatOp(','));
+    return { type: 'insert', table, cols, rows, ignore };
+  }
+  pUpdate() {
+    this.expKw('UPDATE'); const table = this.tableName(); this.expKw('SET'); const sets = [];
+    do { const col = this.ident().split('.').pop().toLowerCase(); this.expOp('='); sets.push({ col, e: this.pExpr() }); } while (this.eatOp(','));
+    let where = null; if (this.eatKw('WHERE')) where = this.pExpr();
+    return { type: 'update', table, sets, where };
+  }
+  pDelete() {
+    this.expKw('DELETE'); this.expKw('FROM'); const table = this.tableName();
+    let where = null; if (this.eatKw('WHERE')) where = this.pExpr();
+    return { type: 'delete', table, where };
+  }
+  pExpr() { return this.pOr(); }
+  pOr() { let l = this.pAnd(); while (this.eatKw('OR')) l = { k: 'or', l, r: this.pAnd() }; return l; }
+  pAnd() { let l = this.pNot(); while (this.eatKw('AND')) l = { k: 'and', l, r: this.pNot() }; return l; }
+  pNot() { if (this.eatKw('NOT')) return { k: 'not', e: this.pNot() }; return this.pCmp(); }
+  pCmp() {
+    let l = this.pAdd();
+    for (;;) {
+      const c = this.cur;
+      if (c && c.t === 'op' && ['=', '<>', '!=', '<', '<=', '>', '>='].includes(c.v)) { this.i++; l = { k: 'cmp', op: c.v, l, r: this.pAdd() }; continue; }
+      if (this.isKw('IS')) { this.i++; const neg = this.eatKw('NOT'); this.expKw('NULL'); l = { k: 'isnull', e: l, neg }; continue; }
+      if (this.isKw('NOT') && this.t[this.i + 1] && this.t[this.i + 1].u === 'IN') { this.i += 2; l = { k: 'in', e: l, list: this.pList(), neg: true }; continue; }
+      if (this.isKw('IN')) { this.i++; l = { k: 'in', e: l, list: this.pList(), neg: false }; continue; }
+      if (this.isKw('BETWEEN')) { this.i++; const a = this.pAdd(); this.expKw('AND'); const b = this.pAdd(); l = { k: 'and', l: { k: 'cmp', op: '>=', l, r: a }, r: { k: 'cmp', op: '<=', l, r: b } }; continue; }
+      break;
+    }
+    return l;
+  }
+  pList() { this.expOp('('); const a = []; do { a.push(this.pExpr()); } while (this.eatOp(',')); this.expOp(')'); return a; }
+  pAdd() {
+    let l = this.pMul();
+    while (this.isOp('+') || this.isOp('-')) { const op = this.cur.v; this.i++; l = { k: 'ar', op, l, r: this.pMul() }; }
+    return l;
+  }
+  pMul() {
+    let l = this.pUnary();
+    while (this.isOp('*') || this.isOp('/') || this.isOp('%')) { const op = this.cur.v; this.i++; l = { k: 'ar', op, l, r: this.pUnary() }; }
+    return l;
+  }
+  pUnary() { if (this.eatOp('-')) return { k: 'neg', e: this.pUnary() }; if (this.eatOp('+')) return this.pUnary(); return this.pPrimary(); }
+  pPrimary() {
+    const c = this.cur; if (!c) this.err();
+    if (c.t === 'num' || c.t === 'str') { this.i++; return { k: 'lit', v: c.v }; }
+    if (this.isOp('(')) { this.i++; const e = this.pExpr(); this.expOp(')'); return e; }
+    if (c.t === 'id') {
+      if (c.u === 'NULL') { this.i++; return { k: 'lit', v: null }; }
+      if (c.u === 'TRUE') { this.i++; return { k: 'lit', v: 1 }; }
+      if (c.u === 'FALSE') { this.i++; return { k: 'lit', v: 0 }; }
+      const nx = this.t[this.i + 1];
+      if (nx && nx.t === 'op' && nx.v === '(') {
+        this.i += 2; const args = []; let star = false;
+        if (this.isOp('*')) { this.i++; star = true; }
+        else if (!this.isOp(')')) { this.eatKw('DISTINCT'); do { args.push(this.pExpr()); } while (this.eatOp(',')); }
+        this.expOp(')'); return { k: 'fn', name: c.u, args, star };
+      }
+      this.i++;
+      if (c.v.startsWith('@@')) return { k: 'var', name: c.v.replace(/^@@(session\.|global\.)?/i, '').toLowerCase() };
+      return { k: 'col', name: c.v.split('.').pop().toLowerCase() };
+    }
+    this.err();
+  }
+}
+
+/* ---------- engine ---------- */
+function containsAgg(n) {
+  if (!n || typeof n !== 'object') return false;
+  if (n.k === 'fn' && AGG.has(n.name)) return true;
+  return containsAgg(n.l) || containsAgg(n.r) || containsAgg(n.e) || (n.args || []).some(containsAgg) || (n.list || []).some(containsAgg);
+}
+function exprDec(n) {
+  if (!n || typeof n !== 'object') return false;
+  if (n.k === 'col') return DEC_COLS.has(n.name);
+  if (n.k === 'fn' && n.name === 'COUNT') return false;
+  return exprDec(n.l) || exprDec(n.r) || exprDec(n.e) || (n.args || []).some(exprDec);
+}
+function cmpVals(a, b) {
+  if (typeof a === 'number' && typeof b === 'number') return a < b ? -1 : a > b ? 1 : 0;
+  if (typeof a === 'number' || typeof b === 'number') {
+    const x = Number(a), y = Number(b);
+    if (!isNaN(x) && !isNaN(y)) return x < y ? -1 : x > y ? 1 : 0;
+  }
+  const x = String(a).toLowerCase(), y = String(b).toLowerCase();
+  return x < y ? -1 : x > y ? 1 : 0;
+}
+const round2 = (x) => Math.round(x * 100) / 100;
+
+class Engine {
+  constructor(opts) {
+    opts = opts || {};
+    this.lockTimeout = opts.lockTimeout || 50000;
+    this.sessions = {}; this.listeners = []; this.disposed = false;
+    this.db = { tables: {}, auto: {}, seq: 10 };
+    for (const t of Object.keys(SCHEMA)) { this.db.tables[t] = new Map(); this.db.auto[t] = 0; }
+    const T = this.db.tables;
+    T.accounts.set('A101', { account_id: 'A101', owner_name: 'Asha', balance: 1000, _v: 1 });
+    T.accounts.set('B202', { account_id: 'B202', owner_name: 'Ben', balance: 500, _v: 1 });
+    for (const s of ['S1', 'S2', 'S3']) T.seats.set(s, { seat_id: s, status: 'AVAILABLE', booked_by: null, version: 1, _v: 1 });
+    this.locks = new Map(); this.preds = []; this.txnSeq = 1000;
+  }
+  onChange(f) { this.listeners.push(f); }
+  notify() { if (this.disposed) return; for (const f of this.listeners) { try { f(); } catch (e) { /* ignore UI errors */ } } }
+  dispose() {
+    this.disposed = true;
+    for (const s of Object.values(this.sessions)) { if (s.waiting) clearTimeout(s.waiting.timer); }
+  }
+  session(id) {
+    if (!this.sessions[id]) {
+      const n = Object.keys(this.sessions).length;
+      this.sessions[id] = {
+        id, conn: 101 + n, autocommit: true, level: 'READ COMMITTED', txn: null, rowCount: -1,
+        waiting: null, running: null, halted: false, queue: Promise.resolve()
+      };
+    }
+    return this.sessions[id];
+  }
+  setLevel(id, lvl) { this.session(id).level = lvl; this.notify(); }
+
+  /* ----- public execution API ----- */
+  execOne(sid, sql, opts) {
+    opts = opts || {};
+    const sess = this.session(sid);
+    const run = async () => {
+      if (this.disposed) return { sql, session: sid, kind: 'skipped', skipped: true };
+      if (opts.stopOnError && sess.halted) return { sql, session: sid, kind: 'skipped', skipped: true };
+      sess.running = sql; this.notify();
+      let res;
+      try { res = await this.dispatch(sess, sql); }
+      catch (e) {
+        if (e instanceof SqlError) res = { kind: 'error', error: { code: e.code, msg: e.message, state: e.sqlstate } };
+        else res = { kind: 'error', error: { code: 0, msg: 'Simulator error: ' + (e && e.message), state: 'HY000' } };
+        if (opts.stopOnError) sess.halted = true;
+      }
+      sess.running = null; res.sql = sql; res.session = sid; this.notify(); return res;
+    };
+    const p = sess.queue.then(run);
+    sess.queue = p.then(() => {}, () => {});
+    return p;
+  }
+  visible(sid, table) { return [...this.rowsFor(this.session(sid), table, 'consistent', true).values()].sort((a, b) => this.pkCmp(table, a, b)); }
+  committed(table) { return [...this.db.tables[table].values()].sort((a, b) => this.pkCmp(table, a, b)); }
+  pkCmp(table, a, b) { const k = SCHEMA[table].pk; return cmpVals(a[k], b[k]); }
+  pendingCount(sess) { let n = 0; if (sess.txn) for (const m of Object.values(sess.txn.writes)) n += m.size; return n; }
+
+  /* ----- views / visibility ----- */
+  takeSnap(sess) { const s = {}; for (const t of Object.keys(this.db.tables)) s[t] = new Map(this.db.tables[t]); sess.txn.snap = s; }
+  rowsFor(sess, table, mode, peek) {
+    const committed = this.db.tables[table]; const own = sess.txn ? sess.txn.writes[table] : null; let base;
+    if (mode === 'current') base = committed;
+    else if (sess.level === 'READ UNCOMMITTED') {
+      base = new Map(committed);
+      for (const s of Object.values(this.sessions)) {
+        if (s !== sess && s.txn) { const w = s.txn.writes[table]; for (const [k, v] of w) { if (v === null) base.delete(k); else base.set(k, v); } }
+      }
+    } else if (sess.level === 'REPEATABLE READ' && sess.txn && sess.txn.keep) {
+      if (!sess.txn.snap && !peek) this.takeSnap(sess);
+      base = sess.txn.snap ? sess.txn.snap[table] : committed;
+    } else base = committed;
+    if (!own || own.size === 0) return base;
+    const m = new Map(base); for (const [k, v] of own) { if (v === null) m.delete(k); else m.set(k, v); } return m;
+  }
+
+  /* ----- locking ----- */
+  holds(sess, lk, mode) { const L = this.locks.get(lk); if (!L) return false; return mode === 'X' ? L.x === sess.id : (L.x === sess.id || L.s.has(sess.id)); }
+  async lockRow(sess, table, key, mode) {
+    const lk = table + ':' + key;
+    for (;;) {
+      const L = this.locks.get(lk); const blockers = [];
+      if (L) {
+        if (L.x && L.x !== sess.id) blockers.push(L.x);
+        if (mode === 'X') for (const s of L.s) if (s !== sess.id && !blockers.includes(s)) blockers.push(s);
+      }
+      if (!blockers.length) {
+        let E = L; if (!E) { E = { x: null, s: new Set() }; this.locks.set(lk, E); }
+        if (mode === 'X') E.x = sess.id; else if (E.x !== sess.id) E.s.add(sess.id);
+        sess.txn.locks.add(lk); this.notify(); return;
+      }
+      await this.waitOn(sess, blockers, 'the row lock on ' + table + '[' + key + ']');
+    }
+  }
+  waitOn(sess, blockers, desc) {
+    const seen = new Set();
+    const dfs = (id) => {
+      if (id === sess.id) return true; if (seen.has(id)) return false; seen.add(id);
+      const s = this.sessions[id]; if (!s || !s.waiting) return false;
+      return s.waiting.on.some(dfs);
+    };
+    if (blockers.some(dfs)) {
+      this.rollbackTxn(sess);
+      throw new SqlError(1213, 'Deadlock found when trying to get lock; try restarting transaction', '40001');
+    }
+    return new Promise((resolve, reject) => {
+      const w = { on: blockers.slice(), desc, since: Date.now(), resolve };
+      w.timer = setTimeout(() => {
+        if (sess.waiting === w) { sess.waiting = null; this.notify(); reject(new SqlError(1205, 'Lock wait timeout exceeded; try restarting transaction', 'HY000')); }
+      }, this.lockTimeout);
+      sess.waiting = w; this.notify();
+    });
+  }
+  wakeAll() {
+    for (const s of Object.values(this.sessions)) { const w = s.waiting; if (w) { clearTimeout(w.timer); s.waiting = null; w.resolve(); } }
+    this.notify();
+  }
+  async lockingScan(sess, table, where, mode, ser) {
+    for (;;) {
+      const cur = this.rowsFor(sess, table, 'current');
+      const matched = [];
+      for (const [k, r] of cur) if (!where || truthy(this.ev(where, { row: r, sess }))) matched.push([k, r]);
+      matched.sort((a, b) => this.pkCmp(table, a[1], b[1]));
+      let waited = false;
+      for (const [k] of matched) { if (!this.holds(sess, table + ':' + k, mode)) { await this.lockRow(sess, table, k, mode); waited = true; } }
+      if (ser) {
+        const conf = this.pendingMatches(sess, table, where);
+        if (conf.length) { await this.waitOn(sess, conf, 'rows changed by another open transaction'); waited = true; continue; }
+      }
+      if (!waited) { if (ser) this.preds.push({ sid: sess.id, table, where }); return matched.map((x) => x[1]); }
+    }
+  }
+  pendingMatches(sess, table, where) {
+    const out = [];
+    for (const s of Object.values(this.sessions)) {
+      if (s === sess || !s.txn) continue;
+      for (const v of s.txn.writes[table].values()) {
+        if (v !== null && (!where || truthy(this.ev(where, { row: v, sess })))) { if (!out.includes(s.id)) out.push(s.id); }
+      }
+    }
+    return out;
+  }
+  async checkPreds(sess, table, row) {
+    for (;;) {
+      const blockers = [];
+      for (const p of this.preds) {
+        if (p.sid !== sess.id && p.table === table && (!p.where || truthy(this.ev(p.where, { row, sess }))) && !blockers.includes(p.sid)) blockers.push(p.sid);
+      }
+      if (!blockers.length) return;
+      await this.waitOn(sess, blockers, 'a range that another serializable transaction has read');
+    }
+  }
+
+  /* ----- transactions ----- */
+  newTxn(keep) {
+    const writes = {}; for (const t of Object.keys(SCHEMA)) writes[t] = new Map();
+    return { id: ++this.txnSeq, keep, writes, snap: null, locks: new Set(), started: nowStr() };
+  }
+  releaseTxn(sess) {
+    const t = sess.txn; if (!t) return;
+    for (const lk of t.locks) {
+      const L = this.locks.get(lk); if (!L) continue;
+      if (L.x === sess.id) L.x = null; L.s.delete(sess.id);
+      if (!L.x && L.s.size === 0) this.locks.delete(lk);
+    }
+    this.preds = this.preds.filter((p) => p.sid !== sess.id);
+    sess.txn = null;
+  }
+  commitTxn(sess) {
+    const t = sess.txn; if (!t) return;
+    for (const tb of Object.keys(t.writes)) {
+      for (const [k, v] of t.writes[tb]) { if (v === null) this.db.tables[tb].delete(k); else this.db.tables[tb].set(k, Object.assign({}, v, { _v: ++this.db.seq })); }
+    }
+    this.releaseTxn(sess); this.wakeAll();
+  }
+  rollbackTxn(sess) { this.releaseTxn(sess); this.wakeAll(); }
+  async withTxn(sess, fn) {
+    let temp = false;
+    if (!sess.txn) { sess.txn = this.newTxn(!sess.autocommit); temp = sess.autocommit; }
+    try { const r = await fn(); if (temp && sess.txn) this.commitTxn(sess); return r; }
+    catch (e) { if (temp && sess.txn) this.rollbackTxn(sess); throw e; }
+  }
+
+  /* ----- statements ----- */
+  async dispatch(sess, sql) {
+    const ast = new Parser(sql).parse();
+    switch (ast.type) {
+      case 'start':
+        if (sess.txn) this.commitTxn(sess);
+        sess.txn = this.newTxn(true); if (ast.snap) this.takeSnap(sess); this.notify();
+        return { kind: 'ok', op: 'start', msg: 'Transaction started. Nothing is permanent until COMMIT.' };
+      case 'commit':
+        if (sess.txn) { this.commitTxn(sess); return { kind: 'ok', op: 'commit', msg: 'COMMIT: the changes are now permanent and visible to everyone.' }; }
+        return { kind: 'ok', op: 'commit', msg: 'COMMIT: no open transaction, nothing to do.' };
+      case 'rollback':
+        if (sess.txn) { this.rollbackTxn(sess); return { kind: 'ok', op: 'rollback', msg: 'ROLLBACK: all unfinished changes in this transaction were cancelled.' }; }
+        return { kind: 'ok', op: 'rollback', msg: 'ROLLBACK: there is no open transaction, so nothing was cancelled. Committed work is never undone by ROLLBACK.' };
+      case 'setlevel': sess.level = ast.level; this.notify(); return { kind: 'ok', op: 'set', msg: 'Isolation level for this session is now ' + ast.level + '.' };
+      case 'setvar': return this.doSetVar(sess, ast);
+      case 'noop': return { kind: 'ok', op: 'noop', msg: ast.msg };
+      case 'select': return this.withTxn(sess, () => this.doSelect(sess, ast));
+      case 'insert': return this.withTxn(sess, () => this.doInsert(sess, ast));
+      case 'update': return this.withTxn(sess, () => this.doUpdate(sess, ast));
+      case 'delete': return this.withTxn(sess, () => this.doDelete(sess, ast));
+    }
+    throw new SqlError(1064, 'Unsupported statement', '42000');
+  }
+  doSetVar(sess, ast) {
+    const v = this.ev(ast.expr, { row: {}, sess });
+    if (ast.name === 'autocommit') {
+      const on = truthy(v) && String(v).toUpperCase() !== 'OFF';
+      if (on && sess.txn) this.commitTxn(sess);
+      sess.autocommit = on; this.notify();
+      return { kind: 'ok', op: 'set', msg: 'autocommit is now ' + (on ? 'ON: every statement commits by itself.' : 'OFF: changes wait for COMMIT.') };
+    }
+    if (ast.name === 'transaction_isolation' || ast.name === 'tx_isolation') {
+      const lv = String(v).toUpperCase().replace(/-/g, ' ');
+      if (!LEVELS.includes(lv)) throw new SqlError(1231, "Variable 'transaction_isolation' can't be set to the value of '" + v + "'", '42000');
+      sess.level = lv; this.notify(); return { kind: 'ok', op: 'set', msg: 'Isolation level is now ' + lv + '.' };
+    }
+    return { kind: 'ok', op: 'set', msg: 'Variable accepted (ignored by the simulator).' };
+  }
+  trxRows() {
+    const out = [];
+    for (const s of Object.values(this.sessions)) {
+      if (s.txn && s.txn.keep) out.push({ trx_id: s.txn.id, trx_state: s.waiting ? 'LOCK WAIT' : 'RUNNING', trx_started: s.txn.started, trx_mysql_thread_id: s.conn, trx_rows_modified: this.pendingCount(s) });
+    }
+    return out;
+  }
+  async doSelect(sess, ast) {
+    let rows; let table = ast.from;
+    const tdef = table && SCHEMA[table];
+    if (!table) rows = [{}];
+    else if (table === 'innodb_trx') { rows = this.trxRows(); if (ast.where) rows = rows.filter((r) => truthy(this.ev(ast.where, { row: r, sess }))); }
+    else {
+      const ser = sess.level === 'SERIALIZABLE' && sess.txn.keep;
+      const mode = ast.lock || (ser ? 'S' : null);
+      if (mode) rows = await this.lockingScan(sess, table, ast.where, mode, ser);
+      else {
+        rows = [...this.rowsFor(sess, table, 'consistent').values()];
+        if (ast.where) rows = rows.filter((r) => truthy(this.ev(ast.where, { row: r, sess })));
+      }
+      rows.sort((a, b) => this.pkCmp(table, a, b));
+    }
+    const items = [];
+    for (const it of ast.items) {
+      if (it.star) {
+        if (!table) throw new SqlError(1096, 'No tables used', 'HY000');
+        const cols = tdef ? tdef.cols : TRX_COLS;
+        for (const c of cols) items.push({ e: { k: 'col', name: c }, name: c, dec: DEC_COLS.has(c) });
+      } else {
+        items.push({ e: it.e, name: it.alias || (it.e.k === 'col' ? it.e.name : it.text), dec: exprDec(it.e), alias: it.alias });
+      }
+    }
+    const hasAgg = items.some((x) => containsAgg(x.e)) || ast.group || (ast.having && containsAgg(ast.having));
+    let out = [];
+    if (hasAgg) {
+      let groups;
+      if (ast.group) {
+        const m = new Map();
+        for (const r of rows) { const key = JSON.stringify(ast.group.map((g) => this.ev(g, { row: r, sess }))); if (!m.has(key)) m.set(key, []); m.get(key).push(r); }
+        groups = [...m.values()];
+      } else groups = [rows];
+      for (const g of groups) {
+        const ctx = { row: g[0] || {}, group: g, sess };
+        if (ast.having && !truthy(this.ev(ast.having, ctx))) continue;
+        out.push({ ctx, vals: items.map((it) => this.ev(it.e, ctx)) });
+      }
+    } else {
+      for (const r of rows) { const ctx = { row: r, sess }; out.push({ ctx, vals: items.map((it) => this.ev(it.e, ctx)) }); }
+    }
+    if (ast.order) {
+      const keyOf = (o, x) => {
+        if (o.e.k === 'col') { const idx = items.findIndex((it) => it.alias && it.alias.toLowerCase() === o.e.name); if (idx >= 0) return x.vals[idx]; }
+        return this.ev(o.e, x.ctx);
+      };
+      out.sort((a, b) => {
+        for (const o of ast.order) {
+          const va = keyOf(o, a), vb = keyOf(o, b);
+          if (va === vb) continue; if (va === null) return o.desc ? 1 : -1; if (vb === null) return o.desc ? -1 : 1;
+          const c = cmpVals(va, vb); if (c !== 0) return o.desc ? -c : c;
+        }
+        return 0;
+      });
+    }
+    if (ast.limit !== null) out = out.slice(0, ast.limit);
+    const isRc = items.length === 1 && items[0].e.k === 'fn' && items[0].e.name === 'ROW_COUNT';
+    if (!isRc) sess.rowCount = -1;
+    return { kind: 'select', cols: items.map((it) => ({ name: it.name, dec: it.dec })), rows: out.map((x) => x.vals), msg: out.length + ' row(s) returned', locked: !!(ast.lock || (sess.level === 'SERIALIZABLE' && sess.txn && sess.txn.keep && table && table !== 'innodb_trx')) };
+  }
+  coerce(row) {
+    for (const c of ['balance', 'amount', 'version', 'transfer_id', 'booking_id']) {
+      if (c in row && row[c] !== null && typeof row[c] !== 'number') {
+        const n = Number(row[c]);
+        if (isNaN(n)) throw new SqlError(1366, "Incorrect decimal value: '" + row[c] + "' for column '" + c + "'", 'HY000');
+        row[c] = n;
+      }
+    }
+    if (row.status !== undefined && row.status !== null) row.status = String(row.status).toUpperCase();
+  }
+  validate(sess, t, r) {
+    if (t === 'accounts') {
+      if (r.account_id === null) throw new SqlError(1048, "Column 'account_id' cannot be null", '23000');
+      if (r.balance === null) throw new SqlError(1048, "Column 'balance' cannot be null", '23000');
+      if (r.balance < 0) throw new SqlError(3819, "Check constraint 'chk_balance_not_negative' is violated.", 'HY000');
+    }
+    if (t === 'seats') {
+      if (!['AVAILABLE', 'BOOKED'].includes(r.status)) throw new SqlError(3819, "Check constraint 'chk_seat_status' is violated.", 'HY000');
+    }
+    if (t === 'transfers') {
+      const acc = this.rowsFor(sess, 'accounts', 'current');
+      [['from_account', 1], ['to_account', 2]].forEach(([c, n]) => {
+        if (!acc.has(String(r[c]))) throw new SqlError(1452, 'Cannot add or update a child row: a foreign key constraint fails (`class9_lab`.`transfers`, CONSTRAINT `transfers_ibfk_' + n + '` FOREIGN KEY (`' + c + '`) REFERENCES `accounts` (`account_id`))', '23000');
+      });
+    }
+    if (t === 'bookings') {
+      if (!this.rowsFor(sess, 'seats', 'current').has(String(r.seat_id))) throw new SqlError(1452, 'Cannot add or update a child row: a foreign key constraint fails (`class9_lab`.`bookings`, CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`seat_id`) REFERENCES `seats` (`seat_id`))', '23000');
+    }
+  }
+  async doInsert(sess, ast) {
+    if (ast.table === 'innodb_trx') throw new SqlError(1142, 'INSERT command denied on a read-only table', '42000');
+    const def = SCHEMA[ast.table]; const cols = ast.cols || def.cols; const staged = [];
+    for (const tup of ast.rows) {
+      if (tup.length !== cols.length) throw new SqlError(1136, "Column count doesn't match value count at row 1", '21S01');
+      const row = {}; for (const c of def.cols) row[c] = null;
+      cols.forEach((c, i) => {
+        if (!def.cols.includes(c)) throw new SqlError(1054, "Unknown column '" + c + "' in 'field list'", '42S22');
+        row[c] = this.ev(tup[i], { row: {}, sess });
+      });
+      if (def.auto && row[def.pk] === null) row[def.pk] = ++this.db.auto[ast.table];
+      if (ast.table === 'seats') { if (row.status === null) row.status = 'AVAILABLE'; if (row.version === null) row.version = 1; }
+      if (ast.table === 'transfers' && row.created_at === null) row.created_at = nowStr();
+      if (ast.table === 'bookings' && row.booked_at === null) row.booked_at = nowStr();
+      this.coerce(row); this.validate(sess, ast.table, row);
+      const key = String(row[def.pk]);
+      await this.lockRow(sess, ast.table, key, 'X');
+      if (this.rowsFor(sess, ast.table, 'current').has(key) || staged.some((x) => x[0] === key)) {
+        if (ast.ignore) continue;
+        throw new SqlError(1062, "Duplicate entry '" + row[def.pk] + "' for key '" + ast.table + ".PRIMARY'", '23000');
+      }
+      await this.checkPreds(sess, ast.table, row);
+      staged.push([key, row]);
+    }
+    for (const [k, r] of staged) sess.txn.writes[ast.table].set(k, r);
+    sess.rowCount = staged.length;
+    return { kind: 'dml', affected: staged.length, msg: staged.length + ' row(s) affected' };
+  }
+  async doUpdate(sess, ast) {
+    if (ast.table === 'innodb_trx') throw new SqlError(1142, 'UPDATE command denied on a read-only table', '42000');
+    const def = SCHEMA[ast.table];
+    const rows = await this.lockingScan(sess, ast.table, ast.where, 'X', false);
+    const updates = [];
+    for (const old of rows) {
+      const nr = Object.assign({}, old);
+      for (const a of ast.sets) {
+        if (!def.cols.includes(a.col)) throw new SqlError(1054, "Unknown column '" + a.col + "' in 'field list'", '42S22');
+        if (a.col === def.pk) throw new SqlError(1235, 'Simulator: updating a primary key is not supported', '42000');
+        nr[a.col] = this.ev(a.e, { row: nr, sess });
+      }
+      this.coerce(nr); this.validate(sess, ast.table, nr); updates.push([old, nr]);
+    }
+    let changed = 0;
+    for (const [old, nr] of updates) {
+      const same = def.cols.every((c) => old[c] === nr[c]);
+      if (same) continue;
+      await this.checkPreds(sess, ast.table, nr);
+      sess.txn.writes[ast.table].set(String(old[def.pk]), nr); changed++;
+    }
+    sess.rowCount = changed;
+    return { kind: 'dml', affected: changed, matched: rows.length, msg: 'Rows matched: ' + rows.length + '   Changed: ' + changed + '   Warnings: 0' };
+  }
+  async doDelete(sess, ast) {
+    if (ast.table === 'innodb_trx') throw new SqlError(1142, 'DELETE command denied on a read-only table', '42000');
+    const def = SCHEMA[ast.table];
+    const rows = await this.lockingScan(sess, ast.table, ast.where, 'X', false);
+    for (const r of rows) sess.txn.writes[ast.table].set(String(r[def.pk]), null);
+    sess.rowCount = rows.length;
+    return { kind: 'dml', affected: rows.length, msg: rows.length + ' row(s) affected' };
+  }
+
+  /* ----- expression evaluation ----- */
+  ev(n, ctx) {
+    switch (n.k) {
+      case 'lit': return n.v;
+      case 'col': {
+        const r = ctx.row;
+        if (r && n.name in r) { const v = r[n.name]; return v === undefined ? null : v; }
+        if (ctx.group && ctx.group[0] && n.name in ctx.group[0]) return ctx.group[0][n.name];
+        throw new SqlError(1054, "Unknown column '" + n.name + "' in 'field list'", '42S22');
+      }
+      case 'var':
+        if (n.name === 'autocommit') return ctx.sess.autocommit ? 1 : 0;
+        if (n.name === 'transaction_isolation' || n.name === 'tx_isolation') return ctx.sess.level.replace(/ /g, '-');
+        return null;
+      case 'neg': { const v = this.ev(n.e, ctx); return v === null ? null : -Number(v); }
+      case 'not': { const v = this.ev(n.e, ctx); return v === null ? null : (truthy(v) ? 0 : 1); }
+      case 'and': {
+        const l = this.ev(n.l, ctx); if (l !== null && !truthy(l)) return 0;
+        const r = this.ev(n.r, ctx); if (r !== null && !truthy(r)) return 0;
+        return (l === null || r === null) ? null : 1;
+      }
+      case 'or': {
+        const l = this.ev(n.l, ctx); if (truthy(l)) return 1;
+        const r = this.ev(n.r, ctx); if (truthy(r)) return 1;
+        return (l === null || r === null) ? null : 0;
+      }
+      case 'cmp': {
+        const l = this.ev(n.l, ctx), r = this.ev(n.r, ctx); if (l === null || r === null) return null;
+        const c = cmpVals(l, r);
+        switch (n.op) { case '=': return c === 0 ? 1 : 0; case '<>': case '!=': return c !== 0 ? 1 : 0; case '<': return c < 0 ? 1 : 0; case '<=': return c <= 0 ? 1 : 0; case '>': return c > 0 ? 1 : 0; default: return c >= 0 ? 1 : 0; }
+      }
+      case 'isnull': { const v = this.ev(n.e, ctx); return (v === null) !== n.neg ? 1 : 0; }
+      case 'in': {
+        const v = this.ev(n.e, ctx); if (v === null) return null;
+        const hit = n.list.some((x) => { const y = this.ev(x, ctx); return y !== null && cmpVals(v, y) === 0; });
+        return hit !== n.neg ? 1 : 0;
+      }
+      case 'ar': {
+        const l = this.ev(n.l, ctx), r = this.ev(n.r, ctx); if (l === null || r === null) return null;
+        const a = Number(l), b = Number(r);
+        switch (n.op) { case '+': return round2(a + b); case '-': return round2(a - b); case '*': return round2(a * b); case '/': return b === 0 ? null : round2(a / b); default: return b === 0 ? null : a % b; }
+      }
+      case 'fn': {
+        const nm = n.name;
+        if (AGG.has(nm)) {
+          if (!ctx.group) throw new SqlError(1111, 'Invalid use of group function', 'HY000');
+          const rows = ctx.group;
+          if (nm === 'COUNT') {
+            if (n.star) return rows.length;
+            return rows.filter((r) => this.ev(n.args[0], { row: r, sess: ctx.sess }) !== null).length;
+          }
+          const vals = rows.map((r) => this.ev(n.args[0], { row: r, sess: ctx.sess })).filter((v) => v !== null).map(Number);
+          if (!vals.length) return null;
+          if (nm === 'SUM') return round2(vals.reduce((a, b) => a + b, 0));
+          if (nm === 'MAX') return Math.max(...vals);
+          if (nm === 'MIN') return Math.min(...vals);
+          return round2(vals.reduce((a, b) => a + b, 0) / vals.length);
+        }
+        switch (nm) {
+          case 'ROW_COUNT': return ctx.sess.rowCount;
+          case 'CONNECTION_ID': return ctx.sess.conn;
+          case 'NOW': case 'CURRENT_TIMESTAMP': return nowStr();
+          case 'VERSION': return '8.0.36-sim';
+          case 'COALESCE': case 'IFNULL': for (const a of n.args) { const v = this.ev(a, ctx); if (v !== null) return v; } return null;
+          default: throw new SqlError(1305, 'FUNCTION ' + nm + ' does not exist', '42000');
+        }
+      }
+    }
+    throw new SqlError(1064, 'Unsupported expression', '42000');
+  }
+}
+// ==ENGINE-END==
+
+
+/* =====================================================================
+   UI  ·  helpers, live database view, SQL lab
+   ===================================================================== */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, '');
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const c of kids.flat(Infinity)) { if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(c)); }
+  return e;
+}
+const KW = new Set('SELECT FROM WHERE AND OR NOT NULL IS IN AS INSERT INTO VALUES UPDATE SET DELETE START TRANSACTION COMMIT ROLLBACK BEGIN FOR SHARE LOCK MODE GROUP BY HAVING ORDER ASC DESC LIMIT USE SESSION ISOLATION LEVEL READ UNCOMMITTED COMMITTED REPEATABLE SERIALIZABLE DISTINCT BETWEEN WITH CONSISTENT SNAPSHOT'.split(' '));
+const FNS = new Set(['COUNT', 'SUM', 'MAX', 'MIN', 'AVG', 'ROW_COUNT', 'CONNECTION_ID', 'NOW', 'COALESCE', 'IFNULL']);
+function highlight(src) {
+  const re = /(--[^\n]*|#[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|('(?:[^'\\]|\\.|'')*'?)|(\b\d+(?:\.\d+)?\b)|(@@?[A-Za-z_.]+|\b[A-Za-z_][A-Za-z0-9_.]*\b)/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    const t = m[0];
+    if (m[1]) out += '<span class="t-c">' + esc(t) + '</span>';
+    else if (m[2]) out += '<span class="t-s">' + esc(t) + '</span>';
+    else if (m[3]) out += '<span class="t-n">' + esc(t) + '</span>';
+    else {
+      const u = t.toUpperCase();
+      if (KW.has(u)) out += '<span class="t-k">' + esc(t) + '</span>';
+      else if (FNS.has(u) && src[m.index + t.length] === '(') out += '<span class="t-f">' + esc(t) + '</span>';
+      else out += esc(t);
+    }
+    last = m.index + t.length;
+  }
+  return out + esc(src.slice(last));
+}
+function fmtVal(v, dec) {
+  if (v === null || v === undefined) return 'NULL';
+  if (typeof v === 'number') return dec ? v.toFixed(2) : String(v);
+  return String(v);
+}
+const fmtCell = (v, dec) => (v === null || v === undefined ? '<i class="nul">NULL</i>' : esc(fmtVal(v, dec)));
+function gridEl(res) {
+  const rows = res.rows.slice(0, 60);
+  const t = h('table', { class: 'grid' });
+  t.append(h('thead', null, h('tr', null, h('th', { class: 'rn' }, ''), res.cols.map((c) => h('th', null, c.name)))));
+  const tb = h('tbody');
+  if (!rows.length) tb.append(h('tr', null, h('td', { colspan: res.cols.length + 1, class: 'empty' }, '(0 rows)')));
+  rows.forEach((r, i) => tb.append(h('tr', null, h('td', { class: 'rn' }, i + 1), r.map((v, j) => h('td', { html: fmtCell(v, res.cols[j].dec), class: typeof v === 'number' ? 'num' : '' })))));
+  t.append(tb);
+  return h('div', { class: 'gridwrap' }, t);
+}
+const ERR_HINT = {
+  1213: 'MySQL found a deadlock, picked this session as the victim and rolled back its whole transaction. The app must retry or tell the user.',
+  1205: 'The lock wait timed out (50 s by default). Only this statement is cancelled; the transaction is still open.',
+  3819: 'A CHECK rule refused the row. Earlier statements in an open transaction are still pending: the app must ROLLBACK.',
+  1452: 'A foreign key refused the row because the parent row does not exist. Earlier statements in an open transaction are still pending.',
+  1062: 'The primary key already exists.'
+};
+const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+let _raf = {};
+function throttle(key, fn) { if (_raf[key]) return; _raf[key] = requestAnimationFrame(() => { _raf[key] = 0; fn(); }); }
+
+/* ---------- live database view ---------- */
+const TBL_ORDER = ['accounts', 'transfers', 'seats', 'bookings'];
+function renderDB(el, eng, opt) {
+  opt = opt || {};
+  const tables = opt.tables || TBL_ORDER; const had = !!el._prev; const prev = el._prev || {}; const next = {}; let html = '';
+  for (const t of tables) {
+    const def = SCHEMA[t]; const ent = new Map();
+    for (const [k, r] of eng.db.tables[t]) ent.set(k, { c: r, p: [] });
+    for (const s of Object.values(eng.sessions)) {
+      if (!s.txn) continue;
+      for (const [k, v] of s.txn.writes[t]) { let e = ent.get(k); if (!e) { e = { c: null, p: [] }; ent.set(k, e); } e.p.push({ sid: s.id, row: v }); }
+    }
+    const list = [...ent.entries()].sort((a, b) => {
+      const ra = a[1].c || a[1].p[0].row, rb = b[1].c || b[1].p[0].row;
+      return String(ra[def.pk]).localeCompare(String(rb[def.pk]), undefined, { numeric: true });
+    });
+    let rows = '';
+    for (const [k, e] of list) {
+      const lk = t + ':' + k; const L = eng.locks.get(lk); const pend = e.p[0];
+      next[lk] = e.c ? e.c._v : -1;
+      const flash = had && e.c && (prev[lk] === undefined || (prev[lk] !== -1 && prev[lk] !== e.c._v) || prev[lk] === -1);
+      let cls = '';
+      if (pend) cls += ' pend pend-' + pend.sid; if (flash) cls += ' flash'; if (pend && pend.row === null) cls += ' del'; if (!e.c) cls += ' ghost';
+      let cells = '';
+      for (const col of def.cols) {
+        const dec = DEC_COLS.has(col); const oldv = e.c ? e.c[col] : undefined;
+        const newv = pend && pend.row ? pend.row[col] : undefined;
+        if (pend && pend.row && e.c && oldv !== newv) cells += '<td><s class="was">' + esc(fmtVal(oldv, dec)) + '</s><b class="now now-' + pend.sid + '">' + esc(fmtVal(newv, dec)) + '</b></td>';
+        else if (pend && pend.row && !e.c) cells += '<td><b class="now now-' + pend.sid + '">' + esc(fmtVal(newv, dec)) + '</b></td>';
+        else cells += '<td>' + fmtCell(oldv, dec) + '</td>';
+      }
+      let tags = '';
+      if (pend) tags += '<span class="pill p-' + pend.sid + '" title="' + (pend.row === null ? 'delete' : e.c ? 'update' : 'insert') + ' by session ' + pend.sid + ', not committed">' + pend.sid + ' · staged</span>';
+      if (L) {
+        if (L.x) tags += '<span class="pill p-lock" title="Session ' + L.x + ' holds an exclusive (write) lock">🔒 ' + L.x + ' · X</span>';
+        for (const s of L.s) if (s !== L.x) tags += '<span class="pill p-lock" title="Session ' + s + ' holds a shared (read) lock">🔒 ' + s + ' · S</span>';
+      }
+      rows += '<tr class="' + cls.trim() + '">' + cells + '<td class="tags">' + tags + '</td></tr>';
+    }
+    if (!list.length) rows = '<tr><td colspan="' + (def.cols.length + 1) + '" class="empty">(no rows)</td></tr>';
+    html += '<div class="tbl"><div class="tbl-h"><span class="tn">' + t + '</span><span class="cnt">' + eng.db.tables[t].size + ' committed row' + (eng.db.tables[t].size === 1 ? '' : 's') + '</span></div>' +
+      '<table class="dbt"><thead><tr>' + def.cols.map((c) => '<th>' + c + '</th>').join('') + '<th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+  el.innerHTML = html; el._prev = next;
+}
+
+/* ---------- sub tabs ---------- */
+function subTabs(host, items) {
+  const bar = h('div', { class: 'subtabs', role: 'tablist' }); const body = h('div', { class: 'subbody' }); const panes = {};
+  items.forEach((it, i) => {
+    const b = h('button', { class: 'subtab', role: 'tab', onclick: () => show(it.id) }, it.label);
+    bar.append(b); it._btn = b;
+    const p = h('div', { class: 'subpane' }); p.hidden = true; panes[it.id] = p; body.append(p);
+  });
+  function show(id) {
+    items.forEach((it) => { const on = it.id === id; it._btn.classList.toggle('on', on); it._btn.setAttribute('aria-selected', on); panes[it.id].hidden = !on; if (on && !it._built) { it._built = true; it.build(panes[it.id]); } });
+  }
+  host.append(bar, body); show(items[0].id);
+  return { show };
+}
+
+/* =====================================================================
+   SQL LAB
+   ===================================================================== */
+const SQ = {
+  sum: "SELECT * FROM accounts;\nSELECT SUM(balance) AS total_money FROM accounts;",
+  debit: "UPDATE accounts SET balance = balance - 200 WHERE account_id = 'A101';",
+  credit: "UPDATE accounts SET balance = balance + 200 WHERE account_id = 'B202';",
+  log: "INSERT INTO transfers (from_account, to_account, amount)\nVALUES ('A101', 'B202', 200.00);",
+  seat: "SELECT seat_id, status, booked_by, version FROM seats WHERE seat_id = 'S1';",
+  bal: "SELECT balance FROM accounts WHERE account_id = 'A101';",
+  cnt: "SELECT COUNT(*) AS n FROM accounts WHERE balance >= 100;"
+};
+const unsafeSave = (who) => "START TRANSACTION;\nUPDATE seats\nSET status = 'BOOKED', booked_by = '" + who + "', version = version + 1\nWHERE seat_id = 'S1';\nINSERT INTO bookings (seat_id, customer) VALUES ('S1', '" + who + "');\nCOMMIT;";
+const guardedUpd = (who, ver) => "START TRANSACTION;\nUPDATE seats\nSET status = 'BOOKED', booked_by = '" + who + "', version = version + 1\nWHERE seat_id = 'S1' AND version = " + (ver || 1) + " AND status = 'AVAILABLE';\nSELECT ROW_COUNT() AS saved_rows;";
+const bookIns = (who) => "INSERT INTO bookings (seat_id, customer) VALUES ('S1', '" + who + "');\nCOMMIT;\nSELECT * FROM seats WHERE seat_id = 'S1';\nSELECT * FROM bookings WHERE seat_id = 'S1';";
+
+const LESSONS = [
+  { g: 'Part 1 · Bank transfer', id: 'incomplete', title: '1 · The incomplete save', intro: 'One tap on Send is really three writes. What if the app dies after the first one?', steps: [
+    { s: 'A', sql: SQ.sum, ask: 'What should the total money in the bank always be?', expect: '1500.00. Remember this number.' },
+    { s: 'A', sql: SQ.debit + "\n-- 💥 the app crashes here, so Ben's credit never runs", ask: 'Autocommit is ON. Is this change already permanent?', expect: 'Yes. Autocommit committed the lone UPDATE the instant it ran (see the database panel).' },
+    { s: 'A', sql: SQ.sum, ask: 'Is the transfer complete? Where did ₹200 go?', expect: 'Total is 1300.00. ₹200 vanished: one valid statement, a broken business action.' },
+    { s: 'A', sql: "ROLLBACK;\nSELECT * FROM accounts;", ask: 'Will ROLLBACK bring Asha back to 1000?', expect: 'No. There was no open transaction to cancel. ROLLBACK is not a time machine.' }] },
+  { g: 'Part 1 · Bank transfer', id: 'txn', title: '2 · Transactions: stage, roll back, commit', intro: 'Group the three writes. Nothing is permanent until COMMIT.', steps: [
+    { s: 'A', sql: "START TRANSACTION;\n" + SQ.debit + "\n" + SQ.credit + "\n" + SQ.log + "\nSELECT * FROM accounts;\nSELECT * FROM transfers;", ask: 'If I ROLLBACK now, what are the balances? And if I COMMIT?', expect: 'A sees 800 / 700 and one transfer. Yellow rows in the database panel are staged: not committed yet.' },
+    { s: 'B', sql: "SELECT * FROM accounts;\nSELECT COUNT(*) AS transfer_rows FROM transfers;", ask: 'What will Session B see while A is still open?', expect: 'The old values 1000 / 500 and 0 transfers. Uncommitted work is invisible to others (isolation).' },
+    { s: 'B', sql: "SELECT trx_id, trx_state, trx_started, trx_mysql_thread_id FROM information_schema.innodb_trx;", ask: 'Can we prove A has an open transaction?', expect: 'One row: A\'s open transaction (connection #101).' },
+    { s: 'A', sql: "ROLLBACK;\nSELECT * FROM accounts;\nSELECT COUNT(*) AS transfer_rows FROM transfers;", ask: 'Predict: balances and number of transfer rows?', expect: '1000 / 500 and 0 rows. The transfer row disappeared too: same cancelled group.' },
+    { s: 'A', sql: "START TRANSACTION;\n" + SQ.debit + "\n" + SQ.credit + "\n" + SQ.log + "\nCOMMIT;\nSELECT * FROM accounts;\nSELECT * FROM transfers;", ask: 'Same writes. Only the ending changes. Anything different?', expect: '800 / 700 and one transfer, now permanent (rows flash green).' },
+    { s: 'B', sql: "SELECT * FROM accounts;", ask: 'What does B see now?', expect: 'The committed 800 / 700.' },
+    { s: 'A', sql: "ROLLBACK;\nSELECT * FROM accounts;", ask: 'Can ROLLBACK undo it now?', expect: 'No. After COMMIT the work is accepted database state. A wrong decision needs a new, authorised correction.' }] },
+  { g: 'Part 1 · Bank transfer', id: 'fail', title: '3 · When the second write fails', intro: 'Asha has ₹1000 but tries to send ₹5000. Credit Ben first (works), then debit Asha (fails).', steps: [
+    { s: 'A', sql: "START TRANSACTION;\nUPDATE accounts SET balance = balance + 5000 WHERE account_id = 'B202';", ask: 'This write succeeds. Are we done?', expect: 'Ben shows 5500 inside A\'s open transaction.' },
+    { s: 'A', sql: "UPDATE accounts SET balance = balance - 5000 WHERE account_id = 'A101';", ask: 'Asha only has 1000. What happens?', expect: 'ERROR 3819: the CHECK rule refuses a negative balance.' },
+    { s: 'A', sql: SQ.sum, ask: 'Has MySQL automatically undone Ben\'s +5000?', expect: 'No! Total is 6500.00. If we COMMIT now, the bank invents ₹5000.' },
+    { s: 'A', sql: "ROLLBACK;\n" + SQ.sum, ask: 'What is the only correct reaction to a failed required write?', expect: 'ROLLBACK. Back to 1500.00. Any required write fails → cancel the whole attempt.' }] },
+  { g: 'Part 1 · Bank transfer', id: 'acid', title: '4 · Rules the database enforces (the C in ACID)', intro: 'Constraints enforce the rules we wrote down, not the truth.', steps: [
+    { s: 'A', sql: "INSERT INTO transfers (from_account, to_account, amount)\nVALUES ('A101', 'Z999', 10.00);", ask: 'There is no account Z999. What happens?', expect: 'ERROR 1452: the foreign key blocks a transfer to a ghost account.' },
+    { s: 'A', sql: "UPDATE accounts SET balance = -1 WHERE account_id = 'A101';", ask: 'Can a balance go negative?', expect: 'ERROR 3819: the CHECK constraint says no.' },
+    { s: 'A', sql: SQ.log + "\nSELECT * FROM transfers;", ask: 'This one is valid. Could it still be the wrong decision?', expect: 'It succeeds: valid accounts and enough money. Constraints cannot know Asha meant ₹20.' }] },
+  { g: 'Part 2 · Cinema seat', id: 'double', title: '5 · The double booking', intro: 'Two people open the same seat page. Every statement is valid, and a transaction is used.', steps: [
+    { s: 'A', sql: SQ.seat, ask: 'Both reviewers open the page. What do they see?', expect: 'AVAILABLE, version 1. Write "opened version = 1" on the board.' },
+    { s: 'B', sql: SQ.seat, ask: 'Same page, same moment.', expect: 'Same screen: AVAILABLE, version 1. This is the "old photocopy".' },
+    { s: 'A', sql: unsafeSave('Asha'), ask: 'Asha books. Does this look correct?', expect: 'Yes: seat BOOKED v2 plus one booking, saved together.' },
+    { s: 'B', sql: unsafeSave('Ben'), ask: 'Ben\'s screen still says AVAILABLE. Every statement is valid. What will the seat say?', expect: 'It succeeds. Ben overwrote Asha. WHERE seat_id = \'S1\' says nothing about which version Ben saw.' },
+    { s: 'A', sql: "SELECT * FROM seats WHERE seat_id = 'S1';\nSELECT * FROM bookings WHERE seat_id = 'S1';\nSELECT seat_id, COUNT(*) AS bookings_for_seat\nFROM bookings GROUP BY seat_id HAVING COUNT(*) > 1;", ask: 'What was lost?', expect: 'Asha\'s claim as the current state. Two bookings for one seat. A log helps investigate; it did not prevent the double booking.' }] },
+  { g: 'Part 2 · Cinema seat', id: 'guard', title: '6 · The version guard', intro: 'Put the freshness check inside the write: only if it is STILL version 1 and STILL available.', steps: [
+    { s: 'A', sql: SQ.seat, ask: 'Both screens open version 1 again.', expect: 'AVAILABLE, version 1.' },
+    { s: 'B', sql: SQ.seat, ask: 'B remembers: opened version = 1.', expect: 'AVAILABLE, version 1.' },
+    { s: 'A', sql: guardedUpd('Asha', 1), ask: 'How many rows should this change?', expect: 'saved_rows = 1. We are not finished: the booking row and COMMIT are still missing.' },
+    { s: 'A', sql: bookIns('Asha'), ask: 'Only because saved_rows was 1, finish the save.', expect: 'Seat BOOKED v2 with exactly one booking.' },
+    { s: 'B', sql: guardedUpd('Ben', 1), ask: 'B still submits version 1. Predict saved_rows.', expect: 'saved_rows = 0. The seat is version 2 now, so no row matches.' },
+    { s: 'B', sql: "ROLLBACK;\nSELECT * FROM seats WHERE seat_id = 'S1';\nSELECT * FROM bookings WHERE seat_id = 'S1';", ask: 'What should Ben see on his screen?', expect: 'Asha\'s booking is intact. Message: "Sorry, this seat was just booked. Please pick another seat."' }] },
+  { g: 'Part 2 · Cinema seat', id: 'lock', title: '7 · The short row lock (FOR UPDATE)', intro: 'Instead of detecting a conflict at save time, reserve the row for the short save.', steps: [
+    { s: 'A', sql: "START TRANSACTION;\nSELECT seat_id, status, booked_by, version FROM seats WHERE seat_id = 'S3' FOR UPDATE;", ask: 'A reserves seat S3. What do others see?', expect: 'A holds an exclusive lock on S3 (🔒 pill in the database panel).' },
+    { s: 'B', sql: "START TRANSACTION;\nSELECT seat_id, status, booked_by, version FROM seats WHERE seat_id = 'S3' FOR UPDATE;", ask: 'B asks for the same row. What happens?', expect: 'B hangs: it waits for A\'s lock. The query does not return.', nowait: true },
+    { s: 'A', sql: "UPDATE seats SET status = 'BOOKED', booked_by = 'Asha', version = version + 1 WHERE seat_id = 'S3';\nINSERT INTO bookings (seat_id, customer) VALUES ('S3', 'Asha');\nCOMMIT;", ask: 'A finishes and commits. What does B get?', expect: 'B wakes up and sees BOOKED, version 2: the current state, not its old screen.' },
+    { s: 'B', sql: "ROLLBACK;", ask: 'B rechecks the row. Should B book the seat?', expect: 'No. Waiting for a lock does not make an old decision valid. Never hold a lock while a human thinks.' }] },
+  { g: 'Part 3 · Isolation levels', id: 'dirty', title: '8 · Dirty read (READ UNCOMMITTED)', setup: { level: 'READ UNCOMMITTED' }, intro: 'Both sessions start at READ UNCOMMITTED. Later, switch both dropdowns to READ COMMITTED and replay.', steps: [
+    { s: 'A', sql: "START TRANSACTION;\nUPDATE accounts SET balance = balance - 500 WHERE account_id = 'A101';", ask: 'A changes Asha to 500 but has NOT committed.', expect: 'A shows a staged change (yellow). Nothing is permanent.' },
+    { s: 'B', sql: "START TRANSACTION;\n" + SQ.bal, ask: 'What balance will B read?', expect: '500: a dirty read. B sees A\'s uncommitted draft.' },
+    { s: 'A', sql: "ROLLBACK;", ask: 'A changes their mind and rolls back. What did B just read?', expect: 'A value that never officially existed.' },
+    { s: 'B', sql: SQ.bal + "\nCOMMIT;", ask: 'What does B read now?', expect: 'Back to 1000. Try again with both sessions on READ COMMITTED: B reads 1000 the first time.' }] },
+  { g: 'Part 3 · Isolation levels', id: 'nonrep', title: '9 · Non-repeatable read (READ COMMITTED)', setup: { level: 'READ COMMITTED' }, intro: 'Same query twice inside one transaction. Switch both dropdowns to REPEATABLE READ and replay to compare.', steps: [
+    { s: 'B', sql: "START TRANSACTION;\n" + SQ.bal, ask: 'B reads Asha\'s balance.', expect: '1000.' },
+    { s: 'A', sql: "UPDATE accounts SET balance = balance - 500 WHERE account_id = 'A101';", ask: 'A updates with autocommit ON, so it is committed straight away.', expect: 'Committed: Asha is 500.' },
+    { s: 'B', sql: SQ.bal, ask: 'B runs the exact same query inside the same transaction. Same answer?', expect: 'READ COMMITTED: 500, a different answer. REPEATABLE READ: still 1000 (B keeps looking at its snapshot).' },
+    { s: 'B', sql: "COMMIT;\n" + SQ.bal, ask: 'After B commits, what does B see on a new read?', expect: '500. The snapshot ends with the transaction.' }] },
+  { g: 'Part 3 · Isolation levels', id: 'phantom', title: '10 · Phantom read', setup: { level: 'READ COMMITTED' }, intro: 'New rows appear between two identical queries. Compare READ COMMITTED with REPEATABLE READ.', steps: [
+    { s: 'B', sql: "START TRANSACTION;\nSELECT * FROM accounts WHERE balance >= 100;", ask: 'How many accounts have at least 100?', expect: '2 rows (Asha and Ben).' },
+    { s: 'A', sql: "INSERT INTO accounts (account_id, owner_name, balance)\nVALUES ('C303', 'Chitra', 300.00);", ask: 'A adds a new rich customer (autocommit).', expect: 'Committed. A new row exists.' },
+    { s: 'B', sql: "SELECT * FROM accounts WHERE balance >= 100;", ask: 'Same query again in B. How many rows?', expect: 'READ COMMITTED: 3 rows (a phantom appeared). REPEATABLE READ: still 2.' },
+    { s: 'B', sql: "COMMIT;", ask: 'Wrap up.', expect: 'Phantoms are about extra ROWS; non-repeatable reads are about changed VALUES.' }] },
+  { g: 'Part 3 · Isolation levels', id: 'ser', title: '11 · SERIALIZABLE: readers block writers', setup: { level: 'SERIALIZABLE' }, intro: 'Both sessions start at SERIALIZABLE. Reads inside a transaction take shared locks. Part two ends in a deadlock.', steps: [
+    { s: 'B', sql: "START TRANSACTION;\n" + SQ.bal, ask: 'A plain SELECT. Does it leave any trace?', expect: 'B holds a shared lock on Asha\'s row (🔒 pill). SERIALIZABLE turns reads into locking reads.' },
+    { s: 'A', sql: "UPDATE accounts SET balance = balance - 500 WHERE account_id = 'A101';", ask: 'A tries to write that row. What happens?', expect: 'A hangs until B finishes.', nowait: true },
+    { s: 'B', sql: "COMMIT;", ask: 'B commits. What happens to A?', expect: 'The lock is released and A\'s UPDATE runs at once.' },
+    { s: 'A', sql: "START TRANSACTION;\nSELECT status, version FROM seats WHERE seat_id = 'S1';", ask: 'Part two. Both sessions read seat S1 inside a transaction.', expect: 'A holds a shared lock on S1.' },
+    { s: 'B', sql: "START TRANSACTION;\nSELECT status, version FROM seats WHERE seat_id = 'S1';", ask: 'B reads the same seat. Shared locks are compatible.', expect: 'Both sessions now hold a shared lock on S1.' },
+    { s: 'A', sql: "UPDATE seats SET status = 'BOOKED', booked_by = 'Asha', version = version + 1 WHERE seat_id = 'S1';", ask: 'A wants to write. B still holds a shared lock.', expect: 'A waits for B.', nowait: true },
+    { s: 'B', sql: "UPDATE seats SET status = 'BOOKED', booked_by = 'Ben', version = version + 1 WHERE seat_id = 'S1';", ask: 'B also wants to write, but A is waiting for B and B is waiting for A. What now?', expect: 'ERROR 1213: deadlock. MySQL rolls B back; A\'s UPDATE then proceeds. Safe, but the app must retry.' },
+    { s: 'A', sql: "INSERT INTO bookings (seat_id, customer) VALUES ('S1', 'Asha');\nCOMMIT;\nSELECT * FROM bookings;", ask: 'A finishes. How many bookings exist for S1?', expect: 'One. SERIALIZABLE prevented the double booking, at the cost of a deadlock error.' }] }
+];
+
+const lab = { eng: null, sess: {}, lesson: null, idx: 0, typed: false, host: null };
+function newEngine(level) {
+  if (lab.eng) lab.eng.dispose();
+  const e = new Engine();
+  e.session('A'); e.session('B');
+  e.setLevel('A', level || 'READ COMMITTED'); e.setLevel('B', level || 'READ COMMITTED');
+  e.onChange(() => throttle('lab', renderLab));
+  lab.eng = e; return e;
+}
+function syncEditor(S) {
+  S.pre.innerHTML = S.ta.value ? highlight(S.ta.value) + '\n' : '<span class="t-c">-- Session ' + S.id + ': type SQL here\n-- Alt+X runs the script · Ctrl+Enter runs one statement</span>';
+  S.pre.scrollTop = S.ta.scrollTop; S.pre.scrollLeft = S.ta.scrollLeft;
+}
+function currentStatement(ta) {
+  const ranges = splitSqlRanges(ta.value); if (!ranges.length) return '';
+  const pos = ta.selectionStart;
+  let hit = ranges.find((r) => pos >= r.start && pos <= r.end + 1);
+  if (!hit) { const before = ranges.filter((r) => r.start <= pos); hit = before.length ? before[before.length - 1] : ranges[0]; }
+  return hit.text;
+}
+function addCard(S, sql) {
+  const first = sql.replace(/\s+/g, ' ').trim();
+  const body = h('div', { class: 'card-b' }, h('span', { class: 'spin' }, 'Running…'));
+  const card = h('div', { class: 'card pending' }, h('div', { class: 'card-h' }, h('span', { class: 'ico' }, '▸'), h('code', { class: 'q', html: highlight(first.length > 110 ? first.slice(0, 107) + '…' : first) })), body);
+  card._body = body; S.outEl.append(card); return card;
+}
+function finishCard(card, res) {
+  card.classList.remove('pending'); const b = card._body; b.innerHTML = '';
+  const ico = $('.ico', card);
+  if (res.error) {
+    card.classList.add('err'); ico.textContent = '✖';
+    b.append(h('div', { class: 'errmsg' }, 'Error Code: ' + res.error.code + '. ' + res.error.msg));
+    if (ERR_HINT[res.error.code]) b.append(h('div', { class: 'hint' }, ERR_HINT[res.error.code]));
+  } else if (res.kind === 'select') {
+    card.classList.add('okc'); ico.textContent = '✔'; b.append(gridEl(res));
+    b.append(h('div', { class: 'foot' }, res.rows.length + ' row(s) returned' + (res.locked ? ' · locking read' : '')));
+  } else {
+    card.classList.add('okc'); ico.textContent = '✔'; b.append(h('div', { class: 'okmsg' }, res.msg || 'OK'));
+  }
+}
+async function runText(sid, text) {
+  const S = lab.sess[sid]; if (!S || S.busy) return;
+  const stmts = splitSql(text); if (!stmts.length) return;
+  const eng = lab.eng; S.busy = true; S.outEl.innerHTML = ''; S.outEl.scrollTop = 0; renderLab();
+  for (let i = 0; i < stmts.length; i++) {
+    const card = addCard(S, stmts[i]); S.cur = card;
+    const res = await eng.execOne(sid, stmts[i]);
+    if (eng !== lab.eng) return;
+    S.cur = null; finishCard(card, res);
+    if (res.error && S.stopChk.checked) {
+      const rest = stmts.length - i - 1;
+      if (rest > 0) S.outEl.append(h('div', { class: 'note-stop' }, 'Script stopped on error. ' + rest + ' remaining statement(s) were not run.'));
+      break;
+    }
+  }
+  S.busy = false; renderLab();
+}
+function runEditor(sid, mode) {
+  const S = lab.sess[sid]; const ta = S.ta;
+  const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+  if (sel.trim()) return runText(sid, sel);
+  return runText(sid, mode === 'cur' ? currentStatement(ta) : ta.value);
+}
+function buildSession(id) {
+  const S = { id, busy: false, cur: null };
+  S.connEl = h('span', { class: 'conn' }, '');
+  S.badge = h('span', { class: 'badge idle' }, '');
+  S.levelSel = h('select', { class: 'sel', title: 'Isolation level of this session', onchange: () => {
+    if (S.busy) { S.levelSel.value = lab.eng.session(id).level; return; }
+    runText(id, 'SET SESSION TRANSACTION ISOLATION LEVEL ' + S.levelSel.value + ';');
+  } }, LEVELS.map((l) => h('option', { value: l }, l)));
+  S.acChk = h('input', { type: 'checkbox', checked: true, onchange: () => {
+    if (S.busy) { S.acChk.checked = lab.eng.session(id).autocommit; return; }
+    runText(id, 'SET autocommit = ' + (S.acChk.checked ? 1 : 0) + ';');
+  } });
+  S.stopChk = h('input', { type: 'checkbox', checked: true });
+  S.pre = h('pre', { class: 'hl', 'aria-hidden': 'true' });
+  S.ta = h('textarea', { class: 'ta', spellcheck: 'false', wrap: 'off', 'aria-label': 'SQL editor for session ' + id, placeholder: '-- Session ' + id + ': type SQL here, then press Run (Alt+X) or Ctrl+Enter for one statement' });
+  S.ta.addEventListener('input', () => syncEditor(S));
+  S.ta.addEventListener('scroll', () => { S.pre.scrollTop = S.ta.scrollTop; S.pre.scrollLeft = S.ta.scrollLeft; });
+  S.ta.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runEditor(id, 'cur'); }
+    else if (e.altKey && e.code === 'KeyX') { e.preventDefault(); runEditor(id, 'all'); }
+  });
+  S.runBtn = h('button', { class: 'btn run', title: 'Run the selection, or the whole editor (Alt+X)', onclick: () => runEditor(id, 'all') }, '▶ Run script');
+  S.stmtBtn = h('button', { class: 'btn', title: 'Run the statement under the cursor (Ctrl+Enter)', onclick: () => runEditor(id, 'cur') }, 'Run statement');
+  S.outEl = h('div', { class: 'out' }, h('div', { class: 'out-empty' }, 'Results appear here, like the result tabs in DBeaver.'));
+  S.panel = h('section', { class: 'sess sess-' + id },
+    h('div', { class: 's-head' },
+      h('div', { class: 's-title' }, h('span', { class: 'dot dot-' + id }), h('b', null, 'Session ' + id), S.connEl),
+      h('div', { class: 's-ctl' }, h('label', { class: 'chk' }, S.acChk, ' autocommit'), S.levelSel)),
+    S.badge,
+    h('div', { class: 'editor' }, S.pre, S.ta),
+    h('div', { class: 'tools-row' }, S.runBtn, S.stmtBtn,
+      h('button', { class: 'btn ghost', onclick: () => { S.ta.value = ''; syncEditor(S); } }, 'Clear'),
+      h('label', { class: 'chk push' }, S.stopChk, ' stop on error')),
+    S.outEl);
+  syncEditor(S); lab.sess[id] = S; return S;
+}
+function renderLab() {
+  if (!lab.eng || !lab.host) return;
+  const eng = lab.eng;
+  renderDB($('#dbview'), eng);
+  for (const id of ['A', 'B']) {
+    const S = lab.sess[id]; const ss = eng.session(id);
+    S.connEl.textContent = 'connection #' + ss.conn;
+    if (document.activeElement !== S.levelSel) S.levelSel.value = ss.level;
+    S.acChk.checked = ss.autocommit;
+    let txt, cls;
+    if (ss.waiting) { const secs = Math.floor((Date.now() - ss.waiting.since) / 1000); txt = '⏳ waiting ' + secs + 's for ' + ss.waiting.on.join(' and ') + ' (' + ss.waiting.desc + ')'; cls = 'wait'; }
+    else if (ss.txn && ss.txn.keep) { txt = '● transaction open · ' + eng.pendingCount(ss) + ' uncommitted change(s)'; cls = 'open'; }
+    else { txt = ss.autocommit ? 'no open transaction · each statement commits by itself' : 'autocommit off · the next statement opens a transaction'; cls = 'idle'; }
+    S.badge.textContent = txt; S.badge.className = 'badge ' + cls;
+    S.runBtn.disabled = S.busy; S.stmtBtn.disabled = S.busy;
+    if (S.cur) {
+      const b = S.cur._body;
+      if (ss.waiting) b.innerHTML = '<span class="spin waitc">⏳ Waiting for ' + esc(ss.waiting.on.join(' and ')) + ' to release ' + esc(ss.waiting.desc) + '. This statement is frozen until they COMMIT or ROLLBACK.</span>';
+      else if (b.querySelector('.waitc')) b.innerHTML = '<span class="spin">Running…</span>';
+    }
+  }
+}
+setInterval(() => { if (lab.eng && (lab.eng.session('A').waiting || lab.eng.session('B').waiting)) renderLab(); }, 1000);
+
+/* ---------- lesson player ---------- */
+function typeInto(S, text) {
+  return new Promise((res) => {
+    let i = 0; const n = text.length; const step = Math.max(2, Math.ceil(n / 40)); S.ta.value = '';
+    S.panel.classList.add('spot');
+    const iv = setInterval(() => {
+      i = Math.min(n, i + step); S.ta.value = text.slice(0, i); syncEditor(S);
+      if (i >= n) { clearInterval(iv); setTimeout(() => S.panel.classList.remove('spot'), 700); res(); }
+    }, 16);
+  });
+}
+function resetLab(level) {
+  newEngine(level);
+  for (const id of ['A', 'B']) {
+    const S = lab.sess[id]; S.busy = false; S.cur = null;
+    S.outEl.innerHTML = ''; S.outEl.append(h('div', { class: 'out-empty' }, 'Results appear here, like the result tabs in DBeaver.'));
+    S.ta.value = ''; syncEditor(S);
+  }
+  const db = $('#dbview'); db._prev = null; renderLab();
+}
+function startLesson(i) {
+  const L = LESSONS[i]; lab.lesson = L; lab.idx = 0; lab.typed = false;
+  resetLab(L.setup ? L.setup.level : 'READ COMMITTED');
+  renderLessonBar(); setNote('intro');
+}
+function setNote(kind, st) {
+  const box = $('#lessonNote'); const L = lab.lesson;
+  if (!L) { box.innerHTML = '<p class="muted">Pick a lesson to get a guided sequence, or just type SQL into either session. Everything runs in your browser.</p>'; return; }
+  if (kind === 'intro') box.innerHTML = '<p><b>' + esc(L.title) + '.</b> ' + esc(L.intro) + '</p><p class="muted">Press <b>Next step</b>: the SQL is typed into the right session. Ask first, then run it.</p>';
+  else if (kind === 'ask') box.innerHTML = '<p class="ask"><b>Ask the class:</b> ' + esc(st.ask) + '</p><p class="muted">Take a prediction, then press <b>Run step</b>.</p>';
+  else if (kind === 'expect') box.innerHTML = '<p class="ask"><b>Asked:</b> ' + esc(st.ask) + '</p><p class="expect"><b>Answer:</b> ' + esc(st.expect) + '</p>';
+  else if (kind === 'done') box.innerHTML = '<p><b>Lesson complete.</b> Replay it, edit the SQL freely, or change an isolation dropdown and run the same steps again.</p>';
+}
+function renderLessonBar() {
+  const L = lab.lesson; const steps = $('#lessonSteps'); steps.innerHTML = '';
+  if (!L) { $('#nextBtn').textContent = 'Next step'; $('#nextBtn').disabled = true; return; }
+  L.steps.forEach((st, i) => {
+    const cls = 'stp stp-' + st.s + (i < lab.idx ? ' done' : '') + (i === lab.idx ? ' cur' : '');
+    steps.append(h('span', { class: cls, title: st.ask }, h('i', null, st.s), String(i + 1)));
+  });
+  const nb = $('#nextBtn');
+  nb.disabled = lab.idx >= L.steps.length;
+  nb.textContent = lab.idx >= L.steps.length ? 'Lesson finished' : (lab.typed ? 'Run step ' + (lab.idx + 1) + ' ▶' : 'Next step ' + (lab.idx + 1) + ' ▸');
+}
+async function nextStep() {
+  const L = lab.lesson; if (!L || lab.idx >= L.steps.length) return;
+  const st = L.steps[lab.idx]; const S = lab.sess[st.s]; const nb = $('#nextBtn');
+  if (!lab.typed) {
+    nb.disabled = true;
+    await typeInto(S, st.sql);
+    const predict = $('#predictChk').checked;
+    if (predict) { lab.typed = true; setNote('ask', st); renderLessonBar(); return; }
+  }
+  if (S.busy) { setNote('ask', st); return; }
+  lab.typed = false; setNote('expect', st);
+  const p = runText(st.s, S.ta.value);
+  lab.idx++; renderLessonBar();
+  if (lab.idx >= L.steps.length) { await Promise.race([p, sleepMs(1500)]); setTimeout(() => { if (lab.lesson === L && lab.idx >= L.steps.length) setNote('done'); }, 3500); }
+}
+function buildLab(host) {
+  lab.host = host;
+  const sel = h('select', { id: 'lessonSel', class: 'sel big', 'aria-label': 'Choose a lesson' }, h('option', { value: '' }, 'Choose a lesson…'));
+  let grp = null, gname = '';
+  LESSONS.forEach((L, i) => { if (L.g !== gname) { gname = L.g; grp = h('optgroup', { label: gname }); sel.append(grp); } grp.append(h('option', { value: String(i) }, L.title)); });
+  sel.addEventListener('change', () => { if (sel.value !== '') startLesson(+sel.value); });
+  host.append(
+    h('div', { class: 'lessonbar panel' },
+      h('div', { class: 'lb-top' }, sel,
+        h('button', { class: 'btn', onclick: () => { if (lab.lesson) startLesson(LESSONS.indexOf(lab.lesson)); else { resetLab(); } }, title: 'Reset the database and the editors' }, '↺ Reset lab'),
+        h('div', { id: 'lessonSteps', class: 'steps' }),
+        h('label', { class: 'chk push', title: 'Type the SQL first so you can ask for predictions; run on the second click' }, h('input', { id: 'predictChk', type: 'checkbox', checked: true }), ' Predict first'),
+        h('button', { id: 'nextBtn', class: 'btn primary', disabled: true, onclick: nextStep }, 'Next step')),
+      h('div', { id: 'lessonNote', class: 'lnote' })),
+    h('div', { class: 'lab-grid' },
+      h('aside', { class: 'dbpane panel' },
+        h('div', { class: 'pane-title' }, h('b', null, 'Database'), h('span', { class: 'muted' }, 'class9_lab · live')),
+        h('div', { id: 'dbview' }),
+        h('div', { class: 'legend' },
+          h('span', { class: 'pill p-A' }, 'A · staged = not committed'), h('span', { class: 'pill p-B' }, 'B · staged'),
+          h('span', { class: 'pill p-lock' }, '🔒 X = write lock, S = read lock'), h('span', { class: 'pill p-ok' }, 'a commit flashes green'))),
+      h('div', { class: 'sessions' }, buildSession('A').panel, buildSession('B').panel)));
+  newEngine('READ COMMITTED'); setNote(); renderLab();
+}
+
+/* =====================================================================
+   ANIMATIONS  ·  step-through players driven by the real engine
+   ===================================================================== */
+const PLAYERS = [];
+function makePlayer(host, cfg) {
+  const P = { mode: cfg.modes ? cfg.modes[0].id : null, ctx: null, frames: [], i: 0, busy: false };
+  const modeBar = cfg.modes ? h('div', { class: 'modebar', role: 'tablist' }, cfg.modes.map((m) => h('button', { class: 'mode', 'data-m': m.id, onclick: () => { P.mode = m.id; reset(); } }, m.label))) : null;
+  const stage = h('div', { class: 'stage' });
+  const sqlEl = h('div', { class: 'sqlpane' });
+  const capEl = h('div', { class: 'caption' });
+  const askEl = h('div', { class: 'askline' });
+  const ctrlEl = h('div', { class: 'ctrl' });
+  host.append(h('div', { class: 'anim' },
+    cfg.title ? h('div', { class: 'anim-head' }, h('h3', null, cfg.title), h('p', { class: 'muted' }, cfg.blurb)) : null,
+    modeBar,
+    h('div', { class: 'anim-grid' }, stage, h('div', { class: 'side' }, h('div', { class: 'side-h' }, 'SQL that just ran'), sqlEl, capEl, askEl, ctrlEl))));
+  const vis = cfg.build(stage);
+  function renderSql() {
+    sqlEl.innerHTML = '';
+    const last = (P.ctx && P.ctx.last) || [];
+    if (!last.length) { sqlEl.append(h('div', { class: 'sq-empty' }, 'Press the button to run the next step. The statements and their results show up here.')); return; }
+    for (const r of last) {
+      const blk = h('div', { class: 'sq sq-' + r.sid }, h('span', { class: 'who who-' + r.sid }, r.sid), h('pre', { class: 'sq-code', html: highlight(r.sql) }));
+      if (!r.res) blk.append(h('div', { class: 'sq-res wait' }, '⏳ waiting for a lock…'));
+      else if (r.res.error) blk.append(h('div', { class: 'sq-res err' }, '✖ ' + r.res.error.code + ': ' + r.res.error.msg));
+      else if (r.res.kind === 'select') blk.append(gridEl(r.res));
+      else blk.append(h('div', { class: 'sq-res ok' }, '✔ ' + (r.res.msg || 'OK')));
+      sqlEl.append(blk);
+    }
+  }
+  function render() { if (P.ctx) cfg.render(P.ctx, vis); }
+  function setCap(html) { capEl.innerHTML = html || ''; capEl.classList.toggle('on', !!html); }
+  function updateCtrl() {
+    ctrlEl.innerHTML = ''; askEl.textContent = '';
+    const f = P.frames[P.i];
+    if (!f) { ctrlEl.append(h('span', { class: 'end' }, 'End of this run.')); }
+    else if (f.choices) {
+      askEl.innerHTML = '<b>Ask first:</b> ' + esc(f.ask || '');
+      f.choices.forEach((c) => ctrlEl.append(h('button', { class: 'btn big ' + (c.cls || ''), disabled: P.busy, onclick: () => choose(c) }, c.label)));
+    } else {
+      if (f.ask) askEl.innerHTML = '<b>Ask first:</b> ' + esc(f.ask);
+      ctrlEl.append(h('button', { class: 'btn big primary', disabled: P.busy, onclick: step }, (f.label || 'Next') + ' ▸'));
+    }
+    ctrlEl.append(h('button', { class: 'btn ghost', onclick: reset }, '↺ Restart'));
+  }
+  async function step() {
+    if (P.busy) return; const f = P.frames[P.i]; if (!f || f.choices) return;
+    P.busy = true; P.ctx.last = []; renderSql(); updateCtrl();
+    try { await f.run(P.ctx); } catch (e) { console.error(e); }
+    P.i++; setCap(typeof f.cap === 'function' ? f.cap(P.ctx) : f.cap); P.busy = false; updateCtrl(); render(); renderSql();
+  }
+  function choose(c) { P.frames.splice(P.i, P.frames.length - P.i, ...c.frames); step(); }
+  function reset() {
+    if (P.ctx && P.ctx.eng) P.ctx.eng.dispose();
+    const eng = new Engine(); eng.session('A'); eng.session('B');
+    const ctx = { eng, last: [], mode: P.mode };
+    ctx.x = (sid, sql) => {
+      const rec = { sid, sql, res: null }; ctx.last.push(rec); renderSql();
+      return eng.execOne(sid, sql).then((r) => { rec.res = r; renderSql(); return r; });
+    };
+    ctx.show = (rec) => { ctx.last.push(rec); renderSql(); };
+    P.ctx = ctx; cfg.init(ctx); P.frames = cfg.frames(ctx); P.i = 0; P.busy = false;
+    eng.onChange(() => throttle('anim' + cfg.key, render));
+    if (modeBar) $$('.mode', modeBar).forEach((b) => b.classList.toggle('on', b.dataset.m === P.mode));
+    renderSql(); setCap(cfg.intro && cfg.intro[P.mode || 'x'] || cfg.intro && cfg.intro.x || ''); updateCtrl(); render();
+  }
+  P.reset = reset; P.render = render; PLAYERS.push(P); reset();
+  return P;
+}
+setInterval(() => { for (const P of PLAYERS) { if (P.ctx && (P.ctx.eng.session('B').waiting || P.ctx.eng.session('A').waiting)) P.render(); } }, 1000);
+
+const rowOf = (res) => { const o = {}; if (res && res.rows && res.rows[0]) res.cols.forEach((c, i) => { o[c.name] = res.rows[0][i]; }); return o; };
+const money = (n) => '₹' + Number(n).toFixed(0);
+
+/* ---------- Animation 1: transaction ---------- */
+const A1_CARDS = {
+  normal: [['① Take ₹200 from Asha', 'UPDATE accounts … balance − 200'], ['② Give ₹200 to Ben', 'UPDATE accounts … balance + 200'], ['③ Record the transfer', 'INSERT INTO transfers …']],
+  fail: [['① Give ₹5000 to Ben', 'UPDATE accounts … balance + 5000'], ['② Take ₹5000 from Asha', 'UPDATE accounts … balance − 5000'], ['③ Record the transfer', 'INSERT INTO transfers …']]
+};
+const CARD_LABEL = { idle: 'waiting', staged: 'staged · not committed', done: 'saved ✔', cancelled: 'cancelled ✘', failed: 'FAILED ✖', skipped: 'never ran' };
+const BR_LABEL = { none: 'No transaction: every statement commits by itself', open: 'Transaction OPEN: unfinished, nothing permanent yet', committed: 'COMMITTED ✔  The group was accepted together', rolled: 'ROLLED BACK ✘  The whole group was cancelled together' };
+function winView(eng, sid) {
+  const acc = eng.visible(sid, 'accounts'); const get = (id) => (acc.find((r) => r.account_id === id) || {}).balance;
+  return { asha: get('A101'), ben: get('B202'), logs: eng.visible(sid, 'transfers').length, total: acc.reduce((s, r) => s + r.balance, 0) };
+}
+function buildAnim1(stage) {
+  const v = { cards: [], win: {} };
+  v.crash = h('div', { class: 'crash' }, '💥');
+  const cardRow = h('div', { class: 'cards3' });
+  for (let i = 0; i < 3; i++) {
+    const c = { el: h('div', { class: 'wcard idle' }), t: h('div', { class: 'wc-t' }), s: h('code', { class: 'wc-s' }), b: h('div', { class: 'wc-b' }) };
+    c.el.append(c.t, c.s, c.b); v.cards.push(c); cardRow.append(c.el);
+  }
+  v.brLabel = h('div', { class: 'br-label' });
+  v.bracket = h('div', { class: 'bracket none' }, v.brLabel, cardRow, v.crash);
+  ['A', 'B'].forEach((sid) => {
+    const w = { el: h('div', { class: 'win win-' + sid }), body: h('div', { class: 'win-b' }) };
+    w.el.append(h('div', { class: 'win-t' }, h('span', { class: 'dot dot-' + sid }), sid === 'A' ? 'Session A · the app sending money' : 'Session B · everyone else'), w.body);
+    v.win[sid] = w;
+  });
+  v.banner = h('div', { class: 'banner' });
+  stage.append(h('div', { class: 'phone' }, '📱  Send ₹200 · Asha → Ben'), v.bracket, h('div', { class: 'wins' }, v.win.A.el, v.win.B.el), v.banner);
+  return v;
+}
+function renderAnim1(c, v) {
+  const set = c.mode === 'fail' ? A1_CARDS.fail : A1_CARDS.normal;
+  c.cards.forEach((st, i) => {
+    const cd = v.cards[i]; cd.el.className = 'wcard ' + st; cd.t.textContent = set[i][0]; cd.s.textContent = set[i][1]; cd.b.textContent = CARD_LABEL[st];
+  });
+  v.bracket.className = 'bracket ' + c.bracket; v.brLabel.textContent = BR_LABEL[c.bracket];
+  v.crash.classList.toggle('on', !!c.crashed);
+  const a = winView(c.eng, 'A'), b = winView(c.eng, 'B');
+  const body = (me, other) => {
+    const row = (name, val, ov) => '<div class="w-row"><span>' + name + '</span><b class="' + (val !== ov ? 'diff' : '') + '">' + (typeof val === 'number' && name !== 'Transfers logged' ? money(val) : val) + '</b></div>';
+    return row('Asha', me.asha, other.asha) + row('Ben', me.ben, other.ben) + row('Transfers logged', me.logs, other.logs) +
+      '<div class="w-row total ' + (me.total !== 1500 ? 'bad' : '') + '"><span>Total money in the bank</span><b>' + money(me.total) + '</b></div>';
+  };
+  v.win.A.body.innerHTML = body(a, b); v.win.B.body.innerHTML = body(b, a);
+  v.banner.className = 'banner' + (c.banner ? ' on ' + c.banner.k : ''); v.banner.textContent = c.banner ? c.banner.t : '';
+}
+function a1Frames(c) {
+  const D = "UPDATE accounts SET balance = balance - 200 WHERE account_id = 'A101';";
+  const C = "UPDATE accounts SET balance = balance + 200 WHERE account_id = 'B202';";
+  const L = "INSERT INTO transfers (from_account, to_account, amount) VALUES ('A101', 'B202', 200.00);";
+  if (c.mode === 'incomplete') return [
+    { label: 'Run write ① only (autocommit on)', ask: 'We run just the debit with no START TRANSACTION. What will Session B see?', run: async () => { await c.x('A', D); c.cards[0] = 'done'; }, cap: '<b>Autocommit committed it instantly.</b> Both windows already show Asha at ₹800. The statement was valid, but the business action is only one third done.' },
+    { label: '💥 The app crashes here', ask: 'The app dies before writes ② and ③. What is the total money in the bank now?', run: async () => { c.crashed = true; c.cards[1] = 'skipped'; c.cards[2] = 'skipped'; await c.x('A', 'SELECT SUM(balance) AS total_money FROM accounts;'); c.banner = { k: 'bad', t: '₹200 has vanished. The total is ₹1300, not ₹1500.' }; }, cap: '<b>Writes ② and ③ never ran.</b> Ben never got the money and nothing was logged. Incomplete, even though every statement succeeded.' },
+    { label: 'Try ROLLBACK', ask: 'Will ROLLBACK bring Asha back to ₹1000?', run: async () => { await c.x('A', 'ROLLBACK;'); await c.x('A', 'SELECT * FROM accounts;'); }, cap: '<b>No.</b> There was no open transaction, so there was nothing to cancel. ROLLBACK only cancels unfinished work. It is not a time machine.' }
+  ];
+  if (c.mode === 'fail') {
+    const CR = "UPDATE accounts SET balance = balance + 5000 WHERE account_id = 'B202';";
+    const DB = "UPDATE accounts SET balance = balance - 5000 WHERE account_id = 'A101';";
+    return [
+      { label: 'START TRANSACTION', ask: 'Asha has ₹1000 but tries to send ₹5000. Where should the failure show up?', run: async () => { await c.x('A', 'START TRANSACTION;'); c.bracket = 'open'; }, cap: 'The group is open. We deliberately credit Ben first so the danger is visible.' },
+      { label: 'Run write ① (credit Ben ₹5000)', run: async () => { await c.x('A', CR); c.cards[0] = 'staged'; }, cap: 'Staged. Session A already shows a total of ₹6500, which is wrong, but the transaction is still open.' },
+      { label: 'Run write ② (debit Asha ₹5000)', ask: 'Asha only has ₹1000. What happens?', run: async () => { const r = await c.x('A', DB); if (r.error) { c.cards[1] = 'failed'; c.banner = { k: 'bad', t: 'Write ② failed, but MySQL did NOT undo write ①. Ben still has the extra ₹5000.' }; } }, cap: '<b>The CHECK constraint refused the debit.</b> Only that statement failed; the earlier credit is still pending inside the open transaction.' },
+      { label: 'Decide: ROLLBACK or COMMIT?', ask: 'The required debit failed. What is the only correct move?', choices: [
+        { label: 'ROLLBACK (correct)', cls: 'go', frames: [{ run: async () => { await c.x('A', 'ROLLBACK;'); c.bracket = 'rolled'; c.cards = ['cancelled', 'cancelled', 'cancelled']; c.banner = { k: 'ok', t: 'Everything is back to ₹1500. Any required write fails → cancel the whole attempt.' }; }, cap: '<b>Rolled back.</b> The credit disappeared with the rest of the group. The app now tells the user the transfer failed.' }] },
+        { label: 'COMMIT (the mistake)', cls: 'stop', frames: [{ run: async () => { await c.x('A', 'COMMIT;'); c.bracket = 'committed'; c.cards[0] = 'done'; c.banner = { k: 'bad', t: 'The bank just invented ₹5000. The failed write was ignored and the half-finished work was saved.' }; }, cap: '<b>This is exactly what the golden rule prevents.</b> Restart and choose ROLLBACK.' }] }
+      ] }
+    ];
+  }
+  return [
+    { label: 'START TRANSACTION', ask: 'What changes on screen when we begin a transaction?', run: async () => { await c.x('A', 'START TRANSACTION;'); c.bracket = 'open'; }, cap: 'The group is open. <b>Nothing is permanent until COMMIT.</b> Think of the admission packet: prepare it, then accept or abandon it as one unit.' },
+    { label: 'Run write ① (debit Asha)', ask: 'Which window will show ₹800: A, B, or both?', run: async () => { await c.x('A', D); c.cards[0] = 'staged'; }, cap: '<b>Session A sees ₹800. Session B still sees ₹1000.</b> Uncommitted work is private to its own session.' },
+    { label: 'Run write ② (credit Ben)', run: async () => { await c.x('A', C); c.cards[1] = 'staged'; }, cap: 'Total money in A is back to ₹1500, but still only inside A.' },
+    { label: 'Run write ③ (record the transfer)', run: async () => { await c.x('A', L); c.cards[2] = 'staged'; }, cap: 'All three writes are done, none committed. <b>Predict what ROLLBACK does, and what COMMIT does.</b>' },
+    { label: 'Decide: COMMIT or ROLLBACK?', ask: 'Take predictions. ROLLBACK → what balances? COMMIT → what does B see?', choices: [
+      { label: 'COMMIT', cls: 'go', frames: [
+        { run: async () => { await c.x('A', 'COMMIT;'); c.bracket = 'committed'; c.cards = ['done', 'done', 'done']; }, cap: '<b>All three changes became permanent together</b>, and Session B sees them now.' },
+        { label: 'Now try ROLLBACK', ask: 'Can ROLLBACK undo the committed transfer?', run: async () => { await c.x('A', 'ROLLBACK;'); }, cap: '<b>No.</b> After COMMIT the work is accepted state. A wrong decision needs a new, authorised correction.' }] },
+      { label: 'ROLLBACK', cls: 'stop', frames: [{ run: async () => { await c.x('A', 'ROLLBACK;'); c.bracket = 'rolled'; c.cards = ['cancelled', 'cancelled', 'cancelled']; }, cap: '<b>All three writes vanished together</b>, including the transfer record. Restart and choose COMMIT to compare.' }] }
+    ] }
+  ];
+}
+
+/* ---------- Animation 2: stale screen ---------- */
+function buildAnim2(stage) {
+  const v = {};
+  const mk = (sid, name) => {
+    const b = { el: h('div', { class: 'browser br-' + sid }), page: h('div', { class: 'page' }), toast: h('div', { class: 'toast' }), stale: h('div', { class: 'stale' }, '⚠ This screen is out of date') };
+    b.el.append(h('div', { class: 'bar' }, h('span', { class: 'dot dot-' + sid }), name + "'s browser"), b.stale, b.page, b.toast); return b;
+  };
+  v.A = mk('A', 'Asha'); v.B = mk('B', 'Ben');
+  v.db = h('div', { class: 'dbcard' });
+  v.verdict = h('div', { class: 'banner' });
+  stage.append(h('div', { class: 'a2row' }, v.A.el, v.db, v.B.el), v.verdict);
+  return v;
+}
+function renderAnim2(c, v) {
+  ['A', 'B'].forEach((sid) => {
+    const s = c['scr' + sid]; const b = v[sid];
+    if (!s.opened) b.page.innerHTML = '<div class="seat none">Page not opened yet</div>';
+    else b.page.innerHTML = '<div class="seat"><div class="sid">Seat S1</div><span class="chip ' + s.status + '">' + s.status + '</span><div class="ver">version ' + s.version + '</div><div class="bookbtn ' + (s.status === 'AVAILABLE' ? '' : 'off') + '">Book this seat</div></div>';
+    b.stale.classList.toggle('on', !!s.stale); b.toast.className = 'toast' + (s.toast ? ' on ' + s.toastK : ''); b.toast.textContent = s.toast || '';
+  });
+  const seat = c.eng.committed('seats').find((r) => r.seat_id === 'S1'); const bk = c.eng.committed('bookings').filter((r) => r.seat_id === 'S1');
+  v.db.innerHTML = '<div class="db-t">Database · seat S1</div><div class="seat"><span class="chip ' + seat.status + '">' + seat.status + '</span><div class="ver">version ' + seat.version + '</div><div class="who-b">' + (seat.booked_by ? 'held by ' + esc(seat.booked_by) : 'nobody yet') + '</div></div>' +
+    '<div class="db-t">bookings for S1 (' + bk.length + ')</div>' + (bk.length ? bk.map((r) => '<div class="bk ' + (bk.length > 1 ? 'bad' : '') + '">#' + r.booking_id + ' · ' + esc(r.customer) + '</div>').join('') : '<div class="bk none">(none)</div>');
+  v.verdict.className = 'banner' + (c.verdict ? ' on ' + c.verdict.k : ''); v.verdict.textContent = c.verdict ? c.verdict.t : '';
+}
+async function a2Book(c, sid, who, scr) {
+  const ins = "INSERT INTO bookings (seat_id, customer) VALUES ('S1', '" + who + "');";
+  const upd = "UPDATE seats SET status = 'BOOKED', booked_by = '" + who + "', version = version + 1 WHERE seat_id = 'S1'";
+  if (c.mode === 'unsafe') { await c.x(sid, 'START TRANSACTION;'); await c.x(sid, upd + ';'); await c.x(sid, ins); await c.x(sid, 'COMMIT;'); return true; }
+  await c.x(sid, 'START TRANSACTION;');
+  await c.x(sid, upd + " AND version = " + scr.version + " AND status = 'AVAILABLE';");
+  const r = await c.x(sid, 'SELECT ROW_COUNT() AS saved_rows;');
+  if (r.rows[0][0] === 1) { await c.x(sid, ins); await c.x(sid, 'COMMIT;'); return true; }
+  await c.x(sid, 'ROLLBACK;'); return false;
+}
+function a2Frames(c) {
+  const SEL = "SELECT seat_id, status, booked_by, version FROM seats WHERE seat_id = 'S1';";
+  const open = async (sid) => { const r = await c.x(sid, SEL); const o = rowOf(r); const s = c['scr' + sid]; s.opened = true; s.status = o.status; s.version = o.version; s.stale = false; s.toast = ''; };
+  const f = [
+    { label: 'Both open the booking page', ask: 'Two people open the same seat page. What do they see?', run: async () => { await open('A'); await open('B'); }, cap: '<b>Same page, same moment.</b> Both screens remember <b>version 1</b>. Think of two photocopies of one register page.' },
+    { label: 'Asha clicks “Book this seat”', ask: 'Asha saves first. What does Ben\'s unchanged screen say afterwards?', run: async () => { const ok = await a2Book(c, 'A', 'Asha', c.scrA); if (ok) { c.scrA.status = 'BOOKED'; c.scrA.version += 1; c.scrA.toast = 'Booked ✔'; c.scrA.toastK = 'ok'; c.scrB.stale = true; } }, cap: '<b>The database says BOOKED, version 2.</b> Ben\'s screen is a faithful copy of an earlier moment, so it is now stale. It cannot refresh itself.' },
+    { label: 'Ben clicks “Book this seat” (old screen)', ask: c.mode === 'unsafe' ? 'Every statement is valid and uses a transaction. What will the database say after Ben saves?' : 'Ben submits the version he saw (1). How many rows will his UPDATE change?', run: async () => {
+      const ok = await a2Book(c, 'B', 'Ben', c.scrB);
+      if (ok) { const sv = c.eng.committed('seats').find((r) => r.seat_id === 'S1'); c.scrB.status = 'BOOKED'; c.scrB.version = sv.version; c.scrB.stale = false; c.scrB.toast = 'Booked ✔ (Ben thinks it is his)'; c.scrB.toastK = 'ok'; }
+      else { c.scrB.toast = 'Sorry, this seat was just booked. Please pick another seat.'; c.scrB.toastK = 'warn'; }
+    }, cap: c.mode === 'unsafe' ? '<b>It succeeded.</b> WHERE seat_id = \'S1\' says nothing about which version Ben saw, so he silently replaced Asha as the seat holder.' : '<b>saved_rows = 0.</b> The seat is version 2, so no row matches version 1. Ben\'s attempt is closed with ROLLBACK and no booking row is created.' }
+  ];
+  if (c.mode === 'unsafe') f.push({ label: 'Check the damage', ask: 'Which query finds seats booked more than once?', run: async () => { await c.x('A', 'SELECT seat_id, COUNT(*) AS bookings_for_seat FROM bookings GROUP BY seat_id HAVING COUNT(*) > 1;'); c.verdict = { k: 'bad', t: 'Double booking: Asha\'s claim was silently replaced by Ben\'s. A transaction kept the 2 writes together, but nothing checked the screen was still fresh.' }; }, cap: '<b>Transaction + valid IDs was not enough.</b> The save must also check that the state is still what the user saw.' });
+  else f.push({ label: 'Ben refreshes the page', ask: 'What should Ben do next?', run: async () => { await open('B'); c.scrB.toast = ''; c.verdict = { k: 'ok', t: 'One accepted booking. The stale save was detected and rejected, and Ben has a clear way forward.' }; }, cap: '<b>Conflict detected is a useful outcome.</b> Silent replacement is the outcome we prevent. We never fetch version 2 just to force Ben\'s old decision through.' });
+  return f;
+}
+
+/* ---------- Animation 3: short row lock ---------- */
+function buildAnim3(stage) {
+  const v = {};
+  v.A = h('div', { class: 'lane lane-A' }); v.B = h('div', { class: 'lane lane-B' }); v.row = h('div', { class: 'lockrow' });
+  stage.append(h('div', { class: 'a3row' }, v.A, v.row, v.B), (v.verdict = h('div', { class: 'banner' })));
+  return v;
+}
+function renderAnim3(c, v) {
+  const eng = c.eng; const L = eng.locks.get('seats:S3'); const holder = L && L.x; const seat = eng.committed('seats').find((r) => r.seat_id === 'S3');
+  const lane = (sid) => {
+    const ss = eng.session(sid); let st, cls = 'idle';
+    if (ss.waiting) { st = '⏳ waiting ' + Math.floor((Date.now() - ss.waiting.since) / 1000) + 's for ' + ss.waiting.on.join(', '); cls = 'wait'; }
+    else if (ss.txn && ss.txn.keep) { st = '● transaction open'; cls = 'open'; } else st = 'idle';
+    const own = holder === sid ? '<div class="keyhold">🔑 holds the row lock</div>' : '';
+    return '<div class="lane-t"><span class="dot dot-' + sid + '"></span>Session ' + sid + '</div><div class="lane-s ' + cls + '">' + st + '</div>' + own + (c.note && c.note[sid] ? '<div class="lane-n">' + c.note[sid] + '</div>' : '');
+  };
+  v.A.innerHTML = lane('A'); v.B.innerHTML = lane('B');
+  v.row.innerHTML = '<div class="lk ' + (holder ? 'on' : '') + '">' + (holder ? '🔒' : '🔓') + '</div><div class="seatc"><div class="sid">Seat S3</div><span class="chip ' + seat.status + '">' + seat.status + '</span><div class="ver">version ' + seat.version + '</div></div><div class="lkt">' + (holder ? 'Locked by ' + holder : 'No lock held') + '</div>';
+  v.verdict.className = 'banner' + (c.verdict ? ' on ' + c.verdict.k : ''); v.verdict.textContent = c.verdict ? c.verdict.t : '';
+}
+function a3Frames(c) {
+  const FU = "SELECT seat_id, status, booked_by, version FROM seats WHERE seat_id = 'S3' FOR UPDATE;";
+  return [
+    { label: 'A reserves seat S3 (FOR UPDATE)', ask: 'A starts a short transaction and reserves the row. Can anyone else write it now?', run: async () => { await c.x('A', 'START TRANSACTION;'); await c.x('A', FU); c.note = { A: 'Short save: reserve → recheck → write' }; }, cap: '<b>A holds an exclusive row lock.</b> Other sessions can still read committed data, but nobody can lock or change this row.' },
+    { label: 'B asks for the same row', ask: 'B wants to reserve S3 too. What happens to B\'s query?', run: async () => { await c.x('B', 'START TRANSACTION;'); c.pendingB = c.x('B', FU); await sleepMs(150); c.note.B = 'My query is frozen…'; }, cap: '<b>B\'s query does not return.</b> It is frozen until A commits or rolls back (the default wait limit is 50 seconds).' },
+    { label: 'A finishes the save and COMMITs', ask: 'A books the seat and commits. What does B receive?', run: async () => { await c.x('A', "UPDATE seats SET status = 'BOOKED', booked_by = 'Asha', version = version + 1 WHERE seat_id = 'S3';"); await c.x('A', "INSERT INTO bookings (seat_id, customer) VALUES ('S3', 'Asha');"); await c.x('A', 'COMMIT;'); const rb = await c.pendingB; c.show({ sid: 'B', sql: FU + '  -- B wakes up', res: rb }); c.note = { A: 'Done. Lock released.', B: 'Woke up with the CURRENT row' }; }, cap: '<b>The lock moves.</b> B wakes up and receives the current row: BOOKED, version 2. Not the AVAILABLE page it opened earlier.' },
+    { label: 'B rechecks and ROLLBACKs', ask: 'B now holds the lock. Should B book the seat?', run: async () => { await c.x('B', 'ROLLBACK;'); c.verdict = { k: 'ok', t: 'One booking. A lock coordinates access, but B still had to recheck the current state. Never hold a lock while a human thinks.' }; }, cap: '<b>Waiting is not permission.</b> A lock does not make B\'s old screen valid. B must look at the present state, see it is taken, and stop.' }
+  ];
+}
+
+function buildAnimations(host) {
+  subTabs(host, [
+    { id: 'a1', label: 'Transaction: all or nothing', build: (p) => makePlayer(p, { key: 1, title: 'One Save, three writes', blurb: 'Watch Session A and Session B side by side. Everything below runs on the live engine.', modes: [{ id: 'incomplete', label: '1 · Incomplete save (autocommit)' }, { id: 'txn', label: '2 · Transaction: commit or rollback' }, { id: 'fail', label: '3 · A write fails midway' }], build: buildAnim1, init: (c) => { c.cards = ['idle', 'idle', 'idle']; c.bracket = c.mode === 'incomplete' ? 'none' : 'none'; c.crashed = false; c.banner = null; }, frames: a1Frames, render: renderAnim1, intro: { incomplete: 'Autocommit is on and there is <b>no transaction</b>. Press the button to run write ① alone.', txn: 'Same three writes, this time grouped. Press <b>START TRANSACTION</b>.', fail: 'Asha tries to send more than she has. Press <b>START TRANSACTION</b>.' } }) },
+    { id: 'a2', label: 'Stale screen: double booking', build: (p) => makePlayer(p, { key: 2, title: 'Two reviewers, two old photocopies', blurb: 'Switch between an unsafe save and a version-guarded save, then compare.', modes: [{ id: 'unsafe', label: 'Unsafe save (WHERE seat_id only)' }, { id: 'guarded', label: 'Guarded save (version check)' }], build: buildAnim2, init: (c) => { c.scrA = { opened: false }; c.scrB = { opened: false }; c.verdict = null; }, frames: a2Frames, render: renderAnim2, intro: { x: 'Press the button to let both people open the same seat page.' } }) },
+    { id: 'a3', label: 'Short row lock', build: (p) => makePlayer(p, { key: 3, title: 'Reserve, recheck, finish', blurb: 'The pessimistic alternative: SELECT … FOR UPDATE reserves the row for a short save.', build: buildAnim3, init: (c) => { c.note = {}; c.verdict = null; c.pendingB = null; }, frames: a3Frames, render: renderAnim3, intro: { x: 'Press the button to let Session A reserve seat S3.' } }) }
+  ]);
+}
+
+/* =====================================================================
+   ISOLATION LEVELS  ·  explorer + race
+   ===================================================================== */
+const LEVEL_INFO = {
+  'READ UNCOMMITTED': { short: 'RU', tag: 'Reads a colleague\'s unfinished draft',
+    analogy: 'You read a page while its author is still typing. You may act on words that get deleted a minute later.',
+    how: 'No snapshot and no read locks. A SELECT returns the newest version of each row, even if its writer has not committed. Almost never used in real systems.',
+    an: { dirty: 'possible', nonrep: 'possible', phantom: 'possible', lost: 'possible' } },
+  'READ COMMITTED': { short: 'RC', tag: 'Reads only what has been published',
+    analogy: 'Each time you ask, you get the latest published page. Drafts are invisible, but the published page can change between two of your questions.',
+    how: 'Every statement gets a fresh view of committed data. Plain reads take no locks. The usual default in PostgreSQL, Oracle and SQL Server.',
+    an: { dirty: 'prevented', nonrep: 'possible', phantom: 'possible', lost: 'possible' } },
+  'REPEATABLE READ': { short: 'RR', tag: 'Studies a photograph taken at the first read',
+    analogy: 'At your first read the register is photographed. You keep studying the photo while others update the real register. Your writes still go to the real register.',
+    how: 'The InnoDB default. The first plain SELECT creates a snapshot and later plain SELECTs reuse it. UPDATE, DELETE and FOR UPDATE always read the latest committed row, so a stale screen can still overwrite.',
+    an: { dirty: 'prevented', nonrep: 'prevented', phantom: 'prevented', lost: 'possible' } },
+  'SERIALIZABLE': { short: 'SER', tag: 'Keeps a hand on the page while reading',
+    analogy: 'You read with a hand on the page. Nobody can change what you looked at until you finish. If two readers each want to write, one of them is thrown out.',
+    how: 'Inside a transaction, InnoDB turns every plain SELECT into SELECT … FOR SHARE: shared row locks plus range locks. Safest and slowest. Waits and deadlocks are the price.',
+    an: { dirty: 'prevented', nonrep: 'prevented', phantom: 'prevented', lost: 'prevented' } }
+};
+const TL_STEPS = [
+  { c: 1, s: 'B', sql: "START TRANSACTION;\nSELECT balance FROM accounts WHERE account_id = 'A101';" },
+  { c: 2, s: 'A', sql: "START TRANSACTION;\nUPDATE accounts SET balance = balance - 500 WHERE account_id = 'A101';" },
+  { c: 3, s: 'B', sql: "SELECT balance FROM accounts WHERE account_id = 'A101';" },
+  { c: 4, s: 'A', sql: "COMMIT;" },
+  { c: 5, s: 'B', sql: "SELECT balance FROM accounts WHERE account_id = 'A101';" },
+  { c: 6, s: 'B', sql: "COMMIT;" }
+];
+const TL_EVENTS = {
+  'READ UNCOMMITTED': [
+    { c: 0, r: 0, t: 'balance = 1000', k: 'ok' }, { c: 1, r: 2, t: 'reads 1000', k: 'ok' },
+    { c: 2, r: 1, t: 'UPDATE → 500, not committed', k: 'draft' }, { c: 2, r: 0, t: 'draft 500 (only A\'s)', k: 'draft' },
+    { c: 3, r: 2, t: 'reads 500 ⚠ dirty read', k: 'bad' }, { c: 4, r: 1, t: 'COMMIT', k: 'ok' }, { c: 4, r: 0, t: 'balance = 500', k: 'ok' },
+    { c: 5, r: 2, t: 'reads 500', k: 'ok' }, { c: 6, r: 2, t: 'COMMIT', k: 'ok' }],
+  'READ COMMITTED': [
+    { c: 0, r: 0, t: 'balance = 1000', k: 'ok' }, { c: 1, r: 2, t: 'reads 1000', k: 'ok' },
+    { c: 2, r: 1, t: 'UPDATE → 500, not committed', k: 'draft' }, { c: 2, r: 0, t: 'draft 500 (hidden from B)', k: 'draft' },
+    { c: 3, r: 2, t: 'reads 1000 · drafts invisible', k: 'ok' }, { c: 4, r: 1, t: 'COMMIT', k: 'ok' }, { c: 4, r: 0, t: 'balance = 500', k: 'ok' },
+    { c: 5, r: 2, t: 'reads 500 ⚠ changed mid-transaction', k: 'bad' }, { c: 6, r: 2, t: 'COMMIT', k: 'ok' }],
+  'REPEATABLE READ': [
+    { c: 0, r: 0, t: 'balance = 1000', k: 'ok' }, { c: 1, r: 2, t: 'reads 1000 📸 snapshot taken', k: 'ok' },
+    { c: 2, r: 1, t: 'UPDATE → 500, not committed', k: 'draft' }, { c: 2, r: 0, t: 'draft 500 (hidden from B)', k: 'draft' },
+    { c: 3, r: 2, t: 'reads 1000 (from snapshot)', k: 'ok' }, { c: 4, r: 1, t: 'COMMIT', k: 'ok' }, { c: 4, r: 0, t: 'balance = 500', k: 'ok' },
+    { c: 5, r: 2, t: 'reads 1000 · still the snapshot', k: 'ok' }, { c: 6, r: 2, t: 'COMMIT · snapshot released', k: 'ok' }],
+  'SERIALIZABLE': [
+    { c: 0, r: 0, t: 'balance = 1000', k: 'ok' }, { c: 1, r: 2, t: 'reads 1000 🔒 shared lock', k: 'lock' },
+    { c: 2, r: 1, t: 'UPDATE ⏳ blocked by B\'s lock', k: 'wait' }, { c: 3, r: 2, t: 'reads 1000', k: 'ok' },
+    { c: 4, r: 1, t: 'still waiting…', k: 'wait' }, { c: 5, r: 2, t: 'reads 1000', k: 'ok' },
+    { c: 6, r: 2, t: 'COMMIT 🔓 lock released', k: 'ok' }, { c: 6, r: 1, t: 'UPDATE runs now, then COMMIT', k: 'ok' }, { c: 6, r: 0, t: 'balance = 500 (after B)', k: 'ok' }]
+};
+const AN_TXT = { possible: 'possible', prevented: 'prevented' };
+
+function buildExplorer(host) {
+  const S = { lv: 'READ COMMITTED', col: -1, timer: null };
+  const cards = h('div', { class: 'lvl-cards' });
+  const detail = h('div', { class: 'lvl-detail panel' });
+  const tlHost = h('div', { class: 'tl-host panel' });
+  const matrix = h('div', { class: 'matrix panel' });
+  host.append(h('div', { class: 'iso' }, h('div', { class: 'iso-intro' }, h('h3', null, 'Four levels, one question'), h('p', { class: 'muted' }, 'How much of other sessions\' work can my transaction see while both are running? Pick a level, then play the timeline: the same six statements, four different outcomes.')), cards, detail, tlHost, matrix));
+
+  function drawCards() {
+    cards.innerHTML = '';
+    LEVELS.forEach((L) => {
+      const I = LEVEL_INFO[L];
+      cards.append(h('button', { class: 'lvl ' + (L === S.lv ? 'on' : ''), onclick: () => { S.lv = L; stop(); S.col = -1; drawAll(); } },
+        h('b', null, I.short), h('span', { class: 'ln' }, L), h('span', { class: 'lt' }, I.tag)));
+    });
+  }
+  function drawDetail() {
+    const I = LEVEL_INFO[S.lv];
+    const badge = (k, label) => '<span class="an ' + I.an[k] + '">' + label + ': ' + AN_TXT[I.an[k]] + '</span>';
+    detail.innerHTML = '<div class="d-grid"><div><h4>' + S.lv + '</h4><p class="analogy">' + esc(I.analogy) + '</p><p><b>In InnoDB.</b> ' + esc(I.how) + '</p></div>' +
+      '<div><div class="d-sql"><div class="side-h">Set it for a session</div><pre class="sq-code">' + highlight('SET SESSION TRANSACTION ISOLATION LEVEL ' + S.lv + ';') + '</pre></div>' +
+      '<div class="ans">' + badge('dirty', 'Dirty read') + badge('nonrep', 'Non-repeatable read') + badge('phantom', 'Phantom read') + badge('lost', 'Lost update (no guard)') + '</div></div></div>';
+  }
+  function drawTL() {
+    const ev = TL_EVENTS[S.lv]; const labels = ['start', 't1', 't2', 't3', 't4', 't5', 't6'];
+    let g = '<div class="tl" style="--c:' + Math.max(S.col, 0) + '"><div class="tl-corner"></div>';
+    labels.forEach((l, i) => { g += '<div class="tl-h ' + (i === S.col ? 'now' : '') + '">' + l + '</div>'; });
+    ['Row in the database', 'Session A · writer', 'Session B · reader'].forEach((rn, r) => {
+      g += '<div class="tl-r tl-r' + r + '">' + rn + '</div>';
+      for (let c = 0; c < 7; c++) {
+        const chips = ev.filter((e) => e.r === r && e.c === c && c <= S.col).map((e) => '<span class="chip-ev ' + e.k + (e.c === S.col ? ' pop' : '') + '">' + esc(e.t) + '</span>').join('');
+        g += '<div class="tc ' + (c === S.col ? 'now' : '') + '">' + chips + '</div>';
+      }
+    });
+    g += '<div class="ph ' + (S.col < 0 ? 'off' : '') + '"></div></div>';
+    const steps = TL_STEPS.map((s) => '<li class="' + (s.c === S.col ? 'now' : s.c < S.col ? 'past' : '') + '"><span class="who who-' + s.s + '">' + s.s + '</span><pre class="sq-code">' + highlight(s.sql) + '</pre></li>').join('');
+    tlHost.innerHTML = '<div class="tl-top"><h4>The same six statements, replayed at ' + S.lv + '</h4><div class="tl-ctl"></div></div>' + g +
+      '<ol class="tl-steps">' + steps + '</ol>' + '<div class="tl-end ' + (S.col >= 6 ? 'on' : '') + '">' + endText() + '</div>';
+    const ctl = $('.tl-ctl', tlHost);
+    ctl.append(h('button', { class: 'btn primary', onclick: () => (S.timer ? stop() : play()) }, S.timer ? '❚❚ Pause' : (S.col >= 6 ? '↺ Replay' : '▶ Play')),
+      h('button', { class: 'btn', onclick: () => { stop(); stepTL(); } }, 'Step ▸'), h('button', { class: 'btn ghost', onclick: () => { stop(); S.col = -1; drawTL(); } }, 'Reset'));
+  }
+  function endText() {
+    const m = { 'READ UNCOMMITTED': 'B read 500 at t3, a value A had not committed. In a real run A could have rolled back, so B acted on data that never existed.',
+      'READ COMMITTED': 'B read 1000 at t3 and 500 at t5: the same query gave two answers inside one transaction.',
+      'REPEATABLE READ': 'B read 1000 every time, from its snapshot. It only sees 500 after its own transaction ends.',
+      'SERIALIZABLE': 'B always read 1000 because A\'s write was held back until B finished. The price: A waited, and two readers who both write can deadlock.' };
+    return m[S.lv];
+  }
+  function stepTL() { if (S.col >= 6) { S.col = -1; } S.col++; drawTL(); }
+  function play() { if (S.col >= 6) S.col = -1; stepTL(); S.timer = setInterval(() => { if (S.col >= 6) { stop(); return; } stepTL(); }, 1500); drawTL(); }
+  function stop() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+  function drawMatrix() {
+    const row = (L) => { const I = LEVEL_INFO[L]; const td = (k) => '<td class="' + I.an[k] + '">' + (I.an[k] === 'possible' ? '✖ possible' : '✔ prevented') + '</td>'; return '<tr class="' + (L === S.lv ? 'on' : '') + '"><th>' + L + '</th>' + td('dirty') + td('nonrep') + td('phantom') + td('lost') + '</tr>'; };
+    matrix.innerHTML = '<h4>What each level protects you from (MySQL InnoDB, plain reads)</h4><table class="mx"><thead><tr><th></th><th>Dirty read<small>sees uncommitted data</small></th><th>Non-repeatable read<small>same row, new value</small></th><th>Phantom read<small>same query, new rows</small></th><th>Lost update<small>stale save overwrites</small></th></tr></thead><tbody>' + LEVELS.map(row).join('') + '</tbody></table>' +
+      '<p class="muted fine">Notes: under REPEATABLE READ an UPDATE or FOR UPDATE reads the latest committed data, so it can still see rows a plain SELECT cannot. SERIALIZABLE prevents the lost update here by deadlock: one writer is rejected and must retry. That is why the version guard is still the right tool.</p>';
+  }
+  function drawAll() { drawCards(); drawDetail(); drawTL(); drawMatrix(); }
+  drawAll();
+}
+
+/* ---------- Race: same scenario at all four levels ---------- */
+const cellVal = (res) => (res && res.rows && res.rows[0] ? res.rows[0][0] : undefined);
+const SEAT_SEL = "SELECT status, version FROM seats WHERE seat_id = 'S1';";
+const SEAT_UPD = (who) => "UPDATE seats SET status = 'BOOKED', booked_by = '" + who + "', version = version + 1 WHERE seat_id = 'S1';";
+const SEAT_GUARD = (who) => "UPDATE seats SET status = 'BOOKED', booked_by = '" + who + "', version = version + 1 WHERE seat_id = 'S1' AND version = 1 AND status = 'AVAILABLE';";
+const BK = (who) => "INSERT INTO bookings (seat_id, customer) VALUES ('S1', '" + who + "');";
+const errCode = (r) => (r && r.error ? r.error.code : null);
+const SCEN = {
+  dirty: { label: 'Dirty read', story: 'A changes Asha\'s balance but has not committed, then rolls back. Does B ever see the draft?',
+    steps: [{ s: 'A', sql: 'START TRANSACTION;' }, { s: 'A', sql: "UPDATE accounts SET balance = balance - 500 WHERE account_id = 'A101';" }, { s: 'B', sql: 'START TRANSACTION;' },
+      { s: 'B', sql: "SELECT balance FROM accounts WHERE account_id = 'A101';" }, { s: 'A', sql: 'ROLLBACK;' }, { s: 'B', sql: 'COMMIT;' }],
+    verdict: (c) => { const v = cellVal(c.res[3]); if (v === 500) return { s: 'bad', t: 'Dirty read: B saw 500, a value A then rolled back', bad: [3] }; return { s: 'ok', t: 'B only saw committed data (' + v + ')' + (c.blocked[3] ? ', after waiting for A' : ''), bad: [] }; } },
+  nonrep: { label: 'Non-repeatable read', story: 'B reads Asha\'s balance twice inside one transaction. In between, A updates it (autocommit).',
+    steps: [{ s: 'B', sql: 'START TRANSACTION;' }, { s: 'B', sql: "SELECT balance FROM accounts WHERE account_id = 'A101';" }, { s: 'A', sql: "UPDATE accounts SET balance = balance - 500 WHERE account_id = 'A101';" },
+      { s: 'B', sql: "SELECT balance FROM accounts WHERE account_id = 'A101';" }, { s: 'B', sql: 'COMMIT;' }],
+    verdict: (c) => { const a = cellVal(c.res[1]), b = cellVal(c.res[3]); if (a !== b) return { s: 'bad', t: 'Same query, two answers: ' + a + ' then ' + b, bad: [3] }; return { s: 'ok', t: 'Both reads gave ' + a + (c.blocked[2] ? '. Writer A had to wait for B' : ''), bad: [] }; } },
+  phantom: { label: 'Phantom read', story: 'B counts accounts with at least 100, twice. In between, A inserts a new rich customer (autocommit).',
+    steps: [{ s: 'B', sql: 'START TRANSACTION;' }, { s: 'B', sql: 'SELECT COUNT(*) AS n FROM accounts WHERE balance >= 100;' }, { s: 'A', sql: "INSERT INTO accounts (account_id, owner_name, balance) VALUES ('C303', 'Chitra', 300.00);" },
+      { s: 'B', sql: 'SELECT COUNT(*) AS n FROM accounts WHERE balance >= 100;' }, { s: 'B', sql: 'COMMIT;' }],
+    verdict: (c) => { const a = cellVal(c.res[1]), b = cellVal(c.res[3]); if (a !== b) return { s: 'bad', t: 'A phantom row appeared: count went ' + a + ' → ' + b, bad: [3] }; return { s: 'ok', t: 'Count stayed ' + a + (c.blocked[2] ? '. The inserter A had to wait for B' : ''), bad: [] }; } },
+  lost: { label: 'Stale save (no guard)', story: 'Asha and Ben both open seat S1, then both save with WHERE seat_id = \'S1\' only. Does the seat get double booked?',
+    steps: [{ s: 'A', sql: 'START TRANSACTION;' }, { s: 'B', sql: 'START TRANSACTION;' }, { s: 'A', sql: SEAT_SEL }, { s: 'B', sql: SEAT_SEL },
+      { s: 'A', sql: SEAT_UPD('Asha') }, { s: 'A', sql: BK('Asha') }, { s: 'A', sql: 'COMMIT;' }, { s: 'B', sql: SEAT_UPD('Ben') }, { s: 'B', sql: BK('Ben') }, { s: 'B', sql: 'COMMIT;' }],
+    verdict: (c) => { const n = c.eng.committed('bookings').filter((r) => r.seat_id === 'S1').length;
+      if (n > 1) return { s: 'bad', t: 'Double booking: ' + n + ' bookings for S1. Ben silently replaced Asha', bad: [7, 8] };
+      if (errCode(c.res[7]) === 1213) return { s: 'cost', t: 'Booked once, but Ben\'s save died in a deadlock (error 1213) and must be retried', bad: [] };
+      return { s: 'ok', t: 'Booked once', bad: [] }; } },
+  guarded: { label: 'Guarded save (version check)', story: 'The same race, but every save carries WHERE … AND version = 1 AND status = \'AVAILABLE\' and checks ROW_COUNT().',
+    steps: [{ s: 'A', sql: 'START TRANSACTION;' }, { s: 'B', sql: 'START TRANSACTION;' }, { s: 'A', sql: SEAT_SEL }, { s: 'B', sql: SEAT_SEL },
+      { s: 'A', sql: SEAT_GUARD('Asha') }, { s: 'A', sql: BK('Asha') }, { s: 'A', sql: 'COMMIT;' }, { s: 'B', sql: SEAT_GUARD('Ben') }, { s: 'B', sql: 'SELECT ROW_COUNT() AS saved_rows;' }, { s: 'B', sql: 'ROLLBACK;' }],
+    verdict: (c) => { const n = c.eng.committed('bookings').filter((r) => r.seat_id === 'S1').length;
+      if (n !== 1) return { s: 'bad', t: n + ' bookings for S1', bad: [7] };
+      if (errCode(c.res[7]) === 1213) return { s: 'cost', t: 'Booked once. Ben\'s attempt was stopped by a deadlock instead of the guard', bad: [] };
+      return { s: 'ok', t: 'Booked once. Ben\'s guarded UPDATE changed ' + cellVal(c.res[8]) + ' rows → ROLLBACK', bad: [] }; } }
+};
+function summarize(res) {
+  if (!res) return { t: '…', k: 'idle' };
+  if (res.skipped) return { t: '— skipped: the app stopped after the error', k: 'skip' };
+  if (res.error) { const m = { 1213: 'deadlock · transaction rolled back', 3819: 'check failed', 1205: 'lock wait timeout' }; return { t: '✖ ' + res.error.code + ' ' + (m[res.error.code] || res.error.msg.slice(0, 30)), k: 'err' }; }
+  if (res.kind === 'select') {
+    if (res.rows.length === 1) return { t: res.cols.map((c, i) => c.name + ' = ' + fmtVal(res.rows[0][i], c.dec)).join(', '), k: 'read' };
+    return { t: res.rows.length + ' rows', k: 'read' };
+  }
+  if (res.kind === 'dml') return { t: '✔ ' + res.affected + ' row' + (res.affected === 1 ? '' : 's') + ' changed', k: 'ok' };
+  const m = { start: '✔ started', commit: '✔ committed', rollback: '✔ rolled back', set: '✔ set' }; return { t: m[res.op] || '✔ ok', k: 'ok' };
+}
+function makeRunner(sc, hooks) {
+  const R = { sc, i: 0, engs: {}, cells: {}, verdicts: null, dead: false };
+  LEVELS.forEach((L) => {
+    const e = new Engine(); e.session('A'); e.session('B'); e.setLevel('A', L); e.setLevel('B', L);
+    R.engs[L] = e; R.cells[L] = sc.steps.map(() => ({ st: 'idle', res: null, blocked: false }));
+  });
+  R.next = async () => {
+    if (R.i >= sc.steps.length || R.dead) return false;
+    const i = R.i++; const stp = sc.steps[i];
+    for (const L of LEVELS) {
+      const cell = R.cells[L][i]; cell.st = 'run';
+      R.engs[L].execOne(stp.s, stp.sql, { stopOnError: true }).then((res) => { cell.res = res; cell.st = 'done'; if (hooks && hooks.cell && !R.dead) hooks.cell(); });
+    }
+    await sleepMs(25);
+    for (const L of LEVELS) {
+      const cell = R.cells[L][i];
+      if (cell.st !== 'done') { const ss = R.engs[L].session(stp.s); if (ss.waiting) { cell.st = ss.running === stp.sql ? 'blocked' : 'queued'; cell.blocked = true; } }
+    }
+    if (hooks && hooks.cell) hooks.cell();
+    return true;
+  };
+  R.finish = async () => {
+    await sleepMs(80);
+    if (R.dead) return null;
+    R.verdicts = {};
+    LEVELS.forEach((L) => { R.verdicts[L] = sc.verdict({ res: R.cells[L].map((c) => c.res), blocked: R.cells[L].map((c) => c.blocked), eng: R.engs[L], level: L }); });
+    return R.verdicts;
+  };
+  R.dispose = () => { R.dead = true; LEVELS.forEach((L) => R.engs[L].dispose()); };
+  return R;
+}
+function buildRace(host) {
+  const S = { key: 'dirty', R: null, busy: false, playing: false, speed: 900 };
+  const pills = h('div', { class: 'modebar' });
+  const story = h('p', { class: 'story' });
+  const ctl = h('div', { class: 'race-ctl' });
+  const table = h('div', { class: 'cmp panel' });
+  const board = h('div', { class: 'board panel' });
+  host.append(h('div', { class: 'iso' }, h('div', { class: 'iso-intro' }, h('h3', null, 'Race the four levels'), h('p', { class: 'muted' }, 'Each column is its own engine running the identical script. Step through it, or press Play. ⏳ means that statement is frozen waiting for a lock.')), pills, story, ctl, table, board));
+
+  function resetRun() { if (S.R) S.R.dispose(); S.R = makeRunner(SCEN[S.key], { cell: () => throttle('race', drawTable) }); S.busy = false; S.playing = false; drawAll(); }
+  function drawPills() {
+    pills.innerHTML = '';
+    Object.keys(SCEN).forEach((k) => pills.append(h('button', { class: 'mode ' + (k === S.key ? 'on' : ''), onclick: () => { S.key = k; resetRun(); } }, SCEN[k].label)));
+  }
+  function drawCtl() {
+    ctl.innerHTML = '';
+    const R = S.R; const done = R.i >= R.sc.steps.length;
+    ctl.append(h('button', { class: 'btn primary', onclick: playToggle }, S.playing ? '❚❚ Pause' : (done ? '↺ Replay' : '▶ Play')),
+      h('button', { class: 'btn', disabled: S.busy || S.playing || done, onclick: stepOnce }, 'Step ▸'),
+      h('button', { class: 'btn ghost', onclick: resetRun }, 'Reset'),
+      h('label', { class: 'chk' }, 'Speed ', h('select', { class: 'sel', onchange: (e) => { S.speed = +e.target.value; } }, [['1600', 'Slow'], ['900', 'Normal'], ['350', 'Fast']].map(([v, l]) => h('option', { value: v, selected: String(S.speed) === v }, l)))),
+      h('button', { class: 'btn push', onclick: runAll }, 'Run all 5 scenarios → scoreboard'));
+  }
+  async function stepOnce() {
+    const R = S.R; if (S.busy) return; S.busy = true; drawCtl();
+    const more = await R.next(); drawTable();
+    if (R.i >= R.sc.steps.length) { await R.finish(); }
+    S.busy = false; drawAll(); return more;
+  }
+  async function playToggle() {
+    if (S.playing) { S.playing = false; drawCtl(); return; }
+    if (S.R.i >= S.R.sc.steps.length) resetRun();
+    S.playing = true; drawCtl();
+    const R = S.R;
+    while (S.playing && R === S.R && R.i < R.sc.steps.length) { await stepOnce(); if (R !== S.R) return; await sleepMs(S.speed); }
+    S.playing = false; if (R === S.R) drawCtl();
+  }
+  function drawTable() {
+    const R = S.R; const sc = R.sc;
+    let t = '<table class="cmpt"><thead><tr><th class="n"></th><th class="w"></th><th class="q">Statement</th>' + LEVELS.map((L) => '<th class="lv" title="' + L + '">' + LEVEL_INFO[L].short + '<small>' + L.toLowerCase() + '</small></th>').join('') + '</tr></thead><tbody>';
+    sc.steps.forEach((stp, i) => {
+      t += '<tr class="' + (i === R.i - 1 ? 'curstep' : '') + (i >= R.i ? ' future' : '') + '"><td class="n">' + (i + 1) + '</td><td class="w"><span class="who who-' + stp.s + '">' + stp.s + '</span></td><td class="q"><code>' + highlight(stp.sql) + '</code></td>';
+      LEVELS.forEach((L) => {
+        const cell = R.cells[L][i]; const v = R.verdicts && R.verdicts[L]; let txt, cls = 'c';
+        if (cell.st === 'idle') { txt = '·'; cls += ' idle'; }
+        else if (cell.st === 'run') txt = '…';
+        else if (cell.st === 'blocked') { txt = '⏳ waiting for a lock'; cls += ' wait'; }
+        else if (cell.st === 'queued') { txt = '⏳ queued behind the waiting statement'; cls += ' wait'; }
+        else { const sm = summarize(cell.res); txt = sm.t + (cell.blocked ? ' (ran after the lock cleared)' : ''); cls += ' ' + sm.k + (cell.blocked ? ' late' : ''); }
+        if (v && v.bad.includes(i)) cls += ' bad';
+        t += '<td class="' + cls + '">' + esc(txt) + '</td>';
+      });
+      t += '</tr>';
+    });
+    if (R.verdicts) {
+      const ic = { ok: '✅', bad: '❌', cost: '⚠️' };
+      t += '<tr class="verdict"><td colspan="3" class="q">Outcome</td>' + LEVELS.map((L) => { const v = R.verdicts[L]; return '<td class="v ' + v.s + '">' + ic[v.s] + ' ' + esc(v.t) + '</td>'; }).join('') + '</tr>';
+    }
+    table.innerHTML = t + '</tbody></table>';
+  }
+  function drawBoard(data) {
+    if (!data) { board.innerHTML = '<h4>Scoreboard</h4><p class="muted">Press <b>Run all 5 scenarios → scoreboard</b> to replay everything at once and see which level survives which scenario.</p>'; return; }
+    const ic = { ok: '✅', bad: '❌', cost: '⚠️' };
+    let t = '<h4>Scoreboard</h4><table class="cmpt score"><thead><tr><th class="q">Scenario</th>' + LEVELS.map((L) => '<th class="lv">' + LEVEL_INFO[L].short + '<small>' + L.toLowerCase() + '</small></th>').join('') + '</tr></thead><tbody>';
+    Object.keys(SCEN).forEach((k) => { t += '<tr><td class="q"><b>' + SCEN[k].label + '</b></td>' + LEVELS.map((L) => { const v = data[k][L]; return '<td class="v ' + v.s + '">' + ic[v.s] + ' ' + esc(v.t) + '</td>'; }).join('') + '</tr>'; });
+    board.innerHTML = t + '</tbody></table><p class="muted fine">✅ safe · ❌ anomaly · ⚠️ safe, but at the cost of a deadlock or a wait the application must handle.</p>';
+  }
+  async function runAll() {
+    if (S.playing) S.playing = false;
+    board.innerHTML = '<h4>Scoreboard</h4><p class="muted">Running 5 scenarios × 4 levels…</p>'; const data = {};
+    for (const k of Object.keys(SCEN)) {
+      const R = makeRunner(SCEN[k], null);
+      while (await R.next()) { /* run every step */ }
+      data[k] = await R.finish(); R.dispose();
+    }
+    drawBoard(data);
+  }
+  function drawAll() { drawPills(); story.textContent = SCEN[S.key].story; drawCtl(); drawTable(); if (!board.innerHTML) drawBoard(null); }
+  resetRun();
+}
+function buildIsolation(host) {
+  subTabs(host, [{ id: 'ex', label: 'Explore each level', build: buildExplorer }, { id: 'race', label: 'Race the four levels', build: buildRace }]);
+}
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+(function () {
+  let zoom = 1;
+  const applyZoom = () => { document.documentElement.style.fontSize = (16 * zoom) + 'px'; };
+  $('#zoomIn').addEventListener('click', () => { zoom = Math.min(1.5, +(zoom + 0.1).toFixed(2)); applyZoom(); });
+  $('#zoomOut').addEventListener('click', () => { zoom = Math.max(0.8, +(zoom - 0.1).toFixed(2)); applyZoom(); });
+  $('#themeBtn').addEventListener('click', () => {
+    const r = document.documentElement; const cur = r.getAttribute('data-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    r.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  });
+  const tabs = $$('.tab-btn'); const sections = { lab: $('#tab-lab'), anim: $('#tab-anim'), iso: $('#tab-iso') }; const built = {};
+  const builders = { lab: () => buildLab(sections.lab), anim: () => buildAnimations(sections.anim), iso: () => buildIsolation(sections.iso) };
+  function show(id) {
+    tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
+    Object.keys(sections).forEach((k) => { sections[k].hidden = k !== id; });
+    if (!built[id]) { built[id] = true; builders[id](); }
+  }
+  tabs.forEach((b) => b.addEventListener('click', () => show(b.dataset.tab)));
+  show('lab');
+})();
+
+</script>
+</body>
+</html>

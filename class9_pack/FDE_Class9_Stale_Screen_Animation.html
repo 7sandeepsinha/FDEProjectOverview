@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Two Reviewers, One Changing Case</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --panel:#ffffff;
+      --card:#ffffff;
+      --text:#172033;
+      --muted:#667085;
+      --border:#d0d5dd;
+      --accent:#2563eb;
+      --accent-bg:#dbeafe;
+      --series3:#16a34a;
+      --series5:#d97706;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding:24px;
+      font-family:Arial,Helvetica,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    #stale-screen-demo{width:100%;max-width:980px;margin:0 auto}
+    .stage{
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:var(--panel);
+      padding:20px 16px
+    }
+    .header{max-width:760px;margin:0 auto;text-align:center}
+    .title{font-size:18px;font-weight:700}
+    .caption{margin-top:5px;font-size:14px;color:var(--muted)}
+    .lanes{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:14px;
+      max-width:820px;
+      margin:24px auto 0;
+      align-items:stretch
+    }
+    .lane{
+      min-width:0;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:var(--card);
+      padding:15px;
+      position:relative;
+      transition:.35s ease
+    }
+    .lane-title{text-align:center;font-weight:800;margin-bottom:10px}
+    .screen-label{font-size:12px;color:var(--muted);text-align:center;margin-bottom:9px}
+    .case-card{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:13px 12px;
+      background:var(--panel);
+      transition:.4s ease
+    }
+    .row{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:14px}
+    .row span:first-child{color:var(--muted)}
+    .value{font-weight:800;text-align:right}
+    .hidden-state{opacity:.22;filter:grayscale(.6)}
+    .db-changed{outline:2px solid var(--series3);outline-offset:2px}
+    .stale{outline:2px dashed var(--series5);outline-offset:2px}
+    .badge{
+      display:none;
+      margin:10px auto 0;
+      width:max-content;
+      max-width:100%;
+      padding:5px 9px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      font-size:12px;
+      font-weight:800;
+      text-align:center
+    }
+    .badge.show{display:block}
+    .flow{
+      max-width:820px;
+      margin:16px auto 0;
+      min-height:62px;
+      border:1px dashed var(--border);
+      border-radius:14px;
+      padding:13px 15px;
+      background:var(--card);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      font-weight:700
+    }
+    .arrow{display:inline-block;padding:0 8px;font-size:18px}
+    .controls{
+      max-width:820px;
+      margin:18px auto 0;
+      display:flex;
+      justify-content:space-between;
+      gap:12px
+    }
+    button{
+      min-width:110px;
+      min-height:44px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--card);
+      padding:10px 16px;
+      font-weight:800;
+      cursor:pointer
+    }
+    button.primary{background:var(--accent-bg);border-color:var(--accent)}
+    button:disabled{opacity:.42;cursor:not-allowed}
+    button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+    @media(max-width:650px){
+      body{padding:12px}
+      .lanes{grid-template-columns:1fr;gap:11px}
+      .lane{padding:12px}
+      .controls{gap:8px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .lane,.case-card{transition:none}
+    }
+  </style>
+</head>
+<body>
+  <div id="stale-screen-demo">
+    <div class="stage">
+      <div class="header">
+        <div class="title">Two reviewers opened the same case</div>
+        <div id="ss-caption" class="caption">Step 1 of 4 — Start with the shared case</div>
+      </div>
+
+      <div class="lanes">
+        <section id="lane-a" class="lane hidden-state" aria-label="Reviewer A screen">
+          <div class="lane-title">A's screen</div>
+          <div class="screen-label">What A opened earlier</div>
+          <div class="case-card">
+            <div class="row"><span>Status</span><span class="value">PENDING</span></div>
+            <div class="row"><span>Decision</span><span class="value">—</span></div>
+            <div class="row"><span>Version</span><span class="value">1</span></div>
+          </div>
+          <div id="a-badge" class="badge">Opened version 1</div>
+        </section>
+
+        <section id="lane-db" class="lane" aria-label="Current database row">
+          <div class="lane-title">Database row</div>
+          <div class="screen-label">Current stored state</div>
+          <div id="db-card" class="case-card">
+            <div class="row"><span>Status</span><span id="db-status" class="value">PENDING</span></div>
+            <div class="row"><span>Decision</span><span id="db-decision" class="value">—</span></div>
+            <div class="row"><span>Version</span><span id="db-version" class="value">1</span></div>
+          </div>
+          <div id="db-badge" class="badge">Current state</div>
+        </section>
+
+        <section id="lane-b" class="lane hidden-state" aria-label="Reviewer B screen">
+          <div class="lane-title">B's screen</div>
+          <div class="screen-label">What B opened earlier</div>
+          <div class="case-card">
+            <div class="row"><span>Status</span><span class="value">PENDING</span></div>
+            <div class="row"><span>Decision</span><span class="value">—</span></div>
+            <div class="row"><span>Version</span><span class="value">1</span></div>
+          </div>
+          <div id="b-badge" class="badge">Opened version 1</div>
+        </section>
+      </div>
+
+      <div id="ss-flow" class="flow" aria-live="polite">
+        The database currently contains PENDING, version 1.
+      </div>
+
+      <div class="controls">
+        <button type="button" id="ss-back">← Back</button>
+        <button type="button" id="ss-next" class="primary">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById('stale-screen-demo');
+
+      const caption = root.querySelector('#ss-caption');
+      const flow = root.querySelector('#ss-flow');
+      const laneA = root.querySelector('#lane-a');
+      const laneB = root.querySelector('#lane-b');
+      const laneDb = root.querySelector('#lane-db');
+      const dbCard = root.querySelector('#db-card');
+      const dbStatus = root.querySelector('#db-status');
+      const dbDecision = root.querySelector('#db-decision');
+      const dbVersion = root.querySelector('#db-version');
+      const aBadge = root.querySelector('#a-badge');
+      const bBadge = root.querySelector('#b-badge');
+      const dbBadge = root.querySelector('#db-badge');
+      const back = root.querySelector('#ss-back');
+      const next = root.querySelector('#ss-next');
+
+      let step = 0;
+
+      function resetVisuals() {
+        laneA.classList.add('hidden-state');
+        laneB.classList.add('hidden-state');
+        laneB.classList.remove('stale');
+        laneDb.classList.remove('db-changed');
+        dbCard.classList.remove('db-changed');
+        aBadge.classList.remove('show');
+        bBadge.classList.remove('show');
+        dbBadge.classList.remove('show');
+        dbStatus.textContent = 'PENDING';
+        dbDecision.textContent = '—';
+        dbVersion.textContent = '1';
+      }
+
+      function render() {
+        resetVisuals();
+
+        if (step === 0) {
+          caption.textContent = 'Step 1 of 4 — Start with the shared case';
+          flow.textContent = 'The database currently contains PENDING, version 1.';
+        }
+
+        if (step === 1) {
+          laneA.classList.remove('hidden-state');
+          laneB.classList.remove('hidden-state');
+          aBadge.classList.add('show');
+          bBadge.classList.add('show');
+          caption.textContent = 'Step 2 of 4 — A and B both open the case';
+          flow.innerHTML = 'Both screens correctly show <strong>PENDING / version 1</strong> at the moment they are opened.';
+        }
+
+        if (step === 2) {
+          laneA.classList.remove('hidden-state');
+          laneB.classList.remove('hidden-state');
+          aBadge.classList.add('show');
+          bBadge.classList.add('show');
+
+          dbStatus.textContent = 'REVIEWED';
+          dbDecision.textContent = 'NEEDS_INFO';
+          dbVersion.textContent = '2';
+
+          laneDb.classList.add('db-changed');
+          dbCard.classList.add('db-changed');
+          dbBadge.classList.add('show');
+
+          caption.textContent = 'Step 3 of 4 — A saves';
+          flow.innerHTML = '<strong>A saves</strong> <span class="arrow">→</span> only the database changes to <strong>REVIEWED / NEEDS_INFO / version 2</strong>.';
+        }
+
+        if (step === 3) {
+          laneA.classList.remove('hidden-state');
+          laneB.classList.remove('hidden-state');
+          aBadge.classList.add('show');
+          bBadge.classList.add('show');
+
+          dbStatus.textContent = 'REVIEWED';
+          dbDecision.textContent = 'NEEDS_INFO';
+          dbVersion.textContent = '2';
+
+          laneDb.classList.add('db-changed');
+          dbCard.classList.add('db-changed');
+          dbBadge.classList.add('show');
+          laneB.classList.add('stale');
+
+          caption.textContent = 'Step 4 of 4 — B is now looking at an old screen';
+          flow.innerHTML = 'Database: <strong>version 2 / REVIEWED</strong>. B\\'s unchanged screen: <strong>version 1 / PENDING</strong>. B\\'s screen was correct earlier, but it is now stale.';
+        }
+
+        back.disabled = step === 0;
+        next.disabled = step === 3;
+      }
+
+      back.addEventListener('click', () => {
+        if (step > 0) {
+          step--;
+          render();
+        }
+      });
+
+      next.addEventListener('click', () => {
+        if (step < 3) {
+          step++;
+          render();
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
