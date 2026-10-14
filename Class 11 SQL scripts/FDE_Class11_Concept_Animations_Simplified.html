@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Meridian Retail | Two Access-Control Animations</title>
+<style>
+:root{--navy:#17314f;--ink:#1e334a;--muted:#60748a;--line:#d6e0ea;--bg:#f2f6fa;--white:#fff;--blue:#3a78b7;--green:#17865e;--green-bg:#e5f4eb;--red:#b94646;--red-bg:#fae8e8;--amber:#a87521;--amber-bg:#fff1ce;--shadow:0 14px 45px #17314f0c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink)}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #428cd5;outline-offset:3px}.shell{width:min(1200px,calc(100% - 32px));margin:25px auto 35px}.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:16px}.eyebrow{font-size:11px;letter-spacing:.15em;color:#477195;font-weight:800}.title{font-size:clamp(22px,3.1vw,32px);font-weight:780;letter-spacing:-.025em;margin:3px 0 0}.pill{font-size:11px;background:#e4edf7;border:1px solid #c9dbea;border-radius:100px;color:#315a7d;padding:8px 12px;font-weight:750;white-space:nowrap}.tabs{display:flex;background:#dfe8f2;border-radius:14px;padding:5px;gap:5px;margin-bottom:14px}.tab{border:0;background:transparent;color:#586c81;padding:12px 18px;flex:1;border-radius:10px;font-weight:750;text-align:center}.tab[aria-selected="true"]{background:#fff;color:var(--navy);box-shadow:0 2px 12px #17314f18}.stage{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.stage-top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 25px 14px;border-bottom:1px solid #edf1f6}.stage-name{font-size:clamp(18px,2.3vw,25px);font-weight:780;letter-spacing:-.02em}.stepcount{font-size:12px;font-weight:750;color:var(--muted)}.dots{display:flex;gap:6px;margin-top:9px}.dot{width:35px;height:5px;background:#dbe4ed;border-radius:99px;transition:background .3s}.dot.done{background:#8db6d7}.dot.active{background:var(--blue)}.canvas{min-height:452px;background:radial-gradient(circle at 52% 35%,#f4f9fe,transparent 53%),#fbfdff;position:relative;padding:26px 28px}.scene{display:none}.scene.active{display:block;animation:fadein .35s ease}@keyframes fadein{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.status-line{display:flex;align-items:center;justify-content:center;gap:9px;min-height:29px;margin:2px auto 26px;font-size:14px;font-weight:780}.status-line .marker{width:9px;height:9px;border-radius:50%;background:var(--blue)}.status-line.allow{color:var(--green)}.status-line.allow .marker{background:var(--green)}.status-line.deny{color:var(--red)}.status-line.deny .marker{background:var(--red)}.status-line.ask{color:var(--amber)}.status-line.ask .marker{background:var(--amber)}.flow1{display:grid;grid-template-columns:minmax(150px,1fr) minmax(80px,.45fr) minmax(145px,.95fr) minmax(80px,.45fr) minmax(205px,1.3fr);align-items:center;max-width:1040px;margin:0 auto;gap:6px}.identity{display:flex;flex-direction:column;align-items:center;gap:12px}.avatar{width:94px;height:94px;border-radius:23px;background:linear-gradient(155deg,#dbeaf8,#f2f8fe);border:1px solid #bed4e8;position:relative;display:grid;place-items:center}.avatar:before{content:"";width:24px;height:24px;background:#517ba2;border-radius:50%;position:absolute;top:20px;left:34px}.avatar:after{content:"";width:52px;height:30px;background:#517ba2;border-radius:40px 40px 12px 12px;position:absolute;bottom:14px;left:21px}.id-card{font-size:14px;font-weight:850;color:var(--navy);letter-spacing:.02em}.sub{font-size:12px;color:var(--muted);font-weight:650}.connector{height:5px;background:#ccd9e5;border-radius:99px;position:relative;transition:background .35s,opacity .35s}.connector:after{content:"";position:absolute;right:-1px;top:-7px;border-top:9px solid transparent;border-bottom:9px solid transparent;border-left:13px solid #ccd9e5;transition:border-left-color .35s}.connector.on{background:linear-gradient(90deg,#8fc7aa,#189765,#8fc7aa);background-size:200% 100%;animation:shine 1.8s linear infinite}.connector.on:after{border-left-color:var(--green)}.connector.off{background:repeating-linear-gradient(90deg,#edb2b2 0 10px,transparent 10px 16px)}.connector.off:after{border-left-color:#e2b4b4}.connector.maybe{background:repeating-linear-gradient(90deg,#e0c283 0 11px,transparent 11px 17px)}.connector.maybe:after{border-left-color:#d9b66c}@keyframes shine{to{background-position:-200% 0}}.gate{border:2px solid #91bfd5;background:#f3f9ff;border-radius:16px;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:all .4s;position:relative}.gate .gate-symbol{font-size:53px;font-weight:800;line-height:1;transition:all .4s}.gate .gate-label{font-size:12px;color:#64809b;font-weight:750;letter-spacing:.06em}.gate.granted{background:var(--green-bg);border-color:#69ba93}.gate.granted .gate-symbol{color:var(--green)}.gate.revoked{background:#f1f4f7;border-color:#aebac6}.gate.revoked .gate-symbol{color:#63788e}.gate.pending{background:var(--amber-bg);border-color:#d8bb73}.gate.pending .gate-symbol{color:var(--amber)}.gate.denied{background:var(--red-bg);border-color:#de8989}.gate.denied .gate-symbol{color:var(--red)}.record{background:#fff;border:1px solid #cbd8e6;border-radius:15px;padding:15px 14px 14px;box-shadow:0 8px 24px #203b5610}.record-title{font-weight:800;color:var(--navy);font-size:13px;text-align:center;margin-bottom:14px}.record-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.record-grid span{height:17px;background:#d8e7f4;border:1px solid #adcbe3;border-radius:4px}.record-grid span:nth-child(3n){background:#a9c9e3}.record-count{text-align:center;font-weight:850;color:#235680;font-size:14px;margin-top:13px}.persistent{width:max-content;max-width:100%;margin:25px auto 0;border-radius:30px;padding:9px 17px;background:#ecf2f7;color:#40627c;font-size:13px;font-weight:750;letter-spacing:.02em}.revoke-flag{position:absolute;left:50%;top:50px;transform:translateX(-50%);background:var(--navy);border-radius:9px;color:white;font-weight:850;padding:8px 18px;font-size:14px;box-shadow:0 6px 18px #19334c24;z-index:1;display:none;white-space:nowrap}.revoke-flag.show{display:block;animation:drop .35s both}@keyframes drop{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}.revoke-flag:after{content:"";position:absolute;left:50%;bottom:-15px;width:2px;height:15px;background:var(--navy)}.lesson{min-height:62px;text-align:center;padding:15px 22px 16px;font-weight:760;color:var(--navy);background:#f1f7fc;border-top:1px solid #e7eef6;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,1.6vw,17px)}.stage-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;border-top:1px solid var(--line);background:#fff}.ctrl-left{display:flex;align-items:center;gap:10px}.btn{border:1px solid #c8d7e5;background:#fff;color:var(--navy);padding:10px 17px;border-radius:10px;font-weight:750}.btn:disabled{opacity:.38;cursor:default}.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy);min-width:135px}.btn.reset{border-color:transparent;color:#66809a;font-size:13px;padding:10px}.keyboard{font-size:12px;color:#8396a7}.full-table{padding:15px;border:1px solid #bfd1e2;border-radius:14px;background:#fff;box-shadow:0 8px 24px #203b5610;transition:.4s;max-width:320px;width:100%}.full-table .heading{font-size:14px;font-weight:850;text-align:center;color:var(--navy);margin:0 0 10px}.table-dots{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}.table-dots span{height:18px;border-radius:4px;background:#b4d6eb;border:1px solid #92bfdd;transition:all .35s}.table-dots span:nth-child(2n){background:#cde4f3}.source-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}.scope-flow{display:grid;grid-template-columns:minmax(210px,1fr) 80px minmax(300px,1.4fr);gap:8px;align-items:center;max-width:1020px;margin:12px auto 0}.branch-lines{height:236px;position:relative}.branch-lines svg{width:100%;height:100%;overflow:visible}.branch-lines path{fill:none;stroke:#afc2d4;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;transition:stroke .35s}.branch-lines path.on-north{stroke:var(--green);stroke-width:5}.branch-lines path.on-south{stroke:var(--red);stroke-width:5;stroke-dasharray:5 8}.split-list{display:grid;gap:12px}.view{border:2px solid #d5e0ea;background:#fff;border-radius:14px;padding:11px 15px;min-height:126px;transition:all .4s;position:relative}.view-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.view-name{font-size:14px;font-weight:850;letter-spacing:.02em}.view-count{font-weight:850;font-size:12px;background:#e7eef5;color:#436582;padding:4px 9px;border-radius:99px}.view-dots{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:14px}.view-dots span{height:22px;border-radius:3px;background:#d7e5f1;border:1px solid #c0d5e5}.view .outcome{position:absolute;right:15px;top:47px;font-size:14px;font-weight:900;letter-spacing:.02em;padding:6px 11px;border-radius:8px;background:white;display:none}.view.active-north{border-color:#4ba77d;background:#edf9f2;box-shadow:0 4px 22px #20a56a1b}.view.active-north .outcome{display:block;background:#d6f0e1;color:var(--green)}.view.predict-south{border-color:#ddbd75;background:#fffaf0}.view.predict-south .outcome{display:block;color:var(--amber);background:#fcecc5}.view.denied-south{border-color:#da8585;background:#fff1f1}.view.denied-south .outcome{display:block;color:var(--red);background:#f6dcdc}.view.predict-south .view-dots span{opacity:.20}.view.denied-south .view-dots span{opacity:.08;filter:blur(3px)}.view.ghost{opacity:.15;transform:scale(.98)}.mini-key{display:flex;gap:8px;align-items:center;justify-content:center;border:1px solid #b4d0e7;border-radius:99px;background:#e8f2fc;color:#2d5980;padding:7px 12px;font-size:13px;font-weight:850}.key-shape{width:13px;height:13px;border:3px solid currentColor;border-radius:50%;position:relative;margin-right:10px}.key-shape:after{content:"";position:absolute;top:4px;left:10px;width:15px;height:3px;background:currentColor}.scene2-label{margin:0 auto 20px;text-align:center;font-weight:800;color:#315b79;font-size:14px;min-height:22px}.scene2 .status-line{margin-bottom:11px}.scope-flow.initial .full-table{transform:scale(1.06)}.scope-flow.initial .branch-lines,.scope-flow.initial .split-list{opacity:.1}.scope-flow.initial .source-wrap{grid-column:1 / 4;max-width:340px;justify-self:center}.scope-flow.initial .branch-lines,.scope-flow.initial .split-list{display:none}.scope-flow.initial{grid-template-columns:1fr;min-height:247px}.scope-flow.initial .full-table{max-width:340px}.scope-flow.initial .table-dots span{height:21px}.visually-hidden{position:absolute!important;width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden;white-space:nowrap}
+@media(max-width:750px){.shell{width:calc(100% - 20px);margin:10px auto}.top{padding:0 5px}.pill{display:none}.tabs .tab{font-size:13px;padding:11px 7px}.stage-top{padding:17px 15px 12px}.canvas{padding:20px 15px;min-height:0}.flow1{grid-template-columns:1fr 52px 1fr;gap:8px}.flow1 .identity{grid-column:1}.flow1 .connector:first-of-type{grid-column:2}.flow1 .gate{grid-column:3;height:135px}.flow1 .gate+.connector{display:none}.flow1 .record{grid-column:1 / 4;width:min(280px,100%);justify-self:center}.record-grid span{height:11px}.record-title{font-size:11px}.record-count{font-size:12px}.record{padding:10px}.gate .gate-symbol{font-size:38px}.avatar{width:75px;height:75px}.avatar:before{left:25px;top:12px}.avatar:after{left:12px;bottom:8px}.persistent{margin-top:14px}.scope-flow{display:flex;flex-direction:column;gap:8px}.scope-flow .full-table{max-width:300px}.scope-flow .branch-lines{height:35px;width:100px;transform:rotate(90deg)}.scope-flow .split-list{width:100%}.view-dots span{height:15px}.view{min-height:100px}.stage-controls{padding:12px}.keyboard{display:none}.btn{padding:10px}.btn.primary{min-width:115px}.revoke-flag{top:46px;font-size:12px}.status-line{margin-bottom:15px}.scene2-label{font-size:12px}.scope-flow.initial{min-height:175px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell" id="app">
+  <div class="top"><div><div class="eyebrow">MERIDIAN RETAIL · CLASS 11</div><h1 class="title">Two access-control stories</h1></div><div class="pill">SYNTHETIC LAB</div></div>
+  <div class="tabs" role="tablist" aria-label="Choose a concept">
+    <button class="tab" role="tab" aria-selected="true" id="tab-1" aria-controls="panel-1">1 · REVOKE changes access</button>
+    <button class="tab" role="tab" aria-selected="false" id="tab-2" aria-controls="panel-2">2 · North vs South views</button>
+  </div>
+  <section class="stage" aria-label="Concept animation">
+    <div class="stage-top"><div><div id="sceneTitle" class="stage-name">Same data. Different permission.</div><div id="progress" class="dots" aria-label="Progress"></div></div><div id="stepNumber" class="stepcount">1 / 4</div></div>
+    <div class="canvas">
+      <div id="panel-1" class="scene active" role="tabpanel" aria-labelledby="tab-1">
+        <div id="revokeFlag" class="revoke-flag">A · REVOKE SELECT</div>
+        <div class="status-line" id="status1"><i class="marker"></i><span id="s1Status">RAW PROFILE · ACCESS ALLOWED</span></div>
+        <div class="flow1">
+          <div class="identity"><div class="avatar" aria-hidden="true"></div><div class="id-card">SUPPORT (S)</div><div class="sub">Support account</div></div>
+          <div class="connector" id="arrow1"></div>
+          <div class="gate granted" id="accessGate"><div class="gate-symbol" id="gateSymbol">✓</div><div class="gate-label">SELECT PERMISSION</div></div>
+          <div class="connector" id="arrow2"></div>
+          <div class="record"><div class="record-title">RAW CUSTOMER PROFILES</div><div class="record-grid" id="rows1"></div><div class="record-count">24 RECORDS</div></div>
+        </div>
+        <div class="persistent">DATABASE RECORDS: 24 · UNCHANGED</div>
+      </div>
+      <div id="panel-2" class="scene scene2" role="tabpanel" aria-labelledby="tab-2" hidden>
+        <div class="status-line" id="status2"><i class="marker"></i><span id="s2Status">ONE CASE TABLE</span></div>
+        <div class="scene2-label" id="keyBanner">24 CASES TOTAL</div>
+        <div class="scope-flow initial" id="scopeFlow">
+          <div class="source-wrap"><div class="full-table"><div class="heading">SOURCE TABLE · 24 CASES</div><div class="table-dots" id="rows2"></div></div></div>
+          <div class="branch-lines" aria-hidden="true"><svg viewBox="0 0 100 230" preserveAspectRatio="none"><path id="lineNorth" d="M 0 115 L 40 115 L 70 55 L 100 55"/><path id="lineSouth" d="M 0 115 L 40 115 L 70 178 L 100 178"/></svg></div>
+          <div class="split-list"><div class="view" id="northView"><div class="view-top"><span class="view-name">NORTH VIEW</span><span class="view-count">12 rows</span></div><div class="view-dots" id="northDots"></div><div class="outcome" id="northOutcome">✓ ALLOWED</div></div><div class="view" id="southView"><div class="view-top"><span class="view-name">SOUTH VIEW</span><span class="view-count">12 rows</span></div><div class="view-dots" id="southDots"></div><div class="outcome" id="southOutcome">?</div></div></div>
+        </div>
+        <div class="persistent">FIXED-TEAM VIEWS · NOT MYSQL NATIVE RLS</div>
+      </div>
+    </div>
+    <div id="lesson" class="lesson" role="status" aria-live="polite">S can read the raw profile table.</div>
+    <div class="stage-controls"><div class="ctrl-left"><button id="back" class="btn" disabled>← Previous</button><button id="reset" class="btn reset">Reset</button></div><span class="keyboard">Keyboard: ← →</span><button id="next" class="btn primary">Next →</button></div>
+  </section>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const scenes = [
+    {
+      title:'Same data. Different permission.',
+      steps:[
+        {status:'RAW PROFILE · ACCESS ALLOWED',tone:'allow',gate:'granted',symbol:'✓',arrows:'on',flag:false,lesson:'S can read the raw profile table.'},
+        {status:'SELECT PERMISSION REMOVED',tone:'',gate:'revoked',symbol:'−',arrows:'off',flag:true,lesson:'A revokes S’s permission. The 24 records remain.'},
+        {status:'S RETRIES THE SAME REQUEST',tone:'ask',gate:'pending',symbol:'?',arrows:'maybe',flag:false,lesson:'Predict: will S still be able to read the raw profiles?'},
+        {status:'ACCESS DENIED',tone:'deny',gate:'denied',symbol:'×',arrows:'off',flag:false,lesson:'Same records. The permission changed.'}
+      ]
+    },
+    {
+      title:'One table. Two restricted views.',
+      steps:[
+        {status:'ONE CASE TABLE',tone:'',key:'24 CASES TOTAL',lesson:'All 24 cases exist in one source table.',mode:'initial'},
+        {status:'SPLIT BY ASSIGNED TEAM',tone:'',key:'12 NORTH   +   12 SOUTH',lesson:'The same 24 cases appear in two fixed-team views.',mode:'split'},
+        {status:'NORTH ROLE → NORTH VIEW',tone:'allow',key:'NORTH ROLE',lesson:'North view: ALLOWED · 12 rows.',mode:'north'},
+        {status:'NORTH ROLE → SOUTH VIEW',tone:'ask',key:'NORTH ROLE',lesson:'Predict: can the North role open the South view?',mode:'predict'},
+        {status:'SOUTH VIEW · ACCESS DENIED',tone:'deny',key:'NORTH ROLE',lesson:'South view: DENIED · Data remains in the table.',mode:'deny'}
+      ]
+    }
+  ];
+  let tab=0, index=0;
+  const createDots=(el,n)=>{el.innerHTML='';for(let i=0;i<n;i++)el.appendChild(document.createElement('span'))};
+  createDots($('rows1'),24);createDots($('rows2'),24);createDots($('northDots'),12);createDots($('southDots'),12);
+  function render(){
+    const scene=scenes[tab], state=scene.steps[index];
+    $('tab-1').setAttribute('aria-selected',tab===0?'true':'false');$('tab-2').setAttribute('aria-selected',tab===1?'true':'false');
+    $('panel-1').hidden=tab!==0;$('panel-2').hidden=tab!==1;
+    $('panel-1').classList.toggle('active',tab===0);$('panel-2').classList.toggle('active',tab===1);
+    $('sceneTitle').textContent=scene.title;$('stepNumber').textContent=`${index+1} / ${scene.steps.length}`;
+    $('progress').innerHTML=scene.steps.map((_,i)=>`<span class="dot ${i===index?'active':i<index?'done':''}"></span>`).join('');
+    $('lesson').textContent=state.lesson;
+    $('back').disabled=index===0;
+    $('next').textContent=index===scene.steps.length-1?'↻ Replay':(index===2 && tab===0 || index===3 && tab===1)?'Reveal result →':'Next →';
+    if(tab===0){
+      $('s1Status').textContent=state.status;$('status1').className='status-line '+state.tone;
+      $('accessGate').className='gate '+state.gate;$('gateSymbol').textContent=state.symbol;
+      $('arrow1').className='connector '+state.arrows;$('arrow2').className='connector '+state.arrows;
+      $('revokeFlag').classList.toggle('show',state.flag);
+    } else {
+      $('s2Status').textContent=state.status;$('status2').className='status-line '+state.tone;
+      $('keyBanner').textContent=state.key;
+      $('scopeFlow').className='scope-flow '+(state.mode==='initial'?'initial':'');
+      $('northView').className='view'+(state.mode==='north'?' active-north':'');
+      $('southView').className='view'+(state.mode==='predict'?' predict-south':state.mode==='deny'?' denied-south':'');
+      $('southOutcome').textContent=state.mode==='deny'?'× DENIED':'?';
+      $('lineNorth').setAttribute('class',state.mode==='north'?'on-north':'');
+      $('lineSouth').setAttribute('class',state.mode==='predict'||state.mode==='deny'?'on-south':'');
+    }
+  }
+  function navigate(delta){const max=scenes[tab].steps.length-1;if(delta>0&&index===max)index=0;else index=Math.max(0,Math.min(max,index+delta));render()}
+  function changeTab(t){tab=t;index=0;render()}
+  $('tab-1').addEventListener('click',()=>changeTab(0));$('tab-2').addEventListener('click',()=>changeTab(1));
+  $('back').addEventListener('click',()=>navigate(-1));$('next').addEventListener('click',()=>navigate(1));$('reset').addEventListener('click',()=>{index=0;render()});
+  window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName)&&document.activeElement!==document.body)return;if(e.key==='ArrowRight'){navigate(1);e.preventDefault()}else if(e.key==='ArrowLeft'){navigate(-1);e.preventDefault()}});
+  render();
+})();
+</script>
+</body>
+</html>
