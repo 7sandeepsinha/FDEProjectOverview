@@ -1,0 +1,33 @@
+FDE CLASS 12 VALIDATION & REHEARSAL NOTES
+
+DELIVERY
+- Main instructor document: FDE_Class12_World_Class_Instructor_Script.docx
+- 25 rendered pages; timed sections form exactly 120 minutes, including 7-minute break.
+- All 8 named SQL files are called within the teaching flow; no README lookup is required.
+- Four quizzes; six visual/image/animation placeholders with classroom fallbacks.
+- Run the existing meridian_retail database in privileged Workbench connection A.
+
+DATA MODEL
+- Only class12_legacy_orders, class12_nightly_export, class12_local_orders,
+  and class12_sync_runs are created. No new database and no edits to core orders.
+- Designed data counts: source 24, export 23, local 23, sync runs 4.
+- Highlighted scenarios: MR-501 matches all three; MR-502 source status
+  changed after the last local sync; MR-000001 missing locally; MR-000004
+  missing in the export; MR-000002 deliberate export/source conflict.
+- Scenario clock is fixed at 2026-09-20 10:00:00. Last local success was
+  09:42 (18 minutes earlier). Prior-night export age is 11 hours.
+- Optional CSV is a reference representation of the synthetic nightly table;
+  the class does NOT require importing it or opening it as a separate file.
+
+EVIDENCE AND LIMITS
+- An independent Python fixture model verified identifier membership,
+  synthetic status comparisons and clock differences.
+- Actual MySQL execution was NOT available during authoring. The instructor
+  must rehearse files on the disposable MySQL 8 server and confirm results.
+- No real firewall, VPN, SFTP transfer, replication or external legacy connection
+  is configured; all three representations are explicit simulations inside
+  meridian_retail. Legacy status values are fictional and should not be described
+  as newly verified original customer/order facts.
+- No Class 11 credentials or roles are modified. Class 11 objects may remain.
+- 99_class12_reset.sql is ONLY for post-class or pre-rehearsal cleanup;
+  running it during instruction would remove Class 12 teaching evidence.
