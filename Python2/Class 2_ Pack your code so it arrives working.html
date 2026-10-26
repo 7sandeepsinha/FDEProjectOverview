@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Class 2: Pack your code so it arrives working</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9ECEA; --paper:#FFFFFF; --ink:#1B2836; --ink-2:#4F5D6B; --rule:#1B2836; --hair:#CBD2D6;
+  --kraft:#B4875A; --kraft-2:#8E6640; --kraft-soft:#EFE2D1;
+  --tape:#F2C230; --tape-ink:#2E2600;
+  --ok:#2A7653; --ok-soft:#DDEFE5; --bad:#B9412C; --bad-soft:#F6E0DA;
+  --term:#16212C; --term-ink:#D8E3EA; --term-dim:#8EA0AE; --term-ok:#7FD3A6; --term-bad:#FF8E78; --term-hi:#F2C230;
+  --focus:#2D6FD6;
+  --display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",Verdana,"Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131B22; --paper:#1B2630; --ink:#E5EBEF; --ink-2:#A5B2BC; --rule:#8C9BA7; --hair:#2F3D49;
+    --kraft:#C99B6B; --kraft-2:#E0B98E; --kraft-soft:#352B21;
+    --tape:#F2C230; --tape-ink:#2E2600;
+    --ok:#5DBE90; --ok-soft:#163126; --bad:#EE7C66; --bad-soft:#3A1F1A;
+    --term:#0E151B; --focus:#7FAEFF;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131B22; --paper:#1B2630; --ink:#E5EBEF; --ink-2:#A5B2BC; --rule:#8C9BA7; --hair:#2F3D49;
+  --kraft:#C99B6B; --kraft-2:#E0B98E; --kraft-soft:#352B21;
+  --tape:#F2C230; --tape-ink:#2E2600;
+  --ok:#5DBE90; --ok-soft:#163126; --bad:#EE7C66; --bad-soft:#3A1F1A;
+  --term:#0E151B; --focus:#7FAEFF;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+img,svg{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+code,pre,.mono{font-family:var(--mono);font-size:.88em}
+p{margin:0 0 .8em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* ---------- hero ---------- */
+.hero{padding:40px 0 28px}
+.hero-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:36px;align-items:center}
+.kicker{font-family:var(--display);font-weight:600;font-stretch:100%;color:var(--ink-2);margin:0 0 10px;font-size:1rem}
+h1{font-family:var(--display);font-weight:850;font-stretch:108%;font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.02;letter-spacing:-.01em;margin:0 0 18px}
+.lede{font-size:1.15rem;max-width:34em;color:var(--ink-2)}
+.label-slip{display:inline-grid;grid-template-columns:auto 1fr;gap:2px 14px;border:2px solid var(--rule);background:var(--paper);padding:12px 16px;border-radius:6px;margin-top:8px;font-size:.95rem}
+.label-slip dt{font-weight:700}
+.label-slip dd{margin:0}
+
+.stage{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:18px 18px 16px;position:relative}
+.stage-row{display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;gap:6px}
+.laptop{display:flex;flex-direction:column;align-items:center}
+.screen{width:100%;aspect-ratio:16/10;background:var(--term);border-radius:8px 8px 2px 2px;border:3px solid #2A3744;padding:8px 9px;overflow:hidden;font-family:var(--mono);font-size:.66rem;line-height:1.45;color:var(--term-ink)}
+.base{width:112%;height:9px;background:#56636F;border-radius:0 0 8px 8px}
+.laptop-name{margin-top:8px;font-weight:700;font-size:.92rem}
+.screen .ok{color:var(--term-ok)} .screen .bad{color:var(--term-bad)} .screen .dim{color:var(--term-dim)}
+.lane{position:relative;height:60px}
+.lane::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--hair)}
+.mover{position:absolute;z-index:5;top:50%;left:-150%;transform:translate(0,-50%);opacity:0;pointer-events:none}
+.mover.go{animation:fly 1.1s cubic-bezier(.55,.05,.35,1) forwards}
+@keyframes fly{0%{left:-150%;opacity:1}85%{opacity:1}100%{left:170%;opacity:0}}
+.file-ico{width:30px;height:38px;background:var(--paper);border:2px solid var(--rule);border-radius:3px 10px 3px 3px;display:grid;place-items:center;font-family:var(--mono);font-size:.55rem;font-weight:600}
+.parcel{width:54px;height:42px;background:var(--kraft);border:2px solid var(--kraft-2);border-radius:4px;position:relative}
+.parcel::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:12px;transform:translateX(-50%);background:var(--tape);opacity:.9}
+.parcel::after{content:"";position:absolute;left:6px;top:7px;width:18px;height:11px;background:#fff;border-radius:2px}
+.stage-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.stage-note{margin:12px 0 0;font-size:.95rem;min-height:3.2em}
+
+/* ---------- buttons ---------- */
+.btn{appearance:none;border:2px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:8px;padding:9px 15px;font-weight:700;cursor:pointer;line-height:1.2;transition:transform .12s ease, background .15s ease}
+.btn:hover{background:var(--kraft-soft)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.primary:hover{background:var(--ink-2);border-color:var(--ink-2)}
+.btn.tape{background:var(--tape);color:var(--tape-ink);border-color:var(--tape)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.small{padding:6px 11px;font-size:.92rem}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.link-btn{appearance:none;background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-weight:700}
+
+/* ---------- OS switch ---------- */
+.os-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:8px 0 0;font-size:.95rem}
+.seg{display:inline-flex;border:2px solid var(--rule);border-radius:999px;overflow:hidden;background:var(--paper)}
+.seg button{appearance:none;border:0;background:none;padding:6px 14px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+body[data-os="mac"] .win-only{display:none !important}
+body[data-os="win"] .mac-only{display:none !important}
+
+/* ---------- tracking strip ---------- */
+.track{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:2px solid var(--rule)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.track-inner{display:flex;align-items:center;gap:16px;padding:10px 20px;max-width:1080px;margin:0 auto}
+.stops{display:flex;gap:0;flex:1;overflow-x:auto;scrollbar-width:none;padding:4px 2px}
+.stops::-webkit-scrollbar{display:none}
+.stop-dot{appearance:none;flex:1 0 34px;min-width:34px;background:none;border:0;padding:0;cursor:pointer;position:relative;display:flex;justify-content:center}
+.stop-dot::before{content:"";position:absolute;top:50%;left:0;right:0;border-top:2px solid var(--hair);z-index:0}
+.stop-dot:first-child::before{left:50%} .stop-dot:last-child::before{right:50%}
+.stop-dot span{position:relative;z-index:1;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--paper);border:2px solid var(--hair);font-family:var(--display);font-weight:800;font-size:.82rem;color:var(--ink-2);transition:all .2s ease}
+.stop-dot.packed span{background:var(--ok);border-color:var(--ok);color:#fff}
+.stop-dot.current span{background:var(--ink);border-color:var(--ink);color:var(--paper);transform:scale(1.12)}
+.stop-dot.packed.current span{box-shadow:0 0 0 3px var(--ok)}
+.track-meta{flex:0 0 auto;font-size:.9rem;color:var(--ink-2);white-space:nowrap}
+.track-meta strong{color:var(--ink)}
+
+/* ---------- stop panel ---------- */
+main.wrap{padding-top:26px;padding-bottom:60px}
+.stop{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:28px 30px 24px;animation:arrive .35s ease both}
+.stop[hidden]{display:none}
+@keyframes arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stop-no{font-family:var(--display);font-weight:700;color:var(--ink-2);margin:0 0 4px;font-size:.98rem}
+.stop h2{font-family:var(--display);font-weight:850;font-stretch:112%;font-size:clamp(1.8rem,3.6vw,2.6rem);line-height:1.05;margin:0 0 10px}
+.idea{font-size:1.2rem;max-width:36em;margin-bottom:22px}
+.stop h3{font-family:var(--display);font-weight:750;font-stretch:105%;font-size:1.2rem;margin:26px 0 10px}
+.widget{border:2px dashed var(--hair);border-radius:12px;padding:18px;margin:6px 0 20px;background:color-mix(in srgb,var(--bg) 45%,var(--paper))}
+.widget-title{font-weight:700;margin:0 0 4px}
+.widget-hint{color:var(--ink-2);font-size:.95rem;margin:0 0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.points{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start;margin-top:4px}
+.points ul{margin:0;padding-left:1.15em}
+.points li{margin:0 0 .55em}
+.analogy{border-left:6px solid var(--kraft);background:var(--kraft-soft);border-radius:0 10px 10px 0;padding:12px 16px;font-size:.98rem}
+.analogy b{display:block;margin-bottom:2px}
+details.slips{margin-top:18px;border-top:2px solid var(--hair);padding-top:12px}
+details.slips summary{cursor:pointer;font-weight:700}
+details.slips ul{margin:10px 0 0;padding-left:1.15em}
+details.slips li{margin-bottom:.4em}
+.stop-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-top:24px;padding-top:18px;border-top:2px solid var(--rule)}
+.stop-foot .mid{display:flex;gap:10px;align-items:center}
+.stamp{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:800;color:var(--ok);border:2px solid var(--ok);border-radius:6px;padding:4px 10px;transform:rotate(-3deg)}
+.stamp[hidden]{display:none}
+
+/* ---------- terminal & code ---------- */
+.term{background:var(--term);color:var(--term-ink);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:.84rem;line-height:1.55;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.term .p{color:var(--term-dim)} .term .ok{color:var(--term-ok)} .term .bad{color:var(--term-bad)} .term .hi{color:var(--term-hi)}
+.term-title{font-size:.85rem;font-weight:700;margin:0 0 6px;color:var(--ink-2)}
+.cmd{background:var(--term);color:var(--term-ink);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:.84rem;overflow-x:auto;white-space:pre;margin:6px 0 12px}
+.cmd .c{color:var(--term-dim)}
+.cmds-label{font-weight:700;font-size:.95rem;margin:10px 0 2px}
+
+/* ---------- flip cards ---------- */
+.flips{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.flip{appearance:none;text-align:left;border:2px solid var(--rule);border-radius:10px;background:var(--paper);padding:14px;cursor:pointer;min-height:118px;position:relative}
+.flip .front{font-family:var(--display);font-weight:800;font-size:1.15rem}
+.flip .front small{display:block;font-family:var(--body);font-weight:400;font-size:.85rem;color:var(--ink-2);margin-top:6px}
+.flip .back{display:none;font-size:.95rem}
+.flip[aria-pressed="true"]{background:var(--kraft-soft)}
+.flip[aria-pressed="true"] .front{display:none}
+.flip[aria-pressed="true"] .back{display:block;animation:arrive .25s ease}
+
+/* ---------- traceback reader ---------- */
+.tb{display:flex;flex-direction:column;background:var(--term);border-radius:10px;padding:8px;font-family:var(--mono);font-size:.8rem}
+.tb button{appearance:none;background:none;border:0;color:var(--term-ink);text-align:left;padding:3px 8px;border-radius:5px;cursor:pointer;white-space:pre;overflow-x:auto;font-family:inherit;font-size:inherit}
+.tb button:hover{background:rgba(255,255,255,.07)}
+.tb button.wrong{background:rgba(242,194,48,.14)}
+.tb button.right{background:rgba(127,211,166,.18);color:var(--term-ok)}
+.feedback{margin:10px 0 0;min-height:1.6em;font-weight:700}
+.feedback.good{color:var(--ok)} .feedback.meh{color:var(--ink)}
+
+/* ---------- sorter ---------- */
+.pile{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:42px}
+.chip{appearance:none;border:2px solid var(--rule);background:var(--paper);border-radius:999px;padding:6px 13px;font-family:var(--mono);font-size:.84rem;cursor:pointer;transition:transform .15s ease}
+.chip[aria-pressed="true"]{background:var(--tape);color:var(--tape-ink);border-color:var(--tape);transform:translateY(-2px)}
+.chip.gone{display:none}
+.bins{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bin{appearance:none;text-align:left;border:2px solid var(--rule);background:var(--paper);border-radius:10px;padding:10px 12px;cursor:pointer;min-height:92px;display:flex;flex-direction:column;gap:2px}
+.bin:hover{background:var(--kraft-soft)}
+.bin-name{font-family:var(--mono);font-weight:600;font-size:.86rem}
+.bin-job{font-size:.85rem;color:var(--ink-2)}
+.bin-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.bin-items span{font-family:var(--mono);font-size:.72rem;background:var(--ok-soft);color:var(--ink);border:1px solid var(--ok);border-radius:4px;padding:1px 6px;animation:pop .3s ease}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.bin.shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.bins.three .bin{min-height:120px}
+.bin.rules{border-color:#3B6FB6} .bin.settings{border-color:var(--ok)} .bin.secrets{border-color:var(--bad)}
+.bin-big{font-family:var(--display);font-weight:800;font-size:1.1rem}
+.msg{margin:12px 0 0;min-height:1.6em;font-weight:700}
+
+/* ---------- PATH sim ---------- */
+.pathrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.pathrow .lbl{font-weight:700;font-size:.9rem;margin-right:4px}
+.pathbox{font-family:var(--mono);font-size:.78rem;border:2px solid var(--hair);border-radius:6px;padding:4px 8px;background:var(--paper);transition:all .35s ease}
+.pathbox.first{border-color:var(--ink);font-weight:600}
+.pathbox.venv{border-color:var(--ok);background:var(--ok-soft);animation:slidein .45s ease}
+@keyframes slidein{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+.pathbox .tag{font-family:var(--body);font-size:.72rem;margin-left:6px;color:var(--ok);font-weight:700}
+
+/* ---------- pins ---------- */
+.range-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+input[type=range]{accent-color:var(--ink);width:min(320px,100%)}
+.basket{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper)}
+.basket h4{margin:0 0 6px;font-family:var(--display);font-weight:800;font-size:1.05rem}
+.basket .line{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:.82rem;padding:4px 0;border-bottom:1px dashed var(--hair)}
+.basket .verdict{margin-top:8px;font-weight:700;font-size:.95rem}
+.v-ok{color:var(--ok)} .v-warn{color:var(--bad)}
+
+/* ---------- toml explorer ---------- */
+.toml{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;align-items:start}
+.toml-code{background:var(--term);border-radius:10px;padding:6px}
+.toml-code button{display:block;width:100%;appearance:none;border:0;background:none;color:var(--term-ink);text-align:left;font-family:var(--mono);font-size:.78rem;line-height:1.5;white-space:pre;padding:6px 8px;border-radius:6px;cursor:pointer;overflow-x:auto}
+.toml-code button:hover{background:rgba(255,255,255,.06)}
+.toml-code button[aria-pressed="true"]{background:rgba(242,194,48,.16);box-shadow:inset 3px 0 0 var(--term-hi)}
+.toml-code .k{color:var(--term-hi)}
+.explain{border:2px solid var(--rule);border-radius:10px;padding:14px;background:var(--paper);position:sticky;top:110px}
+.explain h4{margin:0 0 6px;font-family:var(--mono);font-size:.9rem}
+.decoder{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:1.25rem;margin:6px 0 10px}
+.decoder button{appearance:none;border:2px solid var(--rule);background:var(--paper);border-radius:6px;padding:4px 10px;font-family:var(--mono);font-size:1.1rem;cursor:pointer}
+.decoder button[aria-pressed="true"]{background:var(--tape);border-color:var(--tape);color:var(--tape-ink)}
+
+/* ---------- module map ---------- */
+.map-stack{display:grid;gap:16px}
+.map{max-width:640px;width:100%;margin:0 auto}
+.map svg{width:100%;height:auto;display:block}
+.map-side{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}
+.map .node rect{fill:var(--paper);stroke:var(--rule);stroke-width:2;rx:10}
+.map .node text{fill:var(--ink);font-family:var(--mono);font-size:15px;font-weight:600}
+.map .node{cursor:pointer}
+.map .node:hover rect{fill:var(--kraft-soft)}
+.map .node.on rect{fill:var(--tape);stroke:var(--tape)}
+.map .node.on text{fill:var(--tape-ink)}
+.map .node:focus{outline:none}
+.map .node:focus-visible rect{stroke:var(--focus);stroke-width:4}
+.map .edge{stroke:var(--ink-2);stroke-width:2.5;fill:none}
+.map .edge-bad{stroke:var(--bad);stroke-width:3;fill:none;stroke-dasharray:7 6;opacity:0;transition:opacity .3s}
+.map.cycle .edge-bad{opacity:1;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-26}}
+.map .arrowhead{fill:var(--ink-2)} .map .arrowhead-bad{fill:var(--bad)}
+.node-info{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper);min-height:94px}
+.node-info h4{margin:0 0 4px;font-family:var(--mono)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.same-badge{display:inline-block;margin-top:10px;font-weight:700;color:var(--ok)}
+
+/* ---------- editor mock ---------- */
+.editor{border:2px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--paper)}
+.editor-bar{display:flex;justify-content:space-between;gap:10px;background:var(--ink);color:var(--paper);font-size:.82rem;padding:5px 10px;font-family:var(--mono)}
+.editor-code{font-family:var(--mono);font-size:.82rem;line-height:1.6;padding:10px 12px;white-space:pre;overflow-x:auto}
+.squig{text-decoration:underline wavy var(--bad);text-underline-offset:4px}
+.editor-tip{font-size:.82rem;color:var(--bad);font-family:var(--mono);padding:0 12px 10px}
+.interp-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.interp-list button{appearance:none;text-align:left;border:2px solid var(--hair);border-radius:8px;background:var(--paper);padding:8px 12px;cursor:pointer}
+.interp-list button[aria-pressed="true"]{border-color:var(--ink);background:var(--kraft-soft)}
+.interp-list small{display:block;font-family:var(--mono);font-size:.74rem;color:var(--ink-2)}
+.code-lines div{transition:all .35s ease;max-height:1.7em;overflow:hidden}
+.code-lines .flag{background:var(--bad-soft);box-shadow:inset 3px 0 0 var(--bad)}
+.code-lines .removed{max-height:0;opacity:0}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+
+/* ---------- layers (precedence) ---------- */
+.layers{display:flex;flex-direction:column;gap:8px}
+.layer{border:2px solid var(--hair);border-radius:10px;padding:10px 14px;background:var(--paper);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;transition:all .25s ease;opacity:.6}
+.layer.active{opacity:1;border-color:var(--rule)}
+.layer.wins{border-color:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.layer .lname{font-weight:700;min-width:9.5em}
+.layer code{background:var(--bg);padding:2px 6px;border-radius:4px}
+.layer .won{margin-left:auto;font-weight:700;color:var(--ok);display:none}
+.layer.wins .won{display:inline}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:700}
+.toggle input{width:20px;height:20px;accent-color:var(--ink)}
+select{border:2px solid var(--rule);border-radius:6px;padding:3px 6px;background:var(--paper)}
+
+/* ---------- switch ---------- */
+.switch{appearance:none;display:inline-flex;align-items:center;gap:12px;background:none;border:0;cursor:pointer;font-weight:700;padding:4px 0;text-align:left}
+.switch .track-s{width:50px;height:28px;border-radius:999px;background:var(--ok);position:relative;flex:0 0 auto;transition:background .2s}
+.switch .track-s::after{content:"";position:absolute;top:3px;left:25px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+.switch[aria-checked="false"] .track-s{background:var(--bad)}
+.switch[aria-checked="false"] .track-s::after{left:3px}
+.switch.risky[aria-checked="false"] .track-s{background:var(--rule)}
+.switch.risky[aria-checked="true"] .track-s{background:var(--bad)}
+
+/* ---------- git sim ---------- */
+.git-lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:relative}
+.git-lane{border:2px solid var(--rule);border-radius:10px;background:var(--paper);padding:10px;min-height:150px;display:flex;flex-direction:column;gap:6px}
+.git-lane h4{margin:0;font-family:var(--display);font-weight:800;font-size:.98rem}
+.git-lane .sub{font-size:.78rem;color:var(--ink-2);margin-top:-4px}
+.gcard{font-family:var(--mono);font-size:.74rem;border:2px solid var(--rule);border-radius:6px;padding:4px 6px;background:var(--tape);color:var(--tape-ink);animation:pop .3s ease}
+.gcard.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
+.commit{font-family:var(--mono);font-size:.72rem;display:flex;gap:6px;align-items:flex-start}
+.commit::before{content:"";flex:0 0 10px;height:10px;margin-top:3px;border-radius:50%;background:var(--ink)}
+.commit.new{animation:pop .3s ease}
+.commit.leak::before{background:var(--bad)}
+.git-cmds{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 10px}
+.git-cmds .btn{font-family:var(--mono);font-size:.86rem;font-weight:600}
+.partner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;border:2px dashed var(--hair);border-radius:10px;padding:8px 12px;margin-top:10px;font-size:.92rem}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--bad-soft);color:var(--bad)}
+
+/* ---------- readme ---------- */
+.readme-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:16px;align-items:start}
+.rm-list{display:flex;flex-direction:column;gap:6px}
+.rm-list label{display:flex;gap:10px;align-items:center;border:2px solid var(--hair);border-radius:8px;padding:7px 10px;background:var(--paper);cursor:pointer}
+.rm-list input{width:18px;height:18px;accent-color:var(--ink)}
+.walk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.walk li{display:flex;gap:10px;align-items:center;border:2px solid var(--hair);border-radius:8px;padding:7px 10px;background:var(--paper);transition:all .25s}
+.walk li .ico{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.8rem;border:2px solid var(--hair);flex:0 0 auto}
+.walk li.done{border-color:var(--ok)} .walk li.done .ico{background:var(--ok);border-color:var(--ok);color:#fff}
+.walk li.here{border-color:var(--ink);box-shadow:0 0 0 3px var(--kraft-soft)}
+.walk li.stuck{border-color:var(--bad);background:var(--bad-soft)} .walk li.stuck .ico{background:var(--bad);border-color:var(--bad);color:#fff}
+.bubble{font-style:italic;color:var(--bad);font-size:.9rem;margin-left:auto}
+.result{margin-top:10px;font-weight:700;min-height:1.6em}
+
+/* ---------- AI boundary ---------- */
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.note-card{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper)}
+.note-text{font-family:var(--mono);font-size:.95rem;background:var(--bg);border-radius:6px;padding:8px 10px;margin:6px 0 0}
+mark{background:var(--tape);color:var(--tape-ink);padding:0 2px;border-radius:2px}
+.sug{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper);min-height:180px}
+.sug dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.95rem}
+.sug dt{font-weight:700}
+.sug dd{margin:0}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-weight:700;font-size:.85rem}
+.badge.ok{background:var(--ok-soft);color:var(--ok)} .badge.warn{background:var(--tape);color:var(--tape-ink)} .badge.no{background:var(--bad-soft);color:var(--bad)}
+.boundary{display:grid;grid-template-columns:1fr 26px 1fr 1fr;gap:10px;align-items:center;margin-top:8px}
+.bbox{border:2px solid var(--rule);border-radius:10px;padding:10px;text-align:center;background:var(--paper);font-family:var(--mono);font-size:.86rem;font-weight:600}
+.bbox small{display:block;font-family:var(--body);font-weight:400;color:var(--ink-2);font-size:.8rem}
+.bwall{height:100%;min-height:80px;border-left:4px dashed var(--ink-2);margin:0 auto;width:0;position:relative}
+.bwall.breached{border-left-color:var(--bad)}
+.bbox.model{border-style:dashed}
+
+/* ---------- before/after ---------- */
+.ba{width:100%;border-collapse:collapse;font-size:.96rem}
+.ba th,.ba td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--hair);vertical-align:top}
+.ba th{font-family:var(--display);font-weight:800}
+.ba td.ans{transition:opacity .2s}
+.ba .now{color:var(--ok);font-weight:700}
+.ba .then{color:var(--ink-2)}
+.three textarea{width:100%;min-height:62px;border:2px solid var(--hair);border-radius:8px;padding:8px 10px;background:var(--paper);resize:vertical}
+.three label{display:block;font-weight:700;margin:10px 0 4px}
+
+/* ---------- quiz ---------- */
+.quiz{border:2px solid var(--rule);border-radius:12px;padding:16px 18px;margin-top:22px;background:var(--paper)}
+.quiz .q{font-weight:700;margin:0 0 10px}
+.quiz .q code{font-weight:400}
+.quiz .opts{display:flex;flex-direction:column;gap:8px}
+.quiz .opt{appearance:none;text-align:left;border:2px solid var(--hair);border-radius:8px;background:var(--paper);padding:9px 12px;cursor:pointer;display:flex;gap:10px}
+.quiz .opt b{flex:0 0 1.4em}
+.quiz .opt:hover{border-color:var(--rule)}
+.quiz .opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.quiz .opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.quiz .why{margin:10px 0 0;min-height:1.4em}
+.quiz-title{font-family:var(--display);font-weight:800;margin:0 0 6px;font-size:1.05rem}
+
+/* ---------- footer ---------- */
+.allcmds{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:16px 22px;margin-top:22px}
+.allcmds summary{cursor:pointer;font-family:var(--display);font-weight:800;font-size:1.15rem}
+footer.site{padding:10px 0 40px;color:var(--ink-2);font-size:.9rem}
+
+#stopFoot{border-top:0;padding-top:0;margin-top:16px}
+.lane{z-index:2}
+/* ---------- responsive ---------- */
+@media (max-width: 860px){
+  .hero-grid{grid-template-columns:1fr}
+  .points,.two,.toml,.readme-grid,.ai-grid,.compare,.map-side{grid-template-columns:1fr}
+  .explain{position:static}
+  .bins{grid-template-columns:repeat(2,1fr)}
+  .flips{grid-template-columns:1fr}
+  .git-lanes{grid-template-columns:repeat(2,1fr)}
+  .stop{padding:22px 18px 20px}
+  .track-meta .long{display:none}
+}
+@media (max-width: 520px){
+  .bins,.bins.three{grid-template-columns:1fr}
+  .stage-row{grid-template-columns:1fr 44px 1fr}
+  .screen{font-size:.55rem}
+  .boundary{grid-template-columns:1fr 18px 1fr;}
+  .boundary .model{grid-column:1 / -1}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body data-os="mac">
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="kicker">FDE Module 2, Class 2: Your Workbench</p>
+      <h1>Pack your code so it arrives working.</h1>
+      <p class="lede">Your Class 1 program works on your laptop. Today you turn it into a repository that a stranger can download, install and run, and get the same answer you got.</p>
+      <dl class="label-slip" aria-label="Shipping label">
+        <dt>From</dt><dd>your laptop</dd>
+        <dt>To</dt><dd>a colleague, next week, on a different machine</dd>
+        <dt>Contents</dt><dd>meridian-workbench</dd>
+      </dl>
+    </div>
+
+    <div class="stage" aria-label="Handoff demo">
+      <div class="stage-row">
+        <div class="laptop">
+          <div class="screen" aria-hidden="true"><span class="dim">$</span> python -m meridian_workbench<br>C-1002: OVERDUE (3 days)<br>C-1004: OVERDUE (2 days)<br>C-1005: OVERDUE (4 days)<br>C-1006: OVERDUE (2 days)<br><span class="ok">4 of 7 cases need attention</span></div>
+          <div class="base"></div>
+          <div class="laptop-name">Your laptop</div>
+        </div>
+        <div class="lane" aria-hidden="true">
+          <div class="mover" id="moverFile"><div class="file-ico">.py</div></div>
+          <div class="mover" id="moverParcel"><div class="parcel"></div></div>
+        </div>
+        <div class="laptop">
+          <div class="screen" id="farScreen" aria-live="polite"><span class="dim">waiting for something to arrive…</span></div>
+          <div class="base"></div>
+          <div class="laptop-name">Colleague’s laptop</div>
+        </div>
+      </div>
+      <div class="stage-actions">
+        <button class="btn" id="sendFile">Send just the file</button>
+        <button class="btn tape" id="sendRepo">Send the repository</button>
+      </div>
+      <p class="stage-note" id="stageNote">Try both. The code is identical. Only what travels with it changes.</p>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="os-bar">
+      <span>Show commands for</span>
+      <div class="seg" role="group" aria-label="Operating system">
+        <button type="button" data-os-pick="mac" aria-pressed="true">macOS or Linux</button>
+        <button type="button" data-os-pick="win" aria-pressed="false">Windows</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="track" aria-label="Class stops">
+  <div class="track-inner">
+    <div class="stops" id="stops"></div>
+    <div class="track-meta"><strong id="packedCount">0</strong> of 12 <span class="long">stops packed</span></div>
+  </div>
+</nav>
+
+<main class="wrap" id="main">
+
+<!-- ================= STOP 1 ================= -->
+<section class="stop" id="s1" data-title="The handoff" data-min="5">
+  <p class="stop-no">Stop 1 of 12, about 5 minutes</p>
+  <h2>The handoff</h2>
+  <p class="idea">The program is correct. It still fails on someone else’s laptop, because it needs things that only exist on yours.</p>
+
+  <div class="widget">
+    <p class="widget-title">Read the error like a pro</p>
+    <p class="widget-hint">This is a traceback: Python’s report of what went wrong and where. Tap the line that names the problem.</p>
+    <div class="tb" id="tb">
+      <button data-tb="0">Traceback (most recent call last):</button>
+      <button data-tb="1">  File "attention_report.py", line 115, in &lt;module&gt;</button>
+      <button data-tb="2">    main()</button>
+      <button data-tb="3">  File "attention_report.py", line 85, in main</button>
+      <button data-tb="4">    cases = load_cases(DATA_DIR / "cases.csv")</button>
+      <button data-tb="5">  File "attention_report.py", line 14, in load_cases</button>
+      <button data-tb="last">FileNotFoundError: [Errno 2] No such file or directory: 'data/cases.csv'</button>
+    </div>
+    <p class="feedback" id="tbMsg" aria-live="polite"></p>
+  </div>
+
+  <h3>Three words you’ll hear all class</h3>
+  <div class="flips">
+    <button class="flip" aria-pressed="false"><span class="front">Reproducible<small>Tap to flip</small></span><span class="back">Someone else follows written steps on their own machine and gets the same result as you.</span></button>
+    <button class="flip" aria-pressed="false"><span class="front">Toolchain<small>Tap to flip</small></span><span class="back">The tools you use one after another to get code from your laptop to something others can run: editor, terminal, private Python, installer, checker, Git.</span></button>
+    <button class="flip" aria-pressed="false"><span class="front">Dependency<small>Tap to flip</small></span><span class="back">Anything your program needs that it didn’t create itself: packages, a Python version, data files.</span></button>
+  </div>
+
+  <h3>Why it failed, twice over</h3>
+  <div class="points">
+    <ul>
+      <li><b>The data never travelled.</b> The file needs <code>data/cases.csv</code>, and your colleague doesn’t have it. The repository fixes this at stop 9.</li>
+      <li><b>The path is relative.</b> <code>data/cases.csv</code> means “inside the folder I’m standing in”, so it only works from one folder. Stop 7 fixes this.</li>
+      <li><b>Read the last line first.</b> Everything above it is the trail; the last line is the answer.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>Posting someone a recipe card but not the ingredients. The recipe is perfect. They still can’t cook.</aside>
+  </div>
+</section>
+
+<!-- ================= STOP 2 ================= -->
+<section class="stop" id="s2" data-title="A home for the code" data-min="7" hidden>
+  <p class="stop-no">Stop 2 of 12, about 7 minutes</p>
+  <h2>A home for the code</h2>
+  <p class="idea">One folder for each kind of file, so anyone finds anything in seconds.</p>
+
+  <div class="widget" data-sorter>
+    <p class="widget-title">Tidy the drawer</p>
+    <p class="widget-hint">Tap a file, then tap the folder it belongs in.</p>
+    <div class="pile">
+      <button class="chip" data-item data-bin="data" data-why="Raw input data lives in data/.">cases.csv</button>
+      <button class="chip" data-item data-bin="src" data-why="Code goes in the package: src/meridian_workbench/.">rules.py</button>
+      <button class="chip" data-item data-bin="outputs" data-why="Generated files go in outputs/. You can always rebuild them, so they’re never committed.">attention_report.json</button>
+      <button class="chip" data-item data-bin="config" data-why="Settings that change between runs live in config/.">settings.toml</button>
+      <button class="chip" data-item data-bin="tests" data-why="Checks that prove the rules work live in tests/.">check_rules.py</button>
+      <button class="chip" data-item data-bin="fixtures" data-why="Recorded model responses live in fixtures/. They let us practise the AI part with no key.">recorded_responses.json</button>
+      <button class="chip" data-item data-bin="data" data-why="Notes are raw input too, so data/.">notes.json</button>
+    </div>
+    <div class="bins">
+      <button class="bin" data-bin="src"><span class="bin-name">src/meridian_workbench/</span><span class="bin-job">the program, as a package</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="tests"><span class="bin-name">tests/</span><span class="bin-job">proof the rules work</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="data"><span class="bin-name">data/</span><span class="bin-job">raw input files</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="config"><span class="bin-name">config/</span><span class="bin-job">settings that change</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="fixtures"><span class="bin-name">fixtures/</span><span class="bin-job">recorded model answers</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="outputs"><span class="bin-name">outputs/</span><span class="bin-job">generated, never committed</span><span class="bin-items"></span></button>
+    </div>
+    <p class="msg" aria-live="polite"></p>
+    <button class="link-btn" data-sort-all>Sort them all for me</button>
+  </div>
+
+  <h3>Three words for how Python finds code</h3>
+  <div class="flips">
+    <button class="flip" aria-pressed="false"><span class="front">Package<small>Tap to flip</small></span><span class="back">A folder of Python files you can import from, like a recipe binder. Ours is <code>meridian_workbench</code>, marked by an <code>__init__.py</code> file.</span></button>
+    <button class="flip" aria-pressed="false"><span class="front">Module<small>Tap to flip</small></span><span class="back">One Python file inside a package, like one recipe card in the binder.</span></button>
+    <button class="flip" aria-pressed="false"><span class="front">Import<small>Tap to flip</small></span><span class="back">One file saying “I want to use something from that other file”, like writing “see the pancake card” in a recipe.</span></button>
+  </div>
+
+  <h3>What to remember</h3>
+  <div class="points">
+    <ul>
+      <li>Underscore, not hyphen: <code>meridian_workbench</code>. Python can’t import a name with a hyphen.</li>
+      <li><code>__init__.py</code> (two underscores each side) turns the folder into a proper package.</li>
+      <li>The extra <code>src/</code> layer means a broken install fails on <em>your</em> laptop first, not your colleague’s.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>Pans, spices and dirty plates in one kitchen drawer work for one cook. The moment a second person helps, nobody can find anything.</aside>
+  </div>
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Creating the project inside another project folder or Git repository. Check the path before you click Open.</li>
+    <li>Typing <code>_init_.py</code> with one underscore. Check the name in the Explorer.</li>
+    <li>Dropping the data files in the root instead of <code>data/</code>.</li>
+  </ul></details>
+</section>
+
+<!-- ================= STOP 3 ================= -->
+<section class="stop" id="s3" data-title="Your own Python" data-min="10" hidden>
+  <p class="stop-no">Stop 3 of 12, about 10 minutes</p>
+  <h2>Your own Python</h2>
+  <p class="idea">A virtual environment is a private shelf of packages, just for this project.</p>
+
+  <div class="widget">
+    <p class="widget-title">What does activation actually do?</p>
+    <p class="widget-hint">When you type <code>python</code>, the terminal searches a list of folders called PATH, left to right. The first folder with a Python wins.</p>
+    <pre class="term" id="venvTerm" aria-live="polite"></pre>
+    <div class="pathrow" id="pathRow"></div>
+    <div class="btnrow">
+      <button class="btn primary" id="venvToggle" aria-pressed="false">Activate .venv</button>
+    </div>
+    <p class="feedback" id="venvMsg" aria-live="polite">Not active. <code>python</code> means the shared Python every project uses.</p>
+  </div>
+
+  <p class="cmds-label">The commands, in order</p>
+  <pre class="cmd mac-only"><span class="c"># 1. check you have 3.11 or newer</span>
+python3 --version
+<span class="c"># 2. create the private environment</span>
+python3 -m venv .venv
+<span class="c"># 3. activate it (every new terminal)</span>
+source .venv/bin/activate
+<span class="c"># 4. prove it, don’t assume it</span>
+python -c "import sys; print(sys.prefix)"</pre>
+  <pre class="cmd win-only"><span class="c"># 1. check you have 3.11 or newer</span>
+py --version
+<span class="c"># 2. create the private environment</span>
+py -m venv .venv
+<span class="c"># 3. activate it (every new terminal)</span>
+.venv\Scripts\Activate.ps1
+<span class="c"># 4. prove it, don’t assume it</span>
+python -c "import sys; print(sys.prefix)"</pre>
+
+  <div class="points">
+    <ul>
+      <li>Activation adds nothing. It only changes which <code>python</code> answers first.</li>
+      <li>Every new terminal starts fresh, so activate once per terminal. <code>deactivate</code> leaves.</li>
+      <li>Never edit or share <code>.venv</code>. It’s rebuildable, and its paths only exist on your machine.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A shared kitchen cupboard in a flat: two kinds of flour, someone’s old spice spoils your dish. The venv gives each project its own small cupboard.</aside>
+  </div>
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Windows says “running scripts is disabled”: run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> once, then activate again.</li>
+    <li>Forgetting to activate, so the next install lands in the shared Python.</li>
+    <li>Python 3.9 or 3.10: a tool we need later won’t import. Install 3.11 or newer.</li>
+  </ul></details>
+</section>
+
+<!-- ================= STOP 4 ================= -->
+<section class="stop" id="s4" data-title="Write down what it needs" data-min="15" hidden>
+  <p class="stop-no">Stop 4 of 12, about 15 minutes</p>
+  <h2>Write down what it needs</h2>
+  <p class="idea">pip installs packages. A pin says exactly which version. <code>pyproject.toml</code> writes it all down once.</p>
+
+  <div class="widget">
+    <p class="widget-title">Why pin versions?</p>
+    <p class="widget-hint">Drag the slider: when does your colleague run the install?</p>
+    <div class="range-row">
+      <input type="range" id="pinRange" min="0" max="2" step="1" value="0" aria-label="Install date">
+      <strong id="pinWhen">Today</strong>
+    </div>
+    <div class="two">
+      <div class="basket">
+        <h4>Pinned</h4>
+        <div class="line"><span>python-dotenv==1.0.1</span><span>1.0.1</span></div>
+        <div class="line"><span>ruff==0.6.9</span><span>0.6.9</span></div>
+        <p class="verdict v-ok" id="pinOk">Same as yours.</p>
+      </div>
+      <div class="basket">
+        <h4>Unpinned</h4>
+        <div class="line"><span>python-dotenv</span><span id="un1">1.0.1</span></div>
+        <div class="line"><span>ruff</span><span id="un2">0.6.9</span></div>
+        <p class="verdict" id="pinWarn">Same as yours, today.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget">
+    <p class="widget-title">Read pyproject.toml, one block at a time</p>
+    <p class="widget-hint">It’s the project’s ID card. Tap a block.</p>
+    <div class="toml">
+      <div class="toml-code" id="tomlCode">
+<button data-k="build" aria-pressed="false"><span class="k">[build-system]</span>
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"</button>
+<button data-k="project" aria-pressed="false"><span class="k">[project]</span>
+name = "meridian-workbench"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["python-dotenv==1.0.1"]</button>
+<button data-k="dev" aria-pressed="false"><span class="k">[project.optional-dependencies]</span>
+dev = ["ruff==0.6.9"]</button>
+<button data-k="find" aria-pressed="false"><span class="k">[tool.setuptools.packages.find]</span>
+where = ["src"]</button>
+<button data-k="ruff" aria-pressed="false"><span class="k">[tool.ruff]</span>
+line-length = 100
+<span class="k">[tool.ruff.lint]</span>
+select = ["E", "F", "I"]</button>
+      </div>
+      <div class="explain" id="tomlExplain" aria-live="polite">
+        <h4>Pick a block</h4>
+        <p>Each block answers one question: what is this, which Python, which packages, where is the code, how should it be checked.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget">
+    <p class="widget-title">Decode the one line in requirements.txt</p>
+    <div class="decoder" id="decoder">
+      <button data-d="e" aria-pressed="false">-e</button>
+      <button data-d="dot" aria-pressed="false">.</button>
+      <button data-d="dev" aria-pressed="false">[dev]</button>
+    </div>
+    <p id="decodeMsg" aria-live="polite">Tap each piece.</p>
+    <pre class="cmd">python -m pip install -r requirements.txt</pre>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li>Always <code>python -m pip</code>: it uses the pip of the Python that’s running, so it can’t pick the wrong one.</li>
+      <li>Two equals signs: <code>==1.0.1</code>. One equals sign is a typo pip will reject.</li>
+      <li>Editable install: edits to your code work immediately. Only a change to <code>pyproject.toml</code> needs a reinstall.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A shopping list that says “flour” gets you whatever the shop has that day. A list that says “this brand, this size” gets everyone the same bag.</aside>
+  </div>
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>On macOS with zsh, typing <code>pip install -e .[dev]</code> gives “no matches found”. Quote it: <code>".[dev]"</code>.</li>
+    <li>Don’t write <code>pip freeze &gt; requirements.txt</code> here. It records a folder path that only exists on your laptop.</li>
+    <li>A typo in <code>pyproject.toml</code> (a missing quote or bracket) breaks the install. Read the last line of the error.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="b">
+    <p class="quiz-title">Quick check 1 of 6</p>
+    <p class="q">You forgot to activate .venv, then ran <code>python -m pip install python-dotenv==1.0.1</code> in the project folder. Where did the package go?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="A folder called .venv does nothing until it’s activated."><b>A</b><span>Into .venv anyway, because the folder exists in the project</span></button>
+      <button class="opt" data-o="b" data-why="Right. pip installs into whichever Python runs it. Without activation, that’s the shared one, and .venv gets nothing."><b>B</b><span>Into your computer’s global Python, not into .venv</span></button>
+      <button class="opt" data-o="c" data-why="pip happily runs without activation. That’s exactly the danger."><b>C</b><span>Nowhere. pip refuses to run without activation</span></button>
+      <button class="opt" data-o="d" data-why="pip never installs into your code folders."><b>D</b><span>Into the src folder next to the code</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 5 ================= -->
+<section class="stop" id="s5" data-title="One file, one job" data-min="13" hidden>
+  <p class="stop-no">Stop 5 of 12, about 13 minutes</p>
+  <h2>One file, one job</h2>
+  <p class="idea">We cut the one big script into small modules. Arrows between them point one way only.</p>
+
+  <div class="widget">
+    <p class="widget-title">The module map</p>
+    <p class="widget-hint">Tap a module to see its one job. An arrow means “imports from”.</p>
+    <div class="map-stack">
+      <div class="map" id="map">
+        <svg viewBox="0 0 520 300" role="group" aria-label="Module map: __main__ imports pipeline; pipeline imports loaders and results; results imports rules">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrowhead-bad" d="M0,0 L10,5 L0,10 z"/></marker>
+          </defs>
+          <path class="edge" d="M110,150 L137,150" marker-end="url(#ah)"/>
+          <path class="edge" d="M250,136 C272,100 266,63 287,63" marker-end="url(#ah)"/>
+          <path class="edge" d="M250,164 C272,200 266,233 287,233" marker-end="url(#ah)"/>
+          <path class="edge" d="M398,233 L417,233" marker-end="url(#ah)"/>
+          <path class="edge-bad" d="M466,258 C466,292 344,292 344,260" marker-end="url(#ahb)"/>
+          <g class="node" tabindex="0" role="button" aria-label="__main__ module" data-n="main"><rect x="10" y="126" width="100" height="48"/><text x="60" y="155" text-anchor="middle">__main__</text></g>
+          <g class="node" tabindex="0" role="button" aria-label="pipeline module" data-n="pipeline"><rect x="140" y="126" width="110" height="48"/><text x="195" y="155" text-anchor="middle">pipeline</text></g>
+          <g class="node" tabindex="0" role="button" aria-label="loaders module" data-n="loaders"><rect x="290" y="40" width="108" height="46"/><text x="344" y="68" text-anchor="middle">loaders</text></g>
+          <g class="node" tabindex="0" role="button" aria-label="results module" data-n="results"><rect x="290" y="210" width="108" height="46"/><text x="344" y="238" text-anchor="middle">results</text></g>
+          <g class="node" tabindex="0" role="button" aria-label="rules module" data-n="rules"><rect x="420" y="210" width="92" height="46"/><text x="466" y="238" text-anchor="middle">rules</text></g>
+        </svg>
+      </div>
+      <div class="map-side">
+        <div class="node-info" id="nodeInfo" aria-live="polite"><h4>Pick a module</h4><p>Each file has one job and a name that says what it is.</p></div>
+        <div>
+          <button class="btn small" id="cycleBtn" aria-pressed="false">Make rules import results</button>
+          <p class="feedback" id="cycleMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget">
+    <p class="widget-title">Was the move safe?</p>
+    <p class="widget-hint">Refactoring changes how code is organised, never what it does. So we compare the output before and after.</p>
+    <div class="compare">
+      <div><p class="term-title">Before: python attention_report.py</p><pre class="term">C-1002: OVERDUE_NOT_CLOSED (3 days)
+C-1004: OVERDUE_NOT_CLOSED (2 days)
+C-1005: OVERDUE_NOT_CLOSED (4 days)
+C-1006: OVERDUE_NOT_CLOSED (2 days)
+4 of 7 cases need attention</pre></div>
+      <div><p class="term-title">After: python -m meridian_workbench</p><pre class="term" id="afterOut"><span class="p">press “Run it”</span></pre></div>
+    </div>
+    <div class="btnrow"><button class="btn primary" id="runAfter">Run it</button></div>
+    <p class="feedback" id="sameMsg" aria-live="polite"></p>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><code>python -m meridian_workbench</code> means “find the installed package by name and run its <code>__main__.py</code>”.</li>
+      <li>Imports name the package: <code>from meridian_workbench.rules import needs_attention</code>. The editable install makes that work anywhere.</li>
+      <li>Move first, run, then change. Never move and change in the same step.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A kitchen brigade. One person chops, one cooks, one plates. Each can be swapped without retraining the others.</aside>
+  </div>
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Forgetting to add the import after moving a function: <code>NameError</code> or <code>ImportError</code>.</li>
+    <li>Two modules importing each other: a circular import. Arrows point one way.</li>
+    <li>Running from a different folder fails for now (the paths are relative). Stop 7 fixes it.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="c">
+    <p class="quiz-title">Quick check 2 of 6</p>
+    <p class="q">The Workbench is split into modules and installed with <code>pip install -e .</code> Which one is true?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="Editable means edits show up straight away. No reinstall."><b>A</b><span>After every edit to rules.py you must run pip install again</span></button>
+      <button class="opt" data-o="b" data-why="rules.py has one job, the decision. Reading files is loaders.py’s job."><b>B</b><span>rules.py should import loaders so it can read the cases itself</span></button>
+      <button class="opt" data-o="c" data-why="Right. The editable install points Python at src/, so the import works wherever you are."><b>C</b><span>While .venv is active, import meridian_workbench works from any folder</span></button>
+      <button class="opt" data-o="d" data-why="Mixing file reading into the rules makes them harder to test. One job per file."><b>D</b><span>rules.py should also contain the code that reads the case files</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 6 ================= -->
+<section class="stop" id="s6" data-title="Editor and proofreader" data-min="7" hidden>
+  <p class="stop-no">Stop 6 of 12, about 7 minutes</p>
+  <h2>Editor and proofreader</h2>
+  <p class="idea">Tell VS Code which Python to use. Then let ruff catch the small mistakes you stopped seeing.</p>
+
+  <div class="widget">
+    <p class="widget-title">Pick the interpreter</p>
+    <p class="widget-hint">The interpreter is the program that reads and runs your code. Choose one and watch the editor.</p>
+    <div class="two">
+      <div class="interp-list" id="interpList">
+        <button aria-pressed="true" data-i="global">Python 3.12 (global)<small class="mac-only">/usr/bin/python3</small><small class="win-only">C:\Users\you\AppData\Local\Programs\Python\Python312\python.exe</small></button>
+        <button aria-pressed="false" data-i="venv">.venv (Recommended)<small class="mac-only">./.venv/bin/python</small><small class="win-only">.\.venv\Scripts\python.exe</small></button>
+      </div>
+      <div class="editor">
+        <div class="editor-bar"><span>config.py</span><span id="statusBar">Python 3.12</span></div>
+        <div class="editor-code">import os
+import tomllib
+
+from <span id="dotenvSquig" class="squig">dotenv</span> import load_dotenv</div>
+        <div class="editor-tip" id="editorTip">Import "dotenv" could not be resolved</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget">
+    <p class="widget-title">Run the proofreader</p>
+    <p class="widget-hint">This is the top of pipeline.py after stop 5. Run the commands in order.</p>
+    <div class="editor">
+      <div class="editor-bar"><span>src/meridian_workbench/pipeline.py</span><span></span></div>
+      <div class="editor-code code-lines" id="ruffCode"><div>"""Run the Meridian attention report from start to finish."""</div><div>&nbsp;</div><div id="csvLine">import csv</div><div>import json</div><div>from datetime import date</div><div>from pathlib import Path</div></div>
+    </div>
+    <div class="btnrow">
+      <button class="btn small" data-ruff="check">ruff check .</button>
+      <button class="btn small" data-ruff="fix">ruff check --fix .</button>
+      <button class="btn small" data-ruff="format">ruff format .</button>
+      <button class="btn small" data-ruff="again">ruff check .</button>
+    </div>
+    <pre class="term" id="ruffOut" aria-live="polite"><span class="p">$ waiting for a command</span></pre>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li>A linter (<code>ruff check</code>) finds likely mistakes. A formatter (<code>ruff format</code>) only tidies spacing.</li>
+      <li><code>--fix</code> repairs what’s safe to repair. Always read what it changed.</li>
+      <li>ruff reads its rules from the <code>[tool.ruff]</code> blocks in <code>pyproject.toml</code>.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A proofreader with a red pencil. They don’t write your essay; they catch the typo you stopped seeing.</aside>
+  </div>
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Picking the global Python: imports get red underlines even though the terminal runs fine.</li>
+    <li><code>ruff: command not found</code> means the venv isn’t active.</li>
+    <li>If .venv isn’t in the list: “Enter interpreter path”, then find <code>.venv/bin/python</code> (Windows: <code>.venv\Scripts\python.exe</code>).</li>
+  </ul></details>
+</section>
+
+<!-- ================= STOP 7 ================= -->
+<section class="stop" id="s7" data-title="Settings and secrets" data-min="13" hidden>
+  <p class="stop-no">Stop 7 of 12, about 13 minutes</p>
+  <h2>Settings and secrets</h2>
+  <p class="idea">Everything a program knows goes in one of three bins. Each bin lives somewhere different.</p>
+
+  <div class="widget" data-sorter>
+    <p class="widget-title">Sort into the three bins</p>
+    <p class="widget-hint">Tap a thing the program knows, then tap its bin.</p>
+    <div class="pile">
+      <button class="chip" data-item data-bin="rules" data-why="A business rule. Changing it changes what “needs attention” means, so it needs review and a test. It stays in rules.py.">closed statuses</button>
+      <button class="chip" data-item data-bin="settings" data-why="Changes from run to run and isn’t secret, so it goes in config/settings.toml.">batch date</button>
+      <button class="chip" data-item data-bin="secrets" data-why="It gives access, and anyone holding it can spend your money. Environment only. Never code, never Git.">API key</button>
+      <button class="chip" data-item data-bin="settings" data-why="Differs between machines and isn’t secret: settings.toml.">data folder</button>
+      <button class="chip" data-item data-bin="secrets" data-why="It gives access. Never in a file that gets committed.">database password</button>
+      <button class="chip" data-item data-bin="settings" data-why="A switch that changes between runs (recorded or live): settings.toml.">AI mode</button>
+    </div>
+    <div class="bins three">
+      <button class="bin rules" data-bin="rules"><span class="bin-big">Rules</span><span class="bin-job">business logic. Lives in code.</span><span class="bin-items"></span></button>
+      <button class="bin settings" data-bin="settings"><span class="bin-big">Settings</span><span class="bin-job">changes between runs. Lives in a file.</span><span class="bin-items"></span></button>
+      <button class="bin secrets" data-bin="secrets"><span class="bin-big">Secrets</span><span class="bin-job">gives access. Lives in the environment.</span><span class="bin-items"></span></button>
+    </div>
+    <p class="msg" aria-live="polite"></p>
+    <button class="link-btn" data-sort-all>Sort them all for me</button>
+  </div>
+
+  <div class="widget">
+    <p class="widget-title">Who wins?</p>
+    <p class="widget-hint">Three places can set the batch date. Switch layers on and off and watch the report change, with no code edited.</p>
+    <div class="layers">
+      <div class="layer" id="lyTerm">
+        <label class="toggle"><input type="checkbox" id="lyTermOn"> Terminal variable</label>
+        <select id="lyTermDate" aria-label="Terminal variable date">
+          <option>2025-03-11</option><option selected>2025-03-12</option><option>2025-03-14</option>
+        </select>
+        <code class="mac-only" id="lyTermCmdMac">MERIDIAN_BATCH_DATE=2025-03-12 python -m meridian_workbench</code>
+        <code class="win-only" id="lyTermCmdWin">$env:MERIDIAN_BATCH_DATE = "2025-03-12"</code>
+        <span class="won">This one wins</span>
+      </div>
+      <div class="layer" id="lyEnv">
+        <label class="toggle"><input type="checkbox" id="lyEnvOn"> .env file</label>
+        <code>MERIDIAN_BATCH_DATE=2025-03-13</code>
+        <span class="won">This one wins</span>
+      </div>
+      <div class="layer active" id="lyToml">
+        <span class="lname">config/settings.toml</span>
+        <code>batch_date = "2025-03-10"</code>
+        <span class="won">This one wins</span>
+      </div>
+    </div>
+    <p class="term-title" style="margin-top:14px">python -m meridian_workbench</p>
+    <pre class="term" id="lyOut" aria-live="polite"></pre>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li>An environment variable is a value your terminal holds in memory. It’s in no file, so Git can’t see it.</li>
+      <li><code>.env</code> is a local file that loads values into the environment. It’s safe only because <code>.gitignore</code> keeps it out of Git.</li>
+      <li><code>.env.example</code> is committed: it shows which variables exist, with no real values.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>Settings are the thermostat dial: anyone may turn it. Rules are the building’s fire code. Secrets are the keys on your own keyring: never pinned to the notice board.</aside>
+  </div>
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Opening settings.toml with <code>"r"</code> instead of <code>"rb"</code>: <code>TypeError</code>.</li>
+    <li>Writing the date as <code>13-03-2025</code>. It’s year-month-day: <code>2025-03-13</code>.</li>
+    <li>In PowerShell, <code>$env:</code> stays set until you remove it. A “stuck” date is always this.</li>
+    <li>Adding a secret to <code>.gitignore</code> after it was committed does nothing. It’s already in history. Replace the key.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="c">
+    <p class="quiz-title">Quick check 3 of 6</p>
+    <p class="q">Which ONE of these is safe to commit to a public GitHub repository?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="The batch date and folders are fine. The database password is a secret, and it ruins the whole file."><b>A</b><span>config/settings.toml containing the batch date, folder names and the database password</span></button>
+      <button class="opt" data-o="b" data-why="A real key in Git travels with every clone and stays in history. Rotate it if this happens."><b>B</b><span>.env containing a real API key</span></button>
+      <button class="opt" data-o="c" data-why="Right. A placeholder holds no real value, and it tells the next engineer which variables to set."><b>C</b><span>.env.example with an empty placeholder for the key</span></button>
+      <button class="opt" data-o="d" data-why="“Private” isn’t a safety plan. Access changes, and history stays forever."><b>D</b><span>rules.py with the key typed in, because the repository is private</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 8 ================= -->
+<section class="stop" id="s8" data-title="Proof" data-min="5" hidden>
+  <p class="stop-no">Stop 8 of 12, about 5 minutes</p>
+  <h2>Proof</h2>
+  <p class="idea">A test is a small program that checks another program gives the right answer. A check that has never failed hasn’t proved it can.</p>
+
+  <div class="widget">
+    <p class="widget-title">Break the rule on purpose</p>
+    <p class="widget-hint">In rules.py, <code>CLOSED_STATUSES = {"DELIVERED", "CANCELLED"}</code>. Switch CANCELLED off and watch both programs.</p>
+    <button class="switch" role="switch" aria-checked="true" id="cancelSwitch"><span class="track-s"></span><span id="cancelLbl">CANCELLED counts as closed</span></button>
+    <div class="two" style="margin-top:14px">
+      <div><p class="term-title">python tests/check_rules.py</p><pre class="term" id="testOut" aria-live="polite"></pre></div>
+      <div><p class="term-title">python -m meridian_workbench</p><pre class="term" id="reportOut" aria-live="polite"></pre></div>
+    </div>
+    <p class="feedback" id="testMsg" aria-live="polite"></p>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><code>assert</code> means “this must be true, or stop here and show me the line”.</li>
+      <li>Tests can invent cases your real data may never contain, like a cancelled order.</li>
+      <li><code>assert</code> belongs in tests. The program itself raises real errors, because Python can be told to skip asserts.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A smoke alarm you’ve never tested. You only trust it after you’ve seen it go off.</aside>
+  </div>
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Forgetting to put CANCELLED back after the demo.</li>
+    <li><code>ModuleNotFoundError</code> when running the test: the venv isn’t active.</li>
+    <li>Writing <code>=</code> instead of <code>==</code> inside an assert: <code>SyntaxError</code>.</li>
+  </ul></details>
+</section>
+
+<!-- ================= STOP 9 ================= -->
+<section class="stop" id="s9" data-title="Git" data-min="18" hidden>
+  <p class="stop-no">Stop 9 of 12, about 18 minutes</p>
+  <h2>Git</h2>
+  <p class="idea">Git remembers every saved version of the project. GitHub is the place others get it from. The tool and the place are different things.</p>
+
+  <div class="widget">
+    <p class="widget-title">Move a change through the four places</p>
+    <p class="widget-hint">Press the commands in any order. Watch <code>git status</code> answer, exactly as it would in a real terminal.</p>
+    <div class="git-lanes">
+      <div class="git-lane"><h4>Working folder</h4><span class="sub">files you see and edit</span><div id="gWork"></div></div>
+      <div class="git-lane"><h4>Staging</h4><span class="sub">chosen for the next snapshot</span><div id="gStage"></div></div>
+      <div class="git-lane"><h4>Local history</h4><span class="sub">commits on your laptop</span><div id="gLocal"></div></div>
+      <div class="git-lane"><h4>GitHub</h4><span class="sub">the copy online</span><div id="gRemote"></div></div>
+    </div>
+    <div class="git-cmds">
+      <button class="btn small" data-g="edit">edit settings.toml</button>
+      <button class="btn small" data-g="add">git add .</button>
+      <button class="btn small" data-g="commit">git commit -m "…"</button>
+      <button class="btn small" data-g="push">git push</button>
+      <button class="btn small" data-g="pull">git pull (on partner’s laptop)</button>
+      <button class="link-btn" data-g="reset">Start over</button>
+    </div>
+    <label class="toggle" style="font-weight:400"><input type="checkbox" id="gNoIgnore"> What if there were no .gitignore?</label>
+    <p class="term-title" style="margin-top:12px">git status</p>
+    <pre class="term" id="gStatus" aria-live="polite"></pre>
+    <div class="partner"><b>Partner’s clone:</b> <span id="gPartner"></span></div>
+  </div>
+
+  <p class="cmds-label">The first time, in your project folder</p>
+  <pre class="cmd">git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git init -b main
+git status
+git check-ignore -v .env        <span class="c"># proves .env is ignored</span>
+git add .
+git status                      <span class="c"># read the list before you commit</span>
+git commit -m "Create reproducible Meridian Workbench V0"
+git remote add origin https://github.com/&lt;you&gt;/meridian-workbench.git
+git push -u origin main</pre>
+
+  <div class="points">
+    <ul>
+      <li>Clone once, pull often, commit then push.</li>
+      <li>Ask <code>git status</code> before and after everything. Read the staged list before every commit.</li>
+      <li>A good commit message says what changed and why, for the next person. Not “stuff” or “final2”.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A group photo. You choose who stands in the frame (add), take the photo with a caption (commit), then post it to the shared album (push). Teammates download the album (pull).</aside>
+  </div>
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Git asks for a password and rejects yours: GitHub no longer accepts account passwords in the terminal. Use the sign-in method your instructor set up.</li>
+    <li>Creating the GitHub repo with a README, then a “rejected” first push. Create it empty.</li>
+    <li>Forgetting <code>-m</code> and landing in an editor. In vim: Esc, type <code>:q!</code>, Enter.</li>
+    <li><code>unknown switch 'b'</code>: Git is older than 2.28. Run <code>git init</code>, then <code>git branch -M main</code>.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="c">
+    <p class="quiz-title">Quick check 4 of 6</p>
+    <p class="q">After a commit, git status says: <code>Your branch is ahead of 'origin/main' by 1 commit.</code> What does it mean, and what’s next?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="That would be “behind”. Ahead means you have something GitHub doesn’t."><b>A</b><span>GitHub has a commit you don’t have, so run git pull</span></button>
+      <button class="opt" data-o="b" data-why="Unsaved work would be listed under changes. This commit is saved, just not sent."><b>B</b><span>Your changes aren’t saved yet, so run git add</span></button>
+      <button class="opt" data-o="c" data-why="Right. Commit saves locally; push sends it to GitHub."><b>C</b><span>You have a commit on your computer that GitHub doesn’t have yet, so run git push</span></button>
+      <button class="opt" data-o="d" data-why="Nothing is broken. This is the normal state between commit and push."><b>D</b><span>The repository is damaged and must be cloned again</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 10 ================= -->
+<section class="stop" id="s10" data-title="The stranger test" data-min="12" hidden>
+  <p class="stop-no">Stop 10 of 12, about 12 minutes</p>
+  <h2>The stranger test</h2>
+  <p class="idea">A README is the front page of your repository. If a stranger can follow it to a working run, it’s done.</p>
+
+  <div class="widget">
+    <p class="widget-title">Build a README, then hand it to a stranger</p>
+    <p class="widget-hint">Tick the sections your README has. Then run the test and see where your partner gets stuck.</p>
+    <div class="readme-grid">
+      <div>
+        <div class="rm-list" id="rmList">
+          <label><input type="checkbox" data-rm="what" checked> What this is</label>
+          <label><input type="checkbox" data-rm="req"> Requirements (Python 3.11+, Git)</label>
+          <label><input type="checkbox" data-rm="setmac" checked> Set up: macOS or Linux</label>
+          <label><input type="checkbox" data-rm="setwin"> Set up: Windows</label>
+          <label><input type="checkbox" data-rm="run" checked> Run, with expected output</label>
+          <label><input type="checkbox" data-rm="check"> Check (tests and ruff)</label>
+          <label><input type="checkbox" data-rm="settings"> Settings and overrides</label>
+          <label><input type="checkbox" data-rm="layout"> Project layout</label>
+        </div>
+        <p style="margin:12px 0 6px;font-weight:700">Your partner uses</p>
+        <div class="seg" role="group" aria-label="Partner’s operating system">
+          <button type="button" data-partner="mac" aria-pressed="false">macOS</button>
+          <button type="button" data-partner="win" aria-pressed="true">Windows</button>
+        </div>
+        <div class="btnrow"><button class="btn primary" id="rmRun">Run the stranger test</button></div>
+      </div>
+      <div>
+        <ol class="walk" id="rmWalk"></ol>
+        <p class="result" id="rmResult" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li>Write commands exactly as you’d type them. “Install the dependencies” isn’t an instruction; <code>python -m pip install -r requirements.txt</code> is.</li>
+      <li>Show the expected output, so the stranger knows it worked.</li>
+      <li>During the test the author stays silent and writes down every hesitation. Each one is a missing line.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>Giving directions to your house. You know the turn after the petrol station, so you forget to mention it. Only a visitor finds the gap.</aside>
+  </div>
+
+  <div class="quiz" data-answer="a">
+    <p class="quiz-title">Quick check 5 of 6</p>
+    <p class="q">A partner clones your repo, sets it up and runs <code>python -m meridian_workbench</code>. They see <code>ModuleNotFoundError: No module named 'meridian_workbench'</code>. Most likely cause?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="Right. The project is only importable inside the Python that got the editable install. Wrong Python, no package."><b>A</b><span>Their .venv wasn’t activated, so a different Python ran the command</span></button>
+      <button class="opt" data-o="b" data-why="A missing data file gives FileNotFoundError, not this."><b>B</b><span>data/cases.csv is missing from the repository</span></button>
+      <button class="opt" data-o="c" data-why=".env is optional. Without it, every value falls back to settings.toml and nothing errors."><b>C</b><span>They didn’t create a .env file from .env.example</span></button>
+      <button class="opt" data-o="d" data-why="We need 3.11 or newer. A newer Python doesn’t cause “module not found”."><b>D</b><span>Their Python version is too new</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 11 ================= -->
+<section class="stop" id="s11" data-title="The AI door" data-min="8" hidden>
+  <p class="stop-no">Stop 11 of 12, about 8 minutes</p>
+  <h2>The AI door</h2>
+  <p class="idea">Next class a model reads the messy notes. Today we build the one door it will come through, and keep the rules on the other side.</p>
+
+  <div class="widget">
+    <p class="widget-title">Ask the door about a note</p>
+    <p class="widget-hint">Pick a note and a mode. In recorded mode, <code>ai_client.py</code> reads saved answers from <code>fixtures/</code>: no key, no internet.</p>
+    <div class="btnrow" role="group" aria-label="Notes">
+      <button class="btn small" data-note="N-01" aria-pressed="true">N-01</button>
+      <button class="btn small" data-note="N-02" aria-pressed="false">N-02</button>
+      <button class="btn small" data-note="N-03" aria-pressed="false">N-03</button>
+      <span style="flex:1"></span>
+      <div class="seg" role="group" aria-label="AI mode">
+        <button type="button" data-mode="recorded" aria-pressed="true">recorded</button>
+        <button type="button" data-mode="live" aria-pressed="false">live</button>
+      </div>
+    </div>
+    <div class="ai-grid">
+      <div class="note-card"><b id="noteHead">Note N-01, case C-1002</b><div class="note-text" id="noteText"></div></div>
+      <div class="sug" id="sug" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="widget">
+    <p class="widget-title">Guard the boundary</p>
+    <p class="widget-hint">Python decides who needs attention. The model only suggests what a note means. A check makes sure the rules never import the model.</p>
+    <div class="boundary">
+      <div class="bbox">rules.py<small>Python decides</small></div>
+      <div class="bwall" id="bWall" aria-hidden="true"></div>
+      <div class="bbox">ai_client.py<small>the only door to a model</small></div>
+      <div class="bbox model">recorded_responses.json<small>today; a live model in Class 3</small></div>
+    </div>
+    <button class="switch risky" role="switch" aria-checked="false" id="wireSwitch" style="margin-top:14px"><span class="track-s"></span><span>Wire the model into rules.py</span></button>
+    <p class="term-title" style="margin-top:12px">python tests/check_ai_boundary.py</p>
+    <pre class="term" id="bOut" aria-live="polite"></pre>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li>One file, <code>ai_client.py</code>, owns all model access. Swap the provider later without touching the rules.</li>
+      <li>The default mode is <code>recorded</code>, so a missing key or an outage can never stop anyone from running the project.</li>
+      <li>A good suggestion points to evidence, says when a human should check, and is allowed to say “I don’t know”.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A hospital pharmacy window. Everything passes through the one window; doctors never walk into the storeroom. If the supplier changes, only the window changes.</aside>
+  </div>
+
+  <div class="quiz" data-answer="d">
+    <p class="quiz-title">Quick check 6 of 6</p>
+    <p class="q">Which design best keeps the AI boundary clean?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="A secret and a model inside the rules. Two problems in one line."><b>A</b><span>Put the API key in rules.py so that needs_attention can ask the model</span></button>
+      <button class="opt" data-o="b" data-why="Even with a fallback, the rules now depend on a model. Python decides; the model suggests."><b>B</b><span>Call the model inside needs_attention and fall back to a default on failure</span></button>
+      <button class="opt" data-o="c" data-why="That makes setup depend on something outside your control: a key, a network, a provider."><b>C</b><span>Make a live model call mandatory so that setup fails early if it’s missing</span></button>
+      <button class="opt" data-o="d" data-why="Right. One clearly named door, a recorded default, and rules that never import it."><b>D</b><span>Keep all model access in ai_client.py, default to recorded mode, and never import ai_client from rules.py</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 12 ================= -->
+<section class="stop" id="s12" data-title="Say it" data-min="7" hidden>
+  <p class="stop-no">Stop 12 of 12, about 7 minutes</p>
+  <h2>Say it</h2>
+  <p class="idea">At the start, the file failed on a stranger’s laptop. Now a stranger has run it from the README alone.</p>
+
+  <div class="widget">
+    <p class="widget-title">What changed today</p>
+    <div class="seg" role="group" aria-label="Compare" style="margin-bottom:12px">
+      <button type="button" data-ba="then" aria-pressed="false">Class 1</button>
+      <button type="button" data-ba="now" aria-pressed="true">After today</button>
+    </div>
+    <table class="ba" id="baTable">
+      <thead><tr><th scope="col">Question</th><th scope="col" id="baHead">After today</th></tr></thead>
+      <tbody>
+        <tr><td>Where does the code live?</td><td class="ans" data-then="One file" data-now="src/meridian_workbench, one job per module"></td></tr>
+        <tr><td>Which Python and packages?</td><td class="ans" data-then="Whatever is on the laptop" data-now=".venv, versions pinned in pyproject.toml"></td></tr>
+        <tr><td>How do you change the date?</td><td class="ans" data-then="Edit the code" data-now="settings.toml, or an environment variable"></td></tr>
+        <tr><td>Where do secrets go?</td><td class="ans" data-then="Nowhere planned" data-now=".env, ignored by Git, with a .env.example template"></td></tr>
+        <tr><td>How do others get it?</td><td class="ans" data-then="Send the file" data-now="git clone from GitHub"></td></tr>
+        <tr><td>How do they know how to run it?</td><td class="ans" data-then="They ask you" data-now="The README"></td></tr>
+        <tr><td>How do we know it’s right?</td><td class="ans" data-then="Checks inside the script" data-now="tests/ plus ruff"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="widget three">
+    <p class="widget-title">Explain it in three sentences</p>
+    <p class="widget-hint">Write it to someone who wasn’t here. Your sentences stay in this browser.</p>
+    <label for="t1">The project is organised as…</label><textarea id="t1" data-save="t1"></textarea>
+    <label for="t2">Someone else can run it by…</label><textarea id="t2" data-save="t2"></textarea>
+    <label for="t3">The model will be kept in…</label><textarea id="t3" data-save="t3"></textarea>
+    <div class="btnrow"><button class="btn small" id="showModel" aria-expanded="false">Show an example</button></div>
+    <div id="modelAns" hidden class="analogy"><b>One way to say it</b>The project is organised as a package in src/ with one job per module, plus folders for tests, data, settings and recorded responses. Someone else can run it by cloning it, creating and activating a .venv, installing from requirements.txt and running python -m meridian_workbench. The model will be kept in ai_client.py, which the rules never import.</div>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li>Next class: the model reads a messy note and suggests a label with evidence, or says it can’t tell.</li>
+      <li>You’ll meet pytest for proper tests and type checking for early mistakes.</li>
+      <li>The first live model call goes through the one door you built today.</li>
+    </ul>
+    <aside class="analogy"><b>Before you leave</b>Check your final push reached GitHub, and that no real key is anywhere in the repository.</aside>
+  </div>
+</section>
+
+
+
+<nav class="stop-foot" aria-label="Stop navigation" id="stopFoot">
+  <button class="btn" id="prevBtn">Previous stop</button>
+  <div class="mid">
+    <span class="stamp" id="stamp" hidden>Packed</span>
+    <button class="btn tape" id="packBtn">Mark this stop as packed</button>
+  </div>
+  <button class="btn primary" id="nextBtn">Next stop</button>
+</nav>
+
+<details class="allcmds">
+  <summary>Every command from today, in order</summary>
+  <pre class="cmd mac-only"><span class="c"># stop 3: your own Python</span>
+python3 -m venv .venv
+source .venv/bin/activate
+python -c "import sys; print(sys.prefix)"
+<span class="c"># stop 4: install what it needs</span>
+python -m pip install python-dotenv==1.0.1
+python -m pip install -r requirements.txt
+<span class="c"># stop 5: run as a package</span>
+python -m meridian_workbench
+<span class="c"># stop 6: proofread</span>
+ruff check .
+ruff check --fix .
+ruff format .
+<span class="c"># stop 7: change the date for one run</span>
+MERIDIAN_BATCH_DATE=2025-03-13 python -m meridian_workbench
+<span class="c"># stop 8 and 11: checks</span>
+python tests/check_rules.py
+python tests/check_ai_boundary.py
+<span class="c"># stop 9: save and share</span>
+git init -b main
+git status
+git add .
+git commit -m "Create reproducible Meridian Workbench V0"
+git remote add origin https://github.com/&lt;you&gt;/meridian-workbench.git
+git push -u origin main
+git clone https://github.com/&lt;you&gt;/meridian-workbench.git
+git pull</pre>
+  <pre class="cmd win-only"><span class="c"># stop 3: your own Python</span>
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+python -c "import sys; print(sys.prefix)"
+<span class="c"># stop 4: install what it needs</span>
+python -m pip install python-dotenv==1.0.1
+python -m pip install -r requirements.txt
+<span class="c"># stop 5: run as a package</span>
+python -m meridian_workbench
+<span class="c"># stop 6: proofread</span>
+ruff check .
+ruff check --fix .
+ruff format .
+<span class="c"># stop 7: change the date for one run</span>
+$env:MERIDIAN_BATCH_DATE = "2025-03-13"
+python -m meridian_workbench
+Remove-Item Env:MERIDIAN_BATCH_DATE
+<span class="c"># stop 8 and 11: checks</span>
+python tests/check_rules.py
+python tests/check_ai_boundary.py
+<span class="c"># stop 9: save and share</span>
+git init -b main
+git status
+git add .
+git commit -m "Create reproducible Meridian Workbench V0"
+git remote add origin https://github.com/&lt;you&gt;/meridian-workbench.git
+git push -u origin main
+git clone https://github.com/&lt;you&gt;/meridian-workbench.git
+git pull</pre>
+</details>
+
+</main>
+
+<footer class="site"><div class="wrap">Meridian Case Intake Workbench, Class 2. The outputs on this page are computed from the real class data (7 cases, 3 notes) using the same rule as rules.py.</div></footer>
+
+<script>
+(function(){
+'use strict';
+var $ = function(s, r){ return (r || document).querySelector(s); };
+var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var store = {
+  get: function(k, d){ try { var v = localStorage.getItem('mw2:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: function(k, v){ try { localStorage.setItem('mw2:' + k, JSON.stringify(v)); } catch (e) {} }
+};
+var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+function later(fn, ms){ return setTimeout(fn, reduce ? 0 : ms); }
+
+/* ---------- the real class data and rule ---------- */
+var CASES = [
+  ['C-1001','DELIVERED','2025-03-06'],
+  ['C-1002','SHIPPED','2025-03-07'],
+  ['C-1003','SHIPPED','2025-03-12'],
+  ['C-1004','PROCESSING','2025-03-08'],
+  ['C-1005','SHIPPED','2025-03-06'],
+  ['C-1006','SHIPPED','2025-03-08'],
+  ['C-1007','CANCELLED','2025-03-05']
+];
+function dayNum(iso){ var p = iso.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) / 86400000; }
+function report(batch, closed){
+  closed = closed || ['DELIVERED','CANCELLED'];
+  var lines = [], n = 0;
+  CASES.forEach(function(c){
+    if (closed.indexOf(c[1]) !== -1) return;
+    var days = dayNum(batch) - dayNum(c[2]);
+    if (days > 0) { n++; lines.push({ id: c[0], days: days }); }
+  });
+  return { lines: lines, n: n };
+}
+function reportText(batch, closed, mark){
+  var r = report(batch, closed);
+  var body = r.lines.map(function(l){
+    var t = l.id + ': OVERDUE_NOT_CLOSED (' + l.days + ' days)';
+    return (mark && mark === l.id) ? '<span class="hi">' + t + '</span>' : t;
+  }).join('\n');
+  return body + '\n' + r.n + ' of 7 cases need attention';
+}
+
+/* ---------- operating system switch ---------- */
+var guess = /Win/i.test(navigator.platform || navigator.userAgent || '') ? 'win' : 'mac';
+var OS = store.get('os', guess);
+var osListeners = [];
+function setOS(os){
+  OS = os;
+  document.body.setAttribute('data-os', os);
+  $$('[data-os-pick]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-os-pick') === os)); });
+  store.set('os', os);
+  osListeners.forEach(function(f){ f(); });
+}
+$$('[data-os-pick]').forEach(function(b){ b.addEventListener('click', function(){ setOS(b.getAttribute('data-os-pick')); }); });
+
+/* ---------- hero handoff ---------- */
+(function(){
+  var far = $('#farScreen'), note = $('#stageNote'), busy = false;
+  var btns = [$('#sendFile'), $('#sendRepo')];
+  function typeLines(lines, done){
+    far.innerHTML = '';
+    var i = 0;
+    (function step(){
+      if (i >= lines.length) { if (done) done(); return; }
+      far.innerHTML += (i ? '<br>' : '') + lines[i];
+      far.scrollTop = far.scrollHeight;
+      i++;
+      later(step, 240);
+    })();
+  }
+  function send(kind){
+    if (busy) return;
+    busy = true;
+    btns.forEach(function(b){ b.disabled = true; });
+    var mover = kind === 'file' ? $('#moverFile') : $('#moverParcel');
+    far.innerHTML = '<span class="dim">incoming…</span>';
+    note.textContent = kind === 'file' ? 'Sending attention_report.py on its own…' : 'Sending the whole repository: code, data, settings, the list of what it needs, and a README…';
+    mover.classList.remove('go'); void mover.offsetWidth;
+    if (!reduce) mover.classList.add('go');
+    later(function(){
+      var lines = kind === 'file' ? [
+        '<span class="dim">$</span> python3 attention_report.py',
+        'Traceback (most recent call last):',
+        '<span class="bad">FileNotFoundError: No such file</span>',
+        "<span class=\"bad\">or directory: 'data/cases.csv'</span>"
+      ] : [
+        '<span class="dim">$</span> git clone …/meridian-workbench',
+        '<span class="dim">$</span> pip install -r requirements.txt',
+        '<span class="dim">$</span> python -m meridian_workbench',
+        'C-1002, C-1004, C-1005, C-1006',
+        '<span class="ok">4 of 7 cases need attention</span>'
+      ];
+      typeLines(lines, function(){
+        note.textContent = kind === 'file'
+          ? 'Correct code, and it still crashes. The data, the right Python and the packages all stayed behind on your laptop.'
+          : 'Same code, same answer, on a machine that has never seen it. That’s what you’ll build today.';
+        busy = false;
+        btns.forEach(function(b){ b.disabled = false; });
+      });
+    }, 1050);
+  }
+  $('#sendFile').addEventListener('click', function(){ send('file'); });
+  $('#sendRepo').addEventListener('click', function(){ send('repo'); });
+})();
+
+/* ---------- flip cards ---------- */
+$$('.flip').forEach(function(f){
+  f.addEventListener('click', function(){ f.setAttribute('aria-pressed', f.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); });
+});
+
+/* ---------- stop 1: traceback reader ---------- */
+$$('#tb button').forEach(function(b){
+  b.addEventListener('click', function(){
+    $$('#tb button').forEach(function(x){ x.classList.remove('wrong', 'right'); });
+    var m = $('#tbMsg');
+    if (b.getAttribute('data-tb') === 'last') {
+      b.classList.add('right');
+      m.className = 'feedback good';
+      m.textContent = 'That’s the one. Python looked for data/cases.csv and it wasn’t there. The last line always names the problem.';
+    } else {
+      b.classList.add('wrong');
+      m.className = 'feedback meh';
+      m.textContent = 'That line is part of the trail: where the error travelled through the code. Try the very last line.';
+    }
+  });
+});
+
+/* ---------- sorters (stop 2 and stop 7) ---------- */
+$$('[data-sorter]').forEach(function(root){
+  var sel = null, msg = $('.msg', root), items = $$('[data-item]', root), done = 0;
+  function place(it, bin){
+    var s = document.createElement('span');
+    s.textContent = it.textContent;
+    $('.bin-items', bin).appendChild(s);
+    it.classList.add('gone');
+    it.setAttribute('aria-pressed', 'false');
+    done++;
+  }
+  items.forEach(function(it){
+    it.addEventListener('click', function(){
+      items.forEach(function(x){ x.setAttribute('aria-pressed', 'false'); });
+      if (sel === it) { sel = null; msg.textContent = ''; return; }
+      sel = it;
+      it.setAttribute('aria-pressed', 'true');
+      msg.textContent = 'Where does ' + it.textContent + ' belong?';
+    });
+  });
+  $$('.bin', root).forEach(function(bin){
+    bin.addEventListener('click', function(){
+      if (!sel) { msg.textContent = 'Pick an item first, then tap where it belongs.'; return; }
+      if (sel.getAttribute('data-bin') === bin.getAttribute('data-bin')) {
+        var why = sel.getAttribute('data-why');
+        place(sel, bin);
+        sel = null;
+        msg.textContent = why + (done === items.length ? ' That’s everything sorted.' : '');
+      } else {
+        bin.classList.remove('shake'); void bin.offsetWidth; bin.classList.add('shake');
+        msg.textContent = 'Not there. Ask yourself what ' + sel.textContent + ' is for.';
+      }
+    });
+  });
+  var all = $('[data-sort-all]', root);
+  if (all) all.addEventListener('click', function(){
+    items.filter(function(i){ return !i.classList.contains('gone'); }).forEach(function(i){
+      place(i, $('.bin[data-bin="' + i.getAttribute('data-bin') + '"]', root));
+    });
+    sel = null;
+    msg.textContent = 'All sorted. Every item has one obvious home.';
+  });
+});
+
+/* ---------- stop 3: activation and PATH ---------- */
+(function(){
+  var term = $('#venvTerm'), row = $('#pathRow'), btn = $('#venvToggle'), msg = $('#venvMsg'), on = false;
+  var P = {
+    mac: { prompt: 'meridian-workbench $', cmd: 'which python3',
+      before: '/usr/bin/python3', after: '/Users/you/meridian-workbench/.venv/bin/python3',
+      path: ['/usr/local/bin', '/usr/bin', '/bin'], py: 1,
+      venv: '.venv/bin', act: 'source .venv/bin/activate' },
+    win: { prompt: 'PS C:\\Users\\you\\meridian-workbench>', cmd: '(Get-Command python).Source',
+      before: 'C:\\Users\\you\\AppData\\Local\\Programs\\Python\\Python312\\python.exe',
+      after: 'C:\\Users\\you\\meridian-workbench\\.venv\\Scripts\\python.exe',
+      path: ['…\\Python312\\', 'C:\\Windows\\System32'], py: 0,
+      venv: '.venv\\Scripts', act: '.venv\\Scripts\\Activate.ps1' }
+  };
+  function render(){
+    var p = P[OS];
+    var prompt = (on ? '(.venv) ' : '') + p.prompt;
+    term.innerHTML = '<span class="p">' + esc(prompt) + '</span> ' + esc(p.cmd) + '\n' +
+      (on ? '<span class="ok">' + esc(p.after) + '</span>' : esc(p.before));
+    var boxes = p.path.map(function(f, i){ return { f: f, py: i === p.py, venv: false }; });
+    if (on) boxes.unshift({ f: p.venv, py: true, venv: true });
+    var first = -1;
+    boxes.forEach(function(b, i){ if (first < 0 && b.py) first = i; });
+    row.innerHTML = '<span class="lbl">PATH</span>' + boxes.map(function(b, i){
+      return '<span class="pathbox' + (b.venv ? ' venv' : '') + (i === first ? ' first' : '') + '">' + esc(b.f) +
+        (i === first ? '<span class="tag">answers “python”</span>' : '') + '</span>';
+    }).join('');
+    btn.textContent = on ? 'Deactivate' : 'Activate .venv';
+    btn.setAttribute('aria-pressed', String(on));
+    msg.innerHTML = on
+      ? 'Active. <code>' + esc(p.act) + '</code> put <code>' + esc(p.venv) + '</code> at the front of PATH. Same word, different program.'
+      : 'Not active. <code>python</code> means the shared Python every project uses.';
+    msg.className = 'feedback ' + (on ? 'good' : 'meh');
+  }
+  btn.addEventListener('click', function(){ on = !on; render(); });
+  osListeners.push(render);
+})();
+
+/* ---------- stop 4: pins ---------- */
+(function(){
+  var r = $('#pinRange'), when = ['Today', 'Next month', 'Next year'];
+  function render(){
+    var v = +r.value;
+    $('#pinWhen').textContent = when[v];
+    $('#un1').textContent = v === 0 ? '1.0.1' : 'newest that day';
+    $('#un2').textContent = v === 0 ? '0.6.9' : 'newest that day';
+    var w = $('#pinWarn');
+    if (v === 0) { w.className = 'verdict v-ok'; w.textContent = 'Same as yours, but only today.'; }
+    else { w.className = 'verdict v-warn'; w.textContent = v === 1 ? 'Maybe the same, maybe not. Nothing in the list tells you.' : 'Probably different, and nobody tested that version.'; }
+    $('#pinOk').textContent = v === 0 ? 'Same as yours.' : 'Still exactly the same as yours.';
+  }
+  r.addEventListener('input', render);
+  render();
+})();
+
+/* ---------- stop 4: pyproject explorer ---------- */
+(function(){
+  var T = {
+    build: ['[build-system]', 'How to build the project. setuptools is a standard tool for that job. Copy this block as it is for now.'],
+    project: ['[project]', 'Who we are: the name (hyphens are allowed here), the oldest Python we support (3.11), and the packages the program needs to run.'],
+    dev: ['[project.optional-dependencies]', 'Extras only developers need. ruff lives here because the program runs without it. The [dev] in requirements.txt pulls it in.'],
+    find: ['[tool.setuptools.packages.find]', 'Tells the build tool that our code lives in src/. This one line is why the src layout works.'],
+    ruff: ['[tool.ruff]', 'Settings for ruff, the checker: lines up to 100 characters, and the rule groups E (style errors), F (unused or undefined names) and I (import order).']
+  };
+  $$('#tomlCode button').forEach(function(b){
+    b.addEventListener('click', function(){
+      $$('#tomlCode button').forEach(function(x){ x.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      var t = T[b.getAttribute('data-k')];
+      $('#tomlExplain').innerHTML = '<h4>' + esc(t[0]) + '</h4><p>' + esc(t[1]) + '</p>';
+    });
+  });
+  var D = {
+    e: '<b>-e</b> means editable. Python doesn’t copy your code; it points at src/, so your edits work immediately.',
+    dot: '<b>.</b> means “the project in this folder”. We install our own project, so the import works from anywhere.',
+    dev: '<b>[dev]</b> means “plus the extras called dev”, which is where ruff is pinned. Every version number lives in one place: pyproject.toml.'
+  };
+  $$('#decoder button').forEach(function(b){
+    b.addEventListener('click', function(){
+      $$('#decoder button').forEach(function(x){ x.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      $('#decodeMsg').innerHTML = D[b.getAttribute('data-d')];
+    });
+  });
+})();
+
+/* ---------- stop 5: module map ---------- */
+(function(){
+  var N = {
+    main: ['__main__.py', 'Makes python -m meridian_workbench work. It imports main and starts it behind the if __name__ guard.', 'from meridian_workbench.pipeline import main'],
+    pipeline: ['pipeline.py', 'Runs the steps in order: load, decide, save, report. This is the old main(), almost unchanged.', 'from meridian_workbench.loaders import load_cases, load_notes\nfrom meridian_workbench.results import build_result'],
+    loaders: ['loaders.py', 'Reads cases.csv and notes.json and hands back Python data. Nothing else.', 'import csv\nimport json'],
+    results: ['results.py', 'Combines a case, its note and the rule’s answer into one evidence-backed result.', 'from meridian_workbench.rules import days_overdue, needs_attention'],
+    rules: ['rules.py', 'The decision: is this case closed, and how many days overdue is it? Pure logic. No files, no internet, and never the model.', 'from datetime import date']
+  };
+  var nodes = $$('#map .node');
+  function pick(g){
+    nodes.forEach(function(x){ x.classList.remove('on'); });
+    g.classList.add('on');
+    var n = N[g.getAttribute('data-n')];
+    $('#nodeInfo').innerHTML = '<h4>' + esc(n[0]) + '</h4><p>' + esc(n[1]) + '</p><pre class="cmd">' + esc(n[2]) + '</pre>';
+  }
+  nodes.forEach(function(g){
+    g.addEventListener('click', function(){ pick(g); });
+    g.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(g); } });
+  });
+  var cyc = $('#cycleBtn');
+  cyc.addEventListener('click', function(){
+    var on = cyc.getAttribute('aria-pressed') !== 'true';
+    cyc.setAttribute('aria-pressed', String(on));
+    $('#map').classList.toggle('cycle', on);
+    cyc.textContent = on ? 'Remove the bad arrow' : 'Make rules import results';
+    var m = $('#cycleMsg');
+    m.className = 'feedback ' + (on ? 'meh' : 'good');
+    m.textContent = on
+      ? 'Now rules needs results, and results needs rules. Each waits for the other to load first: ImportError, “most likely due to a circular import”.'
+      : 'Arrows point one way again. One job, one direction.';
+  });
+  $('#runAfter').addEventListener('click', function(){
+    var out = $('#afterOut'), lines = reportText('2025-03-10').split('\n'), i = 0;
+    out.textContent = '';
+    $('#sameMsg').textContent = '';
+    (function step(){
+      if (i >= lines.length) {
+        var m = $('#sameMsg'); m.className = 'feedback good';
+        m.textContent = 'Identical, line for line. Same input, same rule, same answer: the move was safe.';
+        return;
+      }
+      out.textContent += (i ? '\n' : '') + lines[i]; i++;
+      later(step, 180);
+    })();
+  });
+})();
+
+/* ---------- stop 6: interpreter and ruff ---------- */
+(function(){
+  $$('#interpList button').forEach(function(b){
+    b.addEventListener('click', function(){
+      $$('#interpList button').forEach(function(x){ x.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      var v = b.getAttribute('data-i') === 'venv';
+      $('#dotenvSquig').classList.toggle('squig', !v);
+      var tip = $('#editorTip');
+      tip.textContent = v ? 'No problems. The editor now sees what the terminal sees.' : 'Import "dotenv" could not be resolved';
+      tip.style.color = v ? 'var(--ok)' : 'var(--bad)';
+      $('#statusBar').textContent = v ? "Python 3.12 ('.venv')" : 'Python 3.12';
+    });
+  });
+  var out = $('#ruffOut'), csvLine = $('#csvLine'), fixed = false;
+  $$('[data-ruff]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.getAttribute('data-ruff');
+      if (k === 'check' || k === 'again') {
+        if (!fixed) {
+          csvLine.classList.add('flag');
+          out.innerHTML = '<span class="p">$ ruff check .</span>\nsrc/meridian_workbench/pipeline.py:3:8: <span class="bad">F401</span> [*] `csv` imported but unused\nFound 1 error.\n[*] 1 fixable with the `--fix` option.';
+        } else {
+          out.innerHTML = '<span class="p">$ ruff check .</span>\n<span class="ok">All checks passed!</span>';
+        }
+      } else if (k === 'fix') {
+        if (!fixed) {
+          csvLine.classList.add('flag');
+          later(function(){ csvLine.classList.add('removed'); }, 350);
+          fixed = true;
+          out.innerHTML = '<span class="p">$ ruff check --fix .</span>\nFound 1 error (1 fixed, 0 remaining).';
+        } else {
+          out.innerHTML = '<span class="p">$ ruff check --fix .</span>\n<span class="ok">All checks passed!</span>';
+        }
+      } else if (k === 'format') {
+        out.innerHTML = '<span class="p">$ ruff format .</span>\n6 files left unchanged';
+      }
+    });
+  });
+})();
+
+/* ---------- stop 7: who wins ---------- */
+(function(){
+  var tOn = $('#lyTermOn'), eOn = $('#lyEnvOn'), td = $('#lyTermDate');
+  function render(){
+    var d = td.value;
+    $('#lyTermCmdMac').textContent = 'MERIDIAN_BATCH_DATE=' + d + ' python -m meridian_workbench';
+    $('#lyTermCmdWin').textContent = '$env:MERIDIAN_BATCH_DATE = "' + d + '"';
+    $('#lyTerm').classList.toggle('active', tOn.checked);
+    $('#lyEnv').classList.toggle('active', eOn.checked);
+    var date = '2025-03-10', win = 'lyToml';
+    if (eOn.checked) { date = '2025-03-13'; win = 'lyEnv'; }
+    if (tOn.checked) { date = d; win = 'lyTerm'; }
+    ['lyTerm', 'lyEnv', 'lyToml'].forEach(function(id){ $('#' + id).classList.toggle('wins', id === win); });
+    var body = reportText(date);
+    var lines = body.split('\n');
+    lines[lines.length - 1] = '<span class="ok">' + lines[lines.length - 1] + '</span>';
+    $('#lyOut').innerHTML = '<span class="p">batch date used: ' + date + '</span>\n' + lines.join('\n');
+  }
+  [tOn, eOn, td].forEach(function(el){ el.addEventListener('change', render); });
+  render();
+})();
+
+/* ---------- stop 8: break the rule ---------- */
+(function(){
+  var sw = $('#cancelSwitch');
+  function render(){
+    var on = sw.getAttribute('aria-checked') === 'true';
+    $('#cancelLbl').textContent = on ? 'CANCELLED counts as closed' : 'CANCELLED removed from closed statuses';
+    $('#testOut').innerHTML = on
+      ? '<span class="ok">All rule checks passed</span>'
+      : 'Traceback (most recent call last):\n  …\n  File "tests/check_rules.py", line 17, in run_checks\n    assert needs_attention(cancelled, BATCH_DATE) == (False, "CLOSED")\n<span class="bad">AssertionError</span>';
+    $('#reportOut').innerHTML = reportText('2025-03-10', on ? ['DELIVERED', 'CANCELLED'] : ['DELIVERED'], on ? null : 'C-1007');
+    var m = $('#testMsg');
+    m.className = 'feedback ' + (on ? 'good' : 'meh');
+    m.textContent = on
+      ? 'Both quiet, both correct. Now switch it off.'
+      : 'The test stops at line 17, the cancelled case. The report raises no error at all: C-1007, a cancelled order, is now “overdue”. Without the test, a customer would notice first.';
+  }
+  sw.addEventListener('click', function(){
+    sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+    render();
+  });
+  render();
+})();
+
+/* ---------- stop 9: git simulator ---------- */
+(function(){
+  var noIg = $('#gNoIgnore');
+  var g;
+  function fresh(){ return { edited: false, staged: false, junk: 'none', local: [{ m: 'Create reproducible Meridian Workbench V0', leak: false }], remote: 1, partner: 1, edits: 0 }; }
+  g = fresh();
+  var lastCmd = '', lastOut = '';
+  function commitsHTML(list){
+    return list.slice().reverse().map(function(c, i){
+      return '<div class="commit' + (c.leak ? ' leak' : '') + (i === 0 && list.length > 1 ? ' new' : '') + '">' + esc(c.m) + (c.leak ? ' (contains .env)' : '') + '</div>';
+    }).join('');
+  }
+  function status(){
+    var s = ['On branch main'];
+    var ahead = g.local.length - g.remote;
+    if (ahead > 0) s.push("Your branch is ahead of 'origin/main' by " + ahead + ' commit' + (ahead > 1 ? 's' : '') + '.\n  (use "git push" to publish your local commits)');
+    else s.push("Your branch is up to date with 'origin/main'.");
+    var clean = true;
+    if (g.staged || g.junk === 'staged') {
+      clean = false;
+      s.push('\nChanges to be committed:');
+      if (g.staged) s.push('\t<span class="ok">modified:   config/settings.toml</span>');
+      if (g.junk === 'staged') s.push('\t<span class="bad">new file:   .env</span>\n\t<span class="bad">new file:   .venv/… (1,014 files)</span>');
+    }
+    if (g.edited) { clean = false; s.push('\nChanges not staged for commit:\n\t<span class="bad">modified:   config/settings.toml</span>'); }
+    if (g.junk === 'untracked') { clean = false; s.push('\nUntracked files:\n\t<span class="bad">.env</span>\n\t<span class="bad">.venv/</span>'); }
+    if (clean) s.push('\nnothing to commit, working tree clean');
+    return s.join('\n');
+  }
+  function render(){
+    var work = '', stage = '';
+    if (g.edited) work += '<div class="gcard">settings.toml (edited)</div>';
+    if (g.junk === 'untracked') work += '<div class="gcard bad">.env</div><div class="gcard bad">.venv/ (1,014 files)</div>';
+    if (g.staged) stage += '<div class="gcard">settings.toml</div>';
+    if (g.junk === 'staged') stage += '<div class="gcard bad">.env</div><div class="gcard bad">.venv/ (1,014 files)</div>';
+    $('#gWork').innerHTML = work;
+    $('#gStage').innerHTML = stage;
+    $('#gLocal').innerHTML = commitsHTML(g.local);
+    $('#gRemote').innerHTML = commitsHTML(g.local.slice(0, g.remote));
+    var out = '';
+    if (lastCmd) out += '<span class="p">$ ' + esc(lastCmd) + '</span>\n' + (lastOut ? lastOut + '\n' : '');
+    out += '<span class="p">$ git status</span>\n' + status();
+    $('#gStatus').innerHTML = out;
+    var behind = g.remote - g.partner;
+    var leaked = g.local.slice(0, g.remote).some(function(c){ return c.leak; });
+    $('#gPartner').innerHTML = (behind > 0
+      ? '<span class="pill warn">behind by ' + behind + ' commit' + (behind > 1 ? 's' : '') + '</span> they don’t have your change until they pull'
+      : '<span class="pill ok">up to date</span> same history as GitHub') +
+      (leaked ? ' <span class="pill warn">.env is public now: replace the key</span>' : '');
+  }
+  function run(k){
+    var ahead = g.local.length - g.remote;
+    lastOut = '';
+    if (k === 'edit') {
+      lastCmd = 'code config/settings.toml';
+      g.edited = true; g.edits++;
+      lastOut = '<span class="p">(added a comment line and saved)</span>';
+    } else if (k === 'add') {
+      lastCmd = 'git add .';
+      if (!g.edited && g.junk !== 'untracked') lastOut = '<span class="p">(nothing new to stage: edit something first)</span>';
+      if (g.edited) { g.edited = false; g.staged = true; }
+      if (g.junk === 'untracked') { g.junk = 'staged'; lastOut = '<span class="hi">Read the staged list now. .env and .venv should never be in it.</span>'; }
+    } else if (k === 'commit') {
+      lastCmd = 'git commit -m "Clarify settings comment"';
+      if (!g.staged && g.junk !== 'staged') {
+        lastOut = 'nothing added to commit but untracked files present (use "git add" to track)';
+        if (g.junk !== 'untracked') lastOut = 'nothing to commit, working tree clean';
+      } else {
+        var leak = g.junk === 'staged';
+        var msg = g.staged ? (g.local.length === 1 ? 'Clarify settings comment' : 'Update settings comment') : 'Add files';
+        lastCmd = 'git commit -m "' + msg + '"';
+        g.local.push({ m: msg, leak: leak });
+        g.staged = false;
+        if (leak) { g.junk = 'committed'; lastOut = '<span class="bad">Saved into history, including .env. Deleting it later won’t remove it from history.</span>'; }
+        else lastOut = '[main] ' + msg + '\n 1 file changed, 1 insertion(+)';
+      }
+    } else if (k === 'push') {
+      lastCmd = 'git push';
+      if (ahead === 0) lastOut = 'Everything up-to-date\n<span class="hi">Nothing new to send. Commit first, then push.</span>';
+      else { g.remote = g.local.length; lastOut = 'To github.com:you/meridian-workbench.git\n   main -> main'; }
+    } else if (k === 'pull') {
+      lastCmd = 'git pull   # on your partner’s laptop';
+      if (g.partner === g.remote) lastOut = 'Already up to date.' + (ahead > 0 ? '\n<span class="hi">Your new commit is still only on your laptop. Push it first.</span>' : '');
+      else { g.partner = g.remote; lastOut = 'Fast-forward\n config/settings.toml | 1 +'; }
+    } else if (k === 'reset') {
+      g = fresh(); lastCmd = ''; lastOut = '';
+      if (noIg.checked) g.junk = 'untracked';
+    }
+    render();
+  }
+  $$('[data-g]').forEach(function(b){ b.addEventListener('click', function(){ run(b.getAttribute('data-g')); }); });
+  noIg.addEventListener('change', function(){
+    lastCmd = ''; lastOut = '';
+    if (noIg.checked) {
+      if (g.junk === 'none') g.junk = 'untracked';
+    } else {
+      if (g.junk === 'untracked' || g.junk === 'staged') g.junk = 'none';
+      else if (g.junk === 'committed') { lastCmd = 'echo ".env" >> .gitignore'; lastOut = '<span class="bad">Too late. .env is already in a commit, and .gitignore only hides files Git isn’t tracking yet. Treat the key as leaked and replace it.</span>'; }
+    }
+    render();
+  });
+  render();
+})();
+
+/* ---------- stop 10: README stranger test ---------- */
+(function(){
+  var partner = 'win', running = false;
+  var walk = $('#rmWalk'), result = $('#rmResult');
+  function has(k){ var el = $('[data-rm="' + k + '"]'); return el && el.checked; }
+  function steps(){
+    var setup = partner === 'win' ? 'setwin' : 'setmac';
+    var other = partner === 'win' ? 'setmac' : 'setwin';
+    return [
+      { t: 'Open the repo and read what it’s for', ok: true, hes: has('what') ? '' : 'What does this even do?' },
+      { t: 'Clone it into an empty folder', ok: has('setmac') || has('setwin'), ask: 'How do I get the code onto my laptop?' },
+      { t: 'Check the Python version', ok: has('req'), ask: 'Which Python do I need? I have 3.9.' },
+      { t: 'Create and activate .venv', ok: has(setup), ask: has(other) ? (partner === 'win' ? 'These commands are for a Mac. What do I type in PowerShell?' : 'These commands are for Windows. What do I type on my Mac?') : 'How do I make the environment?' },
+      { t: 'Install the requirements', ok: has('setmac') || has('setwin'), ask: 'Install what? With which command?' },
+      { t: 'Run the program', ok: has('run'), ask: 'Which command starts it?' },
+      { t: 'Know that it worked', ok: has('run'), ask: 'Is this output right?' }
+    ];
+  }
+  function draw(list){
+    walk.innerHTML = list.map(function(s, i){ return '<li><span class="ico">' + (i + 1) + '</span><span>' + esc(s.t) + '</span><span class="bubble"></span></li>'; }).join('');
+  }
+  function go(){
+    if (running) return;
+    running = true;
+    var list = steps(); draw(list);
+    var lis = $$('li', walk), i = 0;
+    result.textContent = ''; result.style.color = '';
+    (function step(){
+      if (i > 0) lis[i - 1].classList.remove('here');
+      if (i >= list.length) {
+        var extras = [];
+        if (!has('check')) extras.push('Check');
+        if (!has('settings')) extras.push('Settings');
+        if (!has('layout')) extras.push('Project layout');
+        result.style.color = 'var(--ok)';
+        result.textContent = 'It runs: 4 of 7 cases need attention.' + (extras.length ? ' To help the next person go further, add: ' + extras.join(', ') + '.' : ' And your README covers everything.');
+        running = false; return;
+      }
+      var s = list[i], li = lis[i];
+      li.classList.add('here');
+      later(function(){
+        if (!s.ok) {
+          li.classList.remove('here'); li.classList.add('stuck');
+          $('.ico', li).textContent = '?';
+          $('.bubble', li).textContent = '“' + s.ask + '”';
+          result.style.color = 'var(--bad)';
+          result.textContent = 'Your partner is stuck at step ' + (i + 1) + '. Fix that gap in the README, push, and they’ll git pull.';
+          running = false; return;
+        }
+        li.classList.add('done');
+        $('.ico', li).textContent = '✓';
+        if (s.hes) $('.bubble', li).textContent = '“' + s.hes + '”';
+        i++;
+        later(step, 120);
+      }, 420);
+    })();
+  }
+  $$('[data-partner]').forEach(function(b){
+    b.addEventListener('click', function(){
+      partner = b.getAttribute('data-partner');
+      $$('[data-partner]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+      if (!running) { draw(steps()); result.textContent = ''; }
+    });
+  });
+  $$('#rmList input').forEach(function(c){ c.addEventListener('change', function(){ if (!running) { draw(steps()); result.textContent = ''; } }); });
+  $('#rmRun').addEventListener('click', go);
+  draw(steps());
+})();
+
+/* ---------- stop 11: the AI door ---------- */
+(function(){
+  var NOTES = {
+    'N-01': { c: 'C-1002', text: 'Held at depot awaiting address confirmation',
+      r: { issue_family: 'ADDRESS_CONFIRMATION', summary: 'Parcel is held at the depot until the delivery address is confirmed.', evidence_span: 'awaiting address confirmation', review_required: false } },
+    'N-02': { c: 'C-1005', text: 'see previous',
+      r: { issue_family: null, summary: null, evidence_span: null, review_required: true, abstained: true, abstain_reason: 'The note refers to an earlier message and says nothing about the issue.' } },
+    'N-03': { c: 'C-1006', text: 'cust n/a x2, rtn to dpt',
+      r: { issue_family: 'FAILED_DELIVERY_ATTEMPT', summary: 'The note suggests the customer was unavailable twice and the parcel was returned to the depot.', evidence_span: 'cust n/a x2, rtn to dpt', review_required: true } }
+  };
+  var note = 'N-01', mode = 'recorded';
+  function render(){
+    var n = NOTES[note], r = n.r;
+    $('#noteHead').textContent = 'Note ' + note + ', case ' + n.c;
+    var t = esc(n.text);
+    if (mode === 'recorded' && r.evidence_span && n.text.indexOf(r.evidence_span) !== -1) {
+      t = t.replace(esc(r.evidence_span), '<mark>' + esc(r.evidence_span) + '</mark>');
+    }
+    $('#noteText').innerHTML = t;
+    var s = $('#sug');
+    if (mode === 'live') {
+      s.innerHTML = '<pre class="term"><span class="p">get_suggestion("' + note + '", settings)</span>\n<span class="bad">NotImplementedError: AI mode \'live\' arrives in Class 3.\nUse \'recorded\' for now.</span></pre><p style="margin-top:10px">A clear error beats a silent failure: it says exactly what’s missing and when it arrives.</p>';
+      return;
+    }
+    if (r.abstained) {
+      s.innerHTML = '<p><span class="badge warn">Abstained</span> <span class="badge warn">Review required</span></p><dl><dt>Reason</dt><dd>' + esc(r.abstain_reason) + '</dd><dt>Label</dt><dd>none</dd></dl><p style="margin-top:10px">Saying “I can’t tell” is a good answer when the note says nothing.</p>';
+      return;
+    }
+    s.innerHTML = '<p>' + (r.review_required ? '<span class="badge warn">Review required</span>' : '<span class="badge ok">No review needed</span>') + '</p>' +
+      '<dl><dt>Label</dt><dd><code>' + esc(r.issue_family) + '</code></dd><dt>Summary</dt><dd>' + esc(r.summary) + '</dd><dt>Evidence</dt><dd>copied word for word from the note (highlighted)</dd></dl>' +
+      '<p style="margin-top:10px">' + (r.review_required ? 'The summary is an interpretation of a cryptic note, so a human should check it.' : 'The evidence is quoted from the note, not invented.') + '</p>';
+  }
+  $$('[data-note]').forEach(function(b){
+    b.addEventListener('click', function(){
+      note = b.getAttribute('data-note');
+      $$('[data-note]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+      render();
+    });
+  });
+  $$('[data-mode]').forEach(function(b){
+    b.addEventListener('click', function(){
+      mode = b.getAttribute('data-mode');
+      $$('[data-mode]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+      render();
+    });
+  });
+  render();
+  var sw = $('#wireSwitch');
+  function wire(){
+    var on = sw.getAttribute('aria-checked') === 'true';
+    $('#bWall').classList.toggle('breached', on);
+    $('#bOut').innerHTML = on
+      ? 'Traceback (most recent call last):\n  …\n    assert not rules_load_ai_client()\n<span class="bad">AssertionError</span>\n<span class="hi">rules.py now pulls in ai_client. The check caught it.</span>'
+      : '<span class="ok">AI boundary checks passed</span>';
+  }
+  sw.addEventListener('click', function(){
+    sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+    wire();
+  });
+  wire();
+})();
+
+/* ---------- stop 12: before/after and three sentences ---------- */
+(function(){
+  function ba(m){
+    $$('[data-ba]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-ba') === m)); });
+    $('#baHead').textContent = m === 'now' ? 'After today' : 'Class 1';
+    $$('#baTable td.ans').forEach(function(td){
+      td.style.opacity = 0;
+      later(function(){ td.textContent = td.getAttribute('data-' + m); td.className = 'ans ' + m; td.style.opacity = 1; }, 140);
+    });
+  }
+  $$('[data-ba]').forEach(function(b){ b.addEventListener('click', function(){ ba(b.getAttribute('data-ba')); }); });
+  ba('now');
+  $$('[data-save]').forEach(function(t){
+    var k = 'say:' + t.getAttribute('data-save');
+    t.value = store.get(k, '');
+    t.addEventListener('input', function(){ store.set(k, t.value); });
+  });
+  var sm = $('#showModel');
+  sm.addEventListener('click', function(){
+    var open = sm.getAttribute('aria-expanded') !== 'true';
+    sm.setAttribute('aria-expanded', String(open));
+    $('#modelAns').hidden = !open;
+    sm.textContent = open ? 'Hide the example' : 'Show an example';
+  });
+})();
+
+/* ---------- quizzes ---------- */
+$$('.quiz').forEach(function(q){
+  var ans = q.getAttribute('data-answer'), why = $('.why', q);
+  $$('.opt', q).forEach(function(o){
+    o.addEventListener('click', function(){
+      $$('.opt', q).forEach(function(x){ x.classList.remove('right', 'wrong'); });
+      var ok = o.getAttribute('data-o') === ans;
+      o.classList.add(ok ? 'right' : 'wrong');
+      why.innerHTML = '<b>' + (ok ? 'Correct.' : 'Not quite.') + '</b> ' + esc(o.getAttribute('data-why'));
+    });
+  });
+});
+
+/* ---------- stops, progress and links ---------- */
+var stops = $$('.stop'), strip = $('#stops'), cur = 0;
+var packed = store.get('packed', []);
+if (!Array.isArray(packed)) packed = [];
+stops.forEach(function(s, i){
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'stop-dot';
+  b.setAttribute('aria-label', 'Stop ' + (i + 1) + ': ' + s.getAttribute('data-title'));
+  b.title = (i + 1) + '. ' + s.getAttribute('data-title');
+  b.innerHTML = '<span>' + (i + 1) + '</span>';
+  b.addEventListener('click', function(){ show(i, true); });
+  strip.appendChild(b);
+});
+var dots = $$('.stop-dot');
+function isPacked(id){ return packed.indexOf(id) !== -1; }
+function paint(){
+  dots.forEach(function(d, j){
+    d.classList.toggle('current', j === cur);
+    d.classList.toggle('packed', isPacked(stops[j].id));
+    if (j === cur) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
+  });
+  var on = isPacked(stops[cur].id);
+  $('#stamp').hidden = !on;
+  $('#packBtn').textContent = on ? 'Unmark this stop' : 'Mark this stop as packed';
+  $('#packedCount').textContent = packed.length;
+}
+function show(i, scroll){
+  i = Math.max(0, Math.min(stops.length - 1, i));
+  cur = i;
+  stops.forEach(function(s, j){ s.hidden = j !== i; });
+  $('#prevBtn').disabled = i === 0;
+  $('#nextBtn').textContent = i === stops.length - 1 ? 'Back to stop 1' : 'Next stop';
+  paint();
+  store.set('last', stops[i].id);
+  var d = dots[i];
+  if (d) strip.scrollLeft = d.offsetLeft - strip.clientWidth / 2 + d.offsetWidth / 2;
+  if (scroll) {
+    var y = $('#main').getBoundingClientRect().top + window.pageYOffset - $('.track').offsetHeight - 6;
+    window.scrollTo({ top: Math.max(0, y), behavior: reduce ? 'auto' : 'smooth' });
+  }
+}
+$('#packBtn').addEventListener('click', function(){
+  var id = stops[cur].id, k = packed.indexOf(id);
+  if (k === -1) packed.push(id); else packed.splice(k, 1);
+  store.set('packed', packed);
+  paint();
+});
+$('#prevBtn').addEventListener('click', function(){ show(cur - 1, true); });
+$('#nextBtn').addEventListener('click', function(){ show(cur === stops.length - 1 ? 0 : cur + 1, true); });
+function fromHash(){ var h = (location.hash || '').slice(1); for (var i = 0; i < stops.length; i++) if (stops[i].id === h) return i; return -1; }
+var start = fromHash();
+if (start < 0) { var last = store.get('last', ''); for (var j = 0; j < stops.length; j++) if (stops[j].id === last) start = j; }
+setOS(OS);
+show(start < 0 ? 0 : start, false);
+window.addEventListener('hashchange', function(){ var k = fromHash(); if (k >= 0) show(k, true); });
+})();
+</script>
+</body>
+</html>

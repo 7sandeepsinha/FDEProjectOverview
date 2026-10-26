@@ -1,0 +1,17 @@
+[
+    {
+        "note_id": "N-01",
+        "case_id": "C-1002",
+        "text": "Held at depot awaiting address confirmation"
+    },
+    {
+        "note_id": "N-02",
+        "case_id": "C-1005",
+        "text": "see previous"
+    },
+    {
+        "note_id": "N-03",
+        "case_id": "C-1006",
+        "text": "cust n/a x2, rtn to dpt"
+    }
+]

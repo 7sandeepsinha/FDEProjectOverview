@@ -1,0 +1,93 @@
+[
+  {
+    "case_id": "C-1001",
+    "order_id": "O-5001",
+    "order_status": "DELIVERED",
+    "promised_date": "2025-03-06",
+    "batch_date": "2025-03-10",
+    "needs_attention": false,
+    "reason": "CLOSED",
+    "days_overdue": 0,
+    "evidence": "Not flagged (CLOSED). Status DELIVERED, promised 2025-03-06",
+    "source_note_id": null,
+    "needs_interpretation": false
+  },
+  {
+    "case_id": "C-1002",
+    "order_id": "O-5002",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-07",
+    "batch_date": "2025-03-10",
+    "needs_attention": true,
+    "reason": "OVERDUE_NOT_CLOSED",
+    "days_overdue": 3,
+    "evidence": "Status SHIPPED, promised 2025-03-07, 3 days overdue as of 2025-03-10",
+    "source_note_id": "N-01",
+    "needs_interpretation": true
+  },
+  {
+    "case_id": "C-1003",
+    "order_id": "O-5003",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-12",
+    "batch_date": "2025-03-10",
+    "needs_attention": false,
+    "reason": "ON_TIME",
+    "days_overdue": 0,
+    "evidence": "Not flagged (ON_TIME). Status SHIPPED, promised 2025-03-12",
+    "source_note_id": null,
+    "needs_interpretation": false
+  },
+  {
+    "case_id": "C-1004",
+    "order_id": "O-5004",
+    "order_status": "PROCESSING",
+    "promised_date": "2025-03-08",
+    "batch_date": "2025-03-10",
+    "needs_attention": true,
+    "reason": "OVERDUE_NOT_CLOSED",
+    "days_overdue": 2,
+    "evidence": "Status PROCESSING, promised 2025-03-08, 2 days overdue as of 2025-03-10",
+    "source_note_id": null,
+    "needs_interpretation": false
+  },
+  {
+    "case_id": "C-1005",
+    "order_id": "O-5005",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-06",
+    "batch_date": "2025-03-10",
+    "needs_attention": true,
+    "reason": "OVERDUE_NOT_CLOSED",
+    "days_overdue": 4,
+    "evidence": "Status SHIPPED, promised 2025-03-06, 4 days overdue as of 2025-03-10",
+    "source_note_id": "N-02",
+    "needs_interpretation": true
+  },
+  {
+    "case_id": "C-1006",
+    "order_id": "O-5006",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-08",
+    "batch_date": "2025-03-10",
+    "needs_attention": true,
+    "reason": "OVERDUE_NOT_CLOSED",
+    "days_overdue": 2,
+    "evidence": "Status SHIPPED, promised 2025-03-08, 2 days overdue as of 2025-03-10",
+    "source_note_id": "N-03",
+    "needs_interpretation": true
+  },
+  {
+    "case_id": "C-1007",
+    "order_id": "O-5007",
+    "order_status": "CANCELLED",
+    "promised_date": "2025-03-05",
+    "batch_date": "2025-03-10",
+    "needs_attention": false,
+    "reason": "CLOSED",
+    "days_overdue": 0,
+    "evidence": "Not flagged (CLOSED). Status CANCELLED, promised 2025-03-05",
+    "source_note_id": null,
+    "needs_interpretation": false
+  }
+]

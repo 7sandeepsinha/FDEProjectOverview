@@ -1,0 +1,25 @@
+{
+  "N-01": {
+    "issue_family": "ADDRESS_CONFIRMATION",
+    "summary": "Parcel is held at the depot until the delivery address is confirmed.",
+    "evidence_span": "awaiting address confirmation",
+    "source_note_id": "N-01",
+    "review_required": false
+  },
+  "N-02": {
+    "issue_family": null,
+    "summary": null,
+    "evidence_span": null,
+    "source_note_id": "N-02",
+    "review_required": true,
+    "abstained": true,
+    "abstain_reason": "The note refers to an earlier message and says nothing about the issue."
+  },
+  "N-03": {
+    "issue_family": "FAILED_DELIVERY_ATTEMPT",
+    "summary": "The note suggests the customer was unavailable twice and the parcel was returned to the depot.",
+    "evidence_span": "cust n/a x2, rtn to dpt",
+    "source_note_id": "N-03",
+    "review_required": true
+  }
+}
