@@ -1,0 +1,22 @@
+# Virtual environment
+.venv/
+ 
+# Secrets and local settings
+.env
+ 
+# Generated files
+outputs/
+ 
+# Python caches and build files
+__pycache__/
+*.pyc
+*.egg-info/
+.ruff_cache/
+ 
+# Editor and system files
+.vscode/
+.DS_Store
+ 
+# Type checker and test caches
+.mypy_cache/
+.pytest_cache/

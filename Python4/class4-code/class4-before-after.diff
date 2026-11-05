@@ -1,0 +1,2193 @@
+diff -ruN -x '*.pyc' -x __pycache__ before/.env.example after/.env.example
+--- before/.env.example	2026-10-28 19:10:13.000000000 +0530
++++ after/.env.example	2026-10-28 19:10:13.000000000 +0530
+@@ -2,6 +2,7 @@
+ # Optional overrides. Leave them commented out to use config/settings.toml.
+ # MERIDIAN_BATCH_DATE=2025-03-10
+ # MERIDIAN_AI_MODE=recorded
++# MERIDIAN_DATA_DIR=data
+  
+-# Placeholder for Class 3. Not used yet.
++# Needed only when MERIDIAN_AI_MODE=live. Never commit a real key.
+ MERIDIAN_LLM_API_KEY=
+diff -ruN -x '*.pyc' -x __pycache__ before/README.md after/README.md
+--- before/README.md	2026-10-28 19:10:13.000000000 +0530
++++ after/README.md	2026-10-28 19:10:13.000000000 +0530
+@@ -1,6 +1,6 @@
+ # Meridian Case Intake Workbench
+  
+-Which customer cases need attention today, and what is the evidence? This program reads cases, linked shipment and inventory records and short notes, applies one clear rule in Python, and writes a report. A model may add a labelled suggestion beside the evidence. It never changes a fact.
++Which customer cases need attention today, and what is the evidence? This program reads cases, linked shipment and inventory records and short notes. It checks every row, sets aside the rows it cannot use with a reason, applies one clear rule in Python, and writes a report. A model may add a labelled suggestion beside the evidence. It never changes a fact.
+  
+ ## Requirements
+  
+@@ -37,20 +37,40 @@
+ python -m meridian_workbench
+ ```
+  
+-Expected output:
++Expected output (the attempt ID is different on every run):
+  
+ ```
++cases.csv: input 7, accepted 7, quarantined 0, reconciled yes
++notes.json: input 3, accepted 3, quarantined 0, reconciled yes
++shipments.csv: input 5, accepted 5, quarantined 0, reconciled yes
++inventory.csv: input 7, accepted 7, quarantined 0, reconciled yes
+ C-1002: OVERDUE_NOT_CLOSED (3 days)
+     suggestion (recorded): ADDRESS_CONFIRMATION, review_required=False
+ C-1004: OVERDUE_NOT_CLOSED (2 days)
+ C-1005: OVERDUE_NOT_CLOSED (4 days)
+-    suggestion (recorded): ABSTAINED, review_required=True
++    suggestion (recorded): ABSTAINED - The note refers to an earlier message and says nothing about the issue.
+ C-1006: OVERDUE_NOT_CLOSED (2 days)
+     suggestion (recorded): FAILED_DELIVERY_ATTEMPT, review_required=True
+ 4 of 7 cases need attention
++batch B-1bf9b12a0999 (attempt 222ae48d-b3d0-4976-8468-cf0a31bbe7b4)
+ ```
+  
+-The full report is written to `outputs/attention_report.json`. Facts and the model's suggestion are stored under separate keys.
++Each run writes to `outputs/batches/<batch id>/`:
++ 
++| File | What it holds |
++| --- | --- |
++| `attention_report.json` | One result per case. Facts and the model's suggestion are stored under separate keys. |
++| `quarantine.csv` | Every row that was set aside, with its file, line number, category and reason. |
++| `summary.json` | The counts per file. Written last, so its presence means the batch finished. |
++| `attempts.log` | One line per run of this batch. |
++ 
++## When the run halts
++ 
++If a required file is missing, or too many rows are bad, the program stops before any model call and prints one line starting with `HALTED:`. The exit code is 2. The quarantine file is still written, so you can see which rows failed and why.
++ 
++```
++HALTED: cases.csv: 4 of 8 rows (50%) were quarantined; the limit is 5%
++```
+  
+ ## Check
+  
+@@ -60,27 +80,42 @@
+ ruff check .
+ ```
+  
+-Success looks like `26 passed`, `Success: no issues found` and `All checks passed!`.
++Success looks like `46 passed`, `Success: no issues found in 27 source files` and `All checks passed!`.
+  
+ ## Settings
+  
+-Settings live in `config/settings.toml`. To run for a different batch date without editing any file:
++Settings live in `config/settings.toml`. Each setting is explained in the file.
++ 
++To run for a different batch date without editing any file:
+  
+ macOS or Linux: `MERIDIAN_BATCH_DATE=2025-03-13 python -m meridian_workbench`
+  
+ Windows PowerShell: `$env:MERIDIAN_BATCH_DATE = "2025-03-13"` and then run the command above.
+  
++To run against another folder with the same four files, set `MERIDIAN_DATA_DIR` to that folder. Copy `data/` first, change the copy, and never change the originals to test a failure.
++ 
+ For local overrides, copy `.env.example` to `.env`. Never commit `.env`.
+  
++## Duplicates, batches and reruns
++ 
++- A `case_id` must appear once. `duplicate_policy = "first_wins"` keeps the first row and quarantines the rest. `"reject_batch"` stops the whole batch instead.
++- A batch ID comes from the bytes of the four input files, the batch date and the rules that change answers (AI mode, model, prompt version, duplicate policy and quarantine limit). The same inputs always give the same ID.
++- If a batch already finished, a rerun reuses its result and makes no model calls. The attempt is still logged.
++ 
+ ## Using a live model (optional)
+  
+ The default mode is `recorded`: saved responses from `fixtures/` are used, so no key or internet is needed.
+  
+-To make one bounded call per flagged note, put your own key in `.env` as `MERIDIAN_LLM_API_KEY=...` and set `MERIDIAN_AI_MODE=live`. If the key is missing or the call fails, the Workbench falls back to the recorded response and says so in the report (`recorded_fallback`).
++To make one bounded call per flagged note, put your own key in `.env` as `MERIDIAN_LLM_API_KEY=...` and set `MERIDIAN_AI_MODE=live`.
++ 
++- Timeouts, rate limits and server errors are retried up to `max_attempts` times, with backoff and jitter.
++- If the call still fails, the suggestion has the status `UNAVAILABLE` and the reason is printed. The facts are unchanged, and no answer is invented.
++- A reply that cannot be read gets the status `INVALID_REPLY`. A model that says the note is not enough gets `ABSTAINED`.
++- A successful reply is saved in `outputs/suggestion_cache.json` and reused on a safe rerun. Failures are never saved.
+  
+ ## Golden set
+  
+-`golden/golden_set.json` holds 10 hand-written examples. Run them and score the answers by hand:
++`golden/golden_set.json` holds 12 hand-written examples. Run them and score the answers by hand:
+  
+ ```
+ python -m meridian_workbench.golden run
+@@ -92,12 +127,22 @@
+ ## Project layout
+  
+ ```
+-src/meridian_workbench/   the program: domain types, loaders, rules, results, ai_client, llm_client
+-tests/                    pytest checks for the domain, loading, rules, AI step and golden set
++src/meridian_workbench/   the program
++    errors.py             the named intake problems (MalformedRecord, MissingSource, ...)
++    parsing.py            defensive parsers for dates, units, amounts and statuses
++    domain.py             the vocabulary: facts, ledgers, decisions and suggestions
++    loaders.py            read each file row by row; accept or quarantine every row
++    reconcile.py          required files, duplicate policy, quality gate, the books
++    batch.py              batch ID, attempt ID, safe file writes, the attempt log
++    retry.py              bounded retry with backoff and jitter
++    llm_client.py         one model call; SDK errors become our own names
++    ai_client.py          suggestion statuses, the cache, recorded and live modes
++    pipeline.py           the run, from files to report
++tests/                    pytest checks for every failure path and for reruns
+ data/                     cases.csv, notes.json, shipments.csv, inventory.csv
+ config/                   settings.toml
+ fixtures/                 recorded model responses, rows with deliberate errors
+-golden/                   the golden set and the hand-scoring sheet
+-docs/                     terminology.md, the agreed meaning of case, evidence and fact
+-outputs/                  generated reports (not committed)
++golden/                   the golden set, the hand-scoring sheet and the extra cases
++docs/                     terminology.md, incident_update_template.md
++outputs/                  generated batch folders (not committed)
+ ```
+diff -ruN -x '*.pyc' -x __pycache__ before/config/settings.toml after/config/settings.toml
+--- before/config/settings.toml	2026-10-28 19:10:20.000000000 +0530
++++ after/config/settings.toml	2026-10-29 16:36:11.000000000 +0530
+@@ -9,10 +9,23 @@
+ [rules]
+ batch_date = "2025-03-10"
+  
++[intake]
++# "first_wins" keeps the first row for a repeated case_id and quarantines the rest.
++# "reject_batch" stops the whole batch when a case_id repeats.
++duplicate_policy = "first_wins"
++# Halt before any model call if more than this share of a file's rows are quarantined.
++max_quarantine_share = 0.05
++ 
++[retry]
++# Attempts per model call, including the first try. Only timeouts, rate limits and server errors are retried.
++max_attempts = 3
++base_seconds = 0.5
++cap_seconds = 8.0
++ 
+ [ai]
+ # "recorded" reads saved responses from fixtures/. "live" makes one bounded model call per note.
+ mode = "recorded"
+ model = "claude-haiku-5-5"
+ prompt_version = "v1"
+ max_tokens = 300
+-timeout_seconds = 20
++timeout_seconds = 20
+\ No newline at end of file
+diff -ruN -x '*.pyc' -x __pycache__ before/docs/terminology.md after/docs/terminology.md
+--- before/docs/terminology.md	2026-10-28 19:10:18.000000000 +0530
++++ after/docs/terminology.md	2026-10-28 19:10:14.000000000 +0530
+@@ -8,9 +8,12 @@
+ | Case | One customer problem about one order. One row in `cases.csv`, identified by `case_id`. | `SupportCase` |
+ | Evidence | Words or records from a source that back a statement. A note's text is evidence. A model's opinion is not. | `SourceEvidence` |
+ | Source-of-truth fact | A value read from a source file and never changed by the program: `case_id`, `order_id`, `order_status`, `promised_date`, shipment and inventory values. | `SupportCase`, `ShipmentInfo`, `InventoryInfo` |
++| Ledger | The books for one source file: rows read, rows accepted, rows quarantined. They must balance. | `Ledger` |
++| Quarantine | A row or note set aside with a category and a reason. Nothing is deleted. | `RejectedRecord`, `quarantine.csv` |
+ | Decision | A result the Python rules compute from facts: needs attention or not, the reason, days overdue. | `AttentionDecision` |
+-| Suggestion | What a model proposes after reading a note. It is always labelled, always keeps its `case_id` and `source_note_id`, and is never written back into a fact. | `CaseSuggestion` |
+-| Rejected record | A source row the program refused to load, with the reason. | `RejectedRecord` |
++| Suggestion | What a model proposes after reading a note. It has a status, always keeps its `case_id` and `source_note_id`, and is never written back into a fact. | `CaseSuggestion` |
++| Batch | The work for one set of input files, one date and one set of rules. It has a stable ID. | `batch_id_for` |
++| Attempt | One run of a batch. Each attempt has its own ID and a line in `attempts.log`. | `new_attempt_id` |
+  
+ ## Rules we agreed
+  
+@@ -18,3 +21,5 @@
+ 2. A suggestion that quotes evidence must quote it exactly from the note.
+ 3. When a note does not say what the problem is, the right answer is to abstain and ask for review.
+ 4. "Needs attention" is decided by the rules, never by the model.
++5. Every source row is either accepted or quarantined with a reason. There is no third outcome.
++6. A model that is unavailable gives the status UNAVAILABLE. The program never fills the gap with an invented answer.
+diff -ruN -x '*.pyc' -x __pycache__ before/golden/golden_set.json after/golden/golden_set.json
+--- before/golden/golden_set.json	2026-10-28 19:10:20.000000000 +0530
++++ after/golden/golden_set.json	2026-10-28 19:10:14.000000000 +0530
+@@ -131,5 +131,32 @@
+     ],
+     "expected_evidence_span": "box crushed",
+     "should_abstain": false
++  },
++  {
++    "golden_id": "G-11",
++    "kind": "AMBIGUOUS",
++    "case_id": "GC-11",
++    "note_id": "GN-11",
++    "order_status": "SHIPPED",
++    "promised_date": "2025-03-06",
++    "note_text": "Parcel still not here. Last scan Monday at depot, customer says they were home all week.",
++    "acceptable_issue_families": [
++      "CARRIER_DELAY",
++      "FAILED_DELIVERY_ATTEMPT"
++    ],
++    "expected_evidence_span": null,
++    "should_abstain": false
++  },
++  {
++    "golden_id": "G-12",
++    "kind": "INSUFFICIENT",
++    "case_id": "GC-12",
++    "note_id": "GN-12",
++    "order_status": "SHIPPED",
++    "promised_date": "2025-03-07",
++    "note_text": "Call dropped after the greeting. Customer name only.",
++    "acceptable_issue_families": [],
++    "expected_evidence_span": null,
++    "should_abstain": true
+   }
+ ]
+diff -ruN -x '*.pyc' -x __pycache__ before/golden/scoring_baseline.csv after/golden/scoring_baseline.csv
+--- before/golden/scoring_baseline.csv	2026-10-28 19:10:20.000000000 +0530
++++ after/golden/scoring_baseline.csv	2026-10-28 19:10:14.000000000 +0530
+@@ -9,3 +9,5 @@
+ G-08,AMBIGUOUS,,,,,
+ G-09,INSUFFICIENT,,,,,
+ G-10,CLEAR,,,,,
++G-11,AMBIGUOUS,,,,,
++G-12,INSUFFICIENT,,,,,
+diff -ruN -x '*.pyc' -x __pycache__ before/pyproject.toml after/pyproject.toml
+--- before/pyproject.toml	2026-10-28 19:10:13.000000000 +0530
++++ after/pyproject.toml	2026-10-28 19:10:13.000000000 +0530
+@@ -4,7 +4,7 @@
+  
+ [project]
+ name = "meridian-workbench"
+-version = "0.2.0"
++version = "0.3.0"
+ description = "Meridian Case Intake Workbench: which cases need attention, with evidence."
+ requires-python = ">=3.11"
+ dependencies = ["python-dotenv==1.0.1", "anthropic==1.15.0"]
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/__main__.py after/src/meridian_workbench/__main__.py
+--- before/src/meridian_workbench/__main__.py	2026-10-28 19:10:25.000000000 +0530
++++ after/src/meridian_workbench/__main__.py	2026-10-28 19:10:23.000000000 +0530
+@@ -1,6 +1,8 @@
+ """Allow: python -m meridian_workbench"""
+  
++import sys
++ 
+ from meridian_workbench.pipeline import main
+  
+ if __name__ == "__main__":
+-    main()
++    sys.exit(main())
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/ai_client.py after/src/meridian_workbench/ai_client.py
+--- before/src/meridian_workbench/ai_client.py	2026-10-28 19:10:24.000000000 +0530
++++ after/src/meridian_workbench/ai_client.py	2026-10-28 19:10:22.000000000 +0530
+@@ -1,20 +1,34 @@
+ """The one place where the Workbench turns a note into a model suggestion.
+  
+ The rules never import this file. The model only suggests, it never decides.
++Every outcome ends in one SuggestionStatus. A missing answer is never replaced by an invented one.
+ """
+  
+ import json
++import random
++import time
+ from collections.abc import Callable
++from pathlib import Path
+ from typing import Any
+  
++from meridian_workbench.batch import write_json_atomic
+ from meridian_workbench.config import Settings
+ from meridian_workbench.domain import (
+     CallMetadata,
+     CaseSuggestion,
+     IssueFamily,
+     SourceEvidence,
++    SuggestionStatus,
+ )
+-from meridian_workbench.llm_client import LlmError, LlmReply, call_model
++from meridian_workbench.errors import RuleFailure
++from meridian_workbench.llm_client import (
++    LlmError,
++    LlmRateLimited,
++    LlmReply,
++    LlmTimeout,
++    call_model,
++)
++from meridian_workbench.retry import call_with_retry
+  
+ Caller = Callable[[str, Settings], LlmReply]
+  
+@@ -35,88 +49,170 @@
+     )
+  
+  
+-def suggestion_from_data(
+-    data: dict[str, Any], case_id: str, note: SourceEvidence, meta: CallMetadata
++def _status(
++    case_id: str,
++    note: SourceEvidence,
++    meta: CallMetadata,
++    status: SuggestionStatus,
++    reason: str,
+ ) -> CaseSuggestion:
+-    warnings: list[str] = []
+- 
+-    family: IssueFamily | None = None
+-    raw_family = data.get("issue_family")
+-    if raw_family is not None:
+-        try:
+-            family = IssueFamily(raw_family)
+-        except ValueError:
+-            warnings.append(f"unknown issue_family '{raw_family}'")
+- 
+-    span = data.get("evidence_span")
+-    if span is not None and span not in note.text:
+-        warnings.append("evidence_span does not appear in the note")
+- 
+-    abstained = bool(data.get("abstained")) or family is None
+-    review = bool(data.get("review_required", True)) or abstained or bool(warnings)
+     return CaseSuggestion(
+         case_id=case_id,
+         source_note_id=note.note_id,
+-        issue_family=family,
+-        summary=data.get("summary"),
+-        evidence_span=span,
+-        review_required=review,
+-        abstained=abstained,
+-        abstain_reason=data.get("abstain_reason") or ("no issue family" if abstained else None),
+-        warnings=tuple(warnings),
++        status=status,
++        review_required=True,
++        reason=reason,
+         meta=meta,
+     )
+  
+  
+-def parse_reply(
++def interpret_reply(
+     text: str, case_id: str, note: SourceEvidence, meta: CallMetadata
+ ) -> CaseSuggestion:
++    """Turn the text of a reply into one status. The shape is checked strictly."""
+     start, end = text.find("{"), text.rfind("}")
+     try:
+-        data = json.loads(text[start : end + 1])
+-        if not isinstance(data, dict):
+-            raise ValueError("reply is not a JSON object")
++        data: Any = json.loads(text[start : end + 1])
++    except json.JSONDecodeError:
++        return _status(
++            case_id, note, meta, SuggestionStatus.INVALID_REPLY, "the reply was not valid JSON"
++        )
++ 
++    if not isinstance(data, dict) or "issue_family" not in data:
++        return _status(
++            case_id,
++            note,
++            meta,
++            SuggestionStatus.INVALID_REPLY,
++            "the reply has no issue_family field",
++        )
++ 
++    raw_family = data["issue_family"]
++    if raw_family is None:
++        reason = str(data.get("abstain_reason") or "the note does not say what the problem is")
++        return _status(case_id, note, meta, SuggestionStatus.ABSTAINED, reason)
++ 
++    try:
++        family = IssueFamily(raw_family)
+     except ValueError:
+-        return CaseSuggestion(
+-            case_id=case_id,
+-            source_note_id=note.note_id,
+-            abstained=True,
+-            abstain_reason="the reply was not valid JSON",
+-            meta=meta,
++        return _status(
++            case_id,
++            note,
++            meta,
++            SuggestionStatus.INVALID_REPLY,
++            f"unknown issue_family {raw_family!r}",
+         )
+-    return suggestion_from_data(data, case_id, note, meta)
+  
++    summary = data.get("summary")
++    span = data.get("evidence_span")
++    if not isinstance(summary, str):
++        return _status(case_id, note, meta, SuggestionStatus.INVALID_REPLY, "summary must be text")
++    if span is not None and not isinstance(span, str):
++        return _status(
++            case_id,
++            note,
++            meta,
++            SuggestionStatus.INVALID_REPLY,
++            "evidence_span must be text or null",
++        )
+  
+-def read_recorded(
+-    case_id: str, note: SourceEvidence, settings: Settings, mode: str, fallback_reason: str | None
+-) -> CaseSuggestion:
++    warnings: list[str] = []
++    if span is None:
++        warnings.append("no evidence_span was quoted")
++    elif span not in note.text:
++        warnings.append("evidence_span does not appear in the note")
++    review = bool(data.get("review_required", True)) or bool(warnings)
++    return CaseSuggestion(
++        case_id=case_id,
++        source_note_id=note.note_id,
++        status=SuggestionStatus.OK,
++        issue_family=family,
++        summary=summary,
++        evidence_span=span,
++        review_required=review,
++        warnings=tuple(warnings),
++        meta=meta,
++    )
++ 
++ 
++def read_recorded(case_id: str, note: SourceEvidence, settings: Settings) -> CaseSuggestion:
+     with open(settings.fixtures_dir / "recorded_responses.json", encoding="utf-8") as f:
+         responses = json.load(f)
+-    meta = CallMetadata(
+-        mode, "recorded", settings.prompt_version, 0, 0, "recorded", fallback_reason
+-    )
++    meta = CallMetadata("recorded", "recorded", settings.prompt_version, 0, 0, "recorded")
+     data = responses.get(note.note_id)
+     if data is None:
+-        return CaseSuggestion(
+-            case_id=case_id,
+-            source_note_id=note.note_id,
+-            abstained=True,
+-            abstain_reason="no recorded response for this note",
+-            meta=meta,
++        return _status(
++            case_id,
++            note,
++            meta,
++            SuggestionStatus.ABSTAINED,
++            "no recorded response exists for this note",
+         )
+-    return suggestion_from_data(data, case_id, note, meta)
++    # A recorded answer goes through the same parser as a live one, so the two cannot drift apart.
++    return interpret_reply(json.dumps(data), case_id, note, meta)
++ 
++ 
++def load_cache(path: Path) -> dict[str, str]:
++    if not path.is_file():
++        return {}
++    try:
++        data = json.loads(path.read_text(encoding="utf-8"))
++    except json.JSONDecodeError as error:
++        raise RuleFailure(f"{path.name} is not valid JSON; delete it and run again") from error
++    return data
++ 
++ 
++def _unavailable(
++    case_id: str, note: SourceEvidence, settings: Settings, reason: str
++) -> CaseSuggestion:
++    meta = CallMetadata("live", settings.model, settings.prompt_version, 0, 0, "unavailable")
++    return _status(case_id, note, meta, SuggestionStatus.UNAVAILABLE, reason)
+  
+  
+ def get_suggestion(
+-    case_id: str, note: SourceEvidence, settings: Settings, caller: Caller = call_model
++    case_id: str,
++    note: SourceEvidence,
++    settings: Settings,
++    caller: Caller = call_model,
++    sleep: Callable[[float], None] = time.sleep,
+ ) -> CaseSuggestion:
+     if settings.ai_mode == "recorded":
+-        return read_recorded(case_id, note, settings, "recorded", None)
++        return read_recorded(case_id, note, settings)
+  
++    key = f"{note.note_id}:{settings.model}:{settings.prompt_version}"
++    cache = load_cache(settings.cache_path)
++    if key in cache:
++        meta = CallMetadata(
++            "cached",
++            settings.model,
++            settings.prompt_version,
++            0,
++            0,
++            "cache",
++            "reused from an earlier successful run",
++        )
++        return interpret_reply(cache[key], case_id, note, meta)
++ 
++    prompt = build_prompt(note)
+     try:
+-        reply = caller(build_prompt(note), settings)
++        reply = call_with_retry(
++            lambda: caller(prompt, settings),
++            max_attempts=settings.retry_max_attempts,
++            base=settings.retry_base_seconds,
++            cap=settings.retry_cap_seconds,
++            rng=random.Random(),
++            sleep=sleep,
++        )
++    except LlmTimeout:
++        return _unavailable(
++            case_id, note, settings, f"model timed out after {settings.retry_max_attempts} attempts"
++        )
++    except LlmRateLimited:
++        return _unavailable(
++            case_id, note, settings, f"rate limited after {settings.retry_max_attempts} attempts"
++        )
+     except LlmError as error:
+-        return read_recorded(case_id, note, settings, "recorded_fallback", str(error))
++        return _unavailable(case_id, note, settings, str(error))
+  
+     meta = CallMetadata(
+         "live",
+@@ -126,4 +222,8 @@
+         reply.output_tokens,
+         reply.finish_reason,
+     )
+-    return parse_reply(reply.text, case_id, note, meta)
++    suggestion = interpret_reply(reply.text, case_id, note, meta)
++    if suggestion.status in (SuggestionStatus.OK, SuggestionStatus.ABSTAINED):
++        cache[key] = reply.text  # only valid, usable replies are kept for reuse
++        write_json_atomic(settings.cache_path, cache)
++    return suggestion
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/batch.py after/src/meridian_workbench/batch.py
+--- before/src/meridian_workbench/batch.py	1970-01-01 05:30:00.000000000 +0530
++++ after/src/meridian_workbench/batch.py	2026-10-28 19:10:21.000000000 +0530
+@@ -0,0 +1,63 @@
++"""Batch identity and output: a stable batch ID, a separate attempt ID, and files written safely."""
++ 
++import csv
++import hashlib
++import json
++import os
++import uuid
++from collections.abc import Sequence
++from datetime import UTC, date, datetime
++from pathlib import Path
++from typing import Any
++ 
++from meridian_workbench.domain import RejectedRecord
++ 
++ 
++def batch_id_for(files: Sequence[Path], batch_date: date, rules_text: str) -> str:
++    """The same files, date and rules always give the same ID, on any machine.
++ 
++    rules_text holds every setting that can change an answer, so a live run never reuses
++    recorded answers, and a different duplicate policy never reuses an old result.
++    """
++    digest = hashlib.sha256()
++    digest.update(batch_date.isoformat().encode("utf-8"))
++    digest.update(rules_text.encode("utf-8"))
++    for path in sorted(
++        files, key=lambda p: p.name
++    ):  # sorted, so the order of listing cannot matter
++        digest.update(path.name.encode("utf-8"))
++        digest.update(b"\0")
++        digest.update(path.read_bytes())
++        digest.update(b"\0")
++    return "B-" + digest.hexdigest()[:12]
++ 
++ 
++def new_attempt_id() -> str:
++    """Every run gets its own ID, so the attempt log can show each try separately."""
++    return str(uuid.uuid4())
++ 
++ 
++def write_json_atomic(path: Path, data: Any) -> None:
++    """Write to a temporary name, then rename. A reader never sees a half-written file."""
++    path.parent.mkdir(parents=True, exist_ok=True)
++    temp = path.with_name(path.name + ".tmp")
++    temp.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
++    os.replace(temp, path)
++ 
++ 
++def write_quarantine(rejected: Sequence[RejectedRecord], path: Path) -> None:
++    temp = path.with_name(path.name + ".tmp")
++    with open(temp, "w", newline="", encoding="utf-8") as f:
++        writer = csv.writer(f)
++        writer.writerow(["source", "row_number", "category", "reason", "raw"])
++        for record in sorted(rejected, key=lambda r: (r.source, r.row_number)):
++            writer.writerow(
++                [record.source, record.row_number, str(record.category), record.reason, record.raw]
++            )
++    os.replace(temp, path)
++ 
++ 
++def log_attempt(out_dir: Path, attempt_id: str, outcome: str) -> None:
++    stamp = datetime.now(UTC).isoformat(timespec="seconds")
++    with open(out_dir / "attempts.log", "a", encoding="utf-8") as f:
++        f.write(f"{stamp}  {attempt_id}  {outcome}\n")
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/config.py after/src/meridian_workbench/config.py
+--- before/src/meridian_workbench/config.py	2026-10-28 19:10:22.000000000 +0530
++++ after/src/meridian_workbench/config.py	2026-10-28 19:10:20.000000000 +0530
+@@ -8,6 +8,8 @@
+  
+ from dotenv import load_dotenv
+  
++from meridian_workbench.reconcile import DUPLICATE_POLICIES
++ 
+ PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ SETTINGS_FILE = PROJECT_ROOT / "config" / "settings.toml"
+ AI_MODES = ("recorded", "live")
+@@ -25,9 +27,23 @@
+     prompt_version: str
+     max_tokens: int
+     timeout_seconds: float
++    duplicate_policy: str
++    max_quarantine_share: float
++    retry_max_attempts: int
++    retry_base_seconds: float
++    retry_cap_seconds: float
+     # repr=False keeps the key out of print(settings) and out of error messages
+     api_key: str | None = field(default=None, repr=False)
+  
++    @property
++    def cache_path(self) -> Path:
++        return self.output_dir / "suggestion_cache.json"
++ 
++ 
++def _path_from(override: str | None, configured: str) -> Path:
++    """MERIDIAN_DATA_DIR, when set, points the run at another folder of the same four files."""
++    return Path(override) if override else PROJECT_ROOT / configured
++ 
+  
+ def load_settings() -> Settings:
+     load_dotenv(PROJECT_ROOT / ".env")
+@@ -39,9 +55,12 @@
+     ai_mode = os.environ.get("MERIDIAN_AI_MODE", raw["ai"]["mode"])
+     if ai_mode not in AI_MODES:
+         raise ValueError(f"MERIDIAN_AI_MODE must be one of {AI_MODES}, not '{ai_mode}'")
++    duplicate_policy = raw["intake"]["duplicate_policy"]
++    if duplicate_policy not in DUPLICATE_POLICIES:
++        raise ValueError(f"[intake] duplicate_policy must be one of {DUPLICATE_POLICIES}")
+  
+     return Settings(
+-        data_dir=PROJECT_ROOT / raw["paths"]["data_dir"],
++        data_dir=_path_from(os.environ.get("MERIDIAN_DATA_DIR"), raw["paths"]["data_dir"]),
+         output_dir=PROJECT_ROOT / raw["paths"]["output_dir"],
+         fixtures_dir=PROJECT_ROOT / raw["paths"]["fixtures_dir"],
+         golden_dir=PROJECT_ROOT / raw["paths"]["golden_dir"],
+@@ -51,5 +70,10 @@
+         prompt_version=raw["ai"]["prompt_version"],
+         max_tokens=int(raw["ai"]["max_tokens"]),
+         timeout_seconds=float(raw["ai"]["timeout_seconds"]),
++        duplicate_policy=duplicate_policy,
++        max_quarantine_share=float(raw["intake"]["max_quarantine_share"]),
++        retry_max_attempts=int(raw["retry"]["max_attempts"]),
++        retry_base_seconds=float(raw["retry"]["base_seconds"]),
++        retry_cap_seconds=float(raw["retry"]["cap_seconds"]),
+         api_key=os.environ.get("MERIDIAN_LLM_API_KEY") or None,
+     )
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/domain.py after/src/meridian_workbench/domain.py
+--- before/src/meridian_workbench/domain.py	2026-10-28 19:10:22.000000000 +0530
++++ after/src/meridian_workbench/domain.py	2026-10-28 19:10:20.000000000 +0530
+@@ -1,7 +1,8 @@
+-"""The Workbench vocabulary. Facts, evidence and suggestions are different types."""
++"""The Workbench vocabulary. Facts, evidence, decisions and suggestions are different types."""
+  
+ from dataclasses import dataclass, field
+ from datetime import date
++from decimal import Decimal
+ from enum import StrEnum
+  
+  
+@@ -26,6 +27,20 @@
+     DAMAGED_IN_TRANSIT = "DAMAGED_IN_TRANSIT"
+  
+  
++class RejectCategory(StrEnum):
++    MALFORMED = "MALFORMED"  # a row or note we cannot read
++    RULE_FAILURE = "RULE_FAILURE"  # readable, but it breaks a business rule
++    DUPLICATE = "DUPLICATE"  # a repeat of a key we already kept
++    MISSING_SOURCE = "MISSING_SOURCE"
++ 
++ 
++class SuggestionStatus(StrEnum):
++    OK = "OK"  # a valid reply that passed the shape check
++    ABSTAINED = "ABSTAINED"  # the model said the note is not enough
++    INVALID_REPLY = "INVALID_REPLY"  # the reply could not be read or had the wrong shape
++    UNAVAILABLE = "UNAVAILABLE"  # no usable reply: timeout, rate limit, failure, or no key
++ 
++ 
+ # ---- Facts and evidence: read from files, never changed ----
+  
+  
+@@ -50,19 +65,27 @@
+  
+ @dataclass(frozen=True)
+ class RejectedRecord:
++    """A quarantined record: where it came from, what it said, and why it was not used."""
++ 
+     source: str
+     row_number: int
++    category: RejectCategory
+     raw: str
+     reason: str
+  
+  
+ @dataclass
+-class CaseBatch:
+-    """What loading a case file gives back: the good rows and the rejected ones."""
++class Ledger:
++    """The books for one source file. Every row read is either accepted or quarantined."""
+  
+-    cases: list[SupportCase] = field(default_factory=list)
++    source: str
++    input_rows: int = 0
++    accepted: int = 0
+     rejected: list[RejectedRecord] = field(default_factory=list)
+  
++    def reject(self, row_number: int, category: RejectCategory, raw: str, reason: str) -> None:
++        self.rejected.append(RejectedRecord(self.source, row_number, category, raw, reason))
++ 
+  
+ # ---- Decisions made by Python rules ----
+  
+@@ -89,6 +112,7 @@
+ class InventoryInfo:
+     sku: str
+     units_on_hand: int
++    unit_value: Decimal
+  
+  
+ @dataclass(frozen=True)
+@@ -106,27 +130,27 @@
+  
+ @dataclass(frozen=True)
+ class CallMetadata:
+-    mode: str  # "recorded", "live" or "recorded_fallback"
++    mode: str  # "recorded", "live" or "cached"
+     model: str
+     prompt_version: str
+     input_tokens: int
+     output_tokens: int
+     finish_reason: str
+-    fallback_reason: str | None = None
++    detail: str | None = None
+  
+  
+ @dataclass(frozen=True)
+ class CaseSuggestion:
+-    """What a model suggests about one case. It must always name its case and its note."""
++    """What a model suggests about one case. It always names its case and its note."""
+  
+     case_id: str
+     source_note_id: str
++    status: SuggestionStatus = SuggestionStatus.OK
+     issue_family: IssueFamily | None = None
+     summary: str | None = None
+     evidence_span: str | None = None
+     review_required: bool = True
+-    abstained: bool = False
+-    abstain_reason: str | None = None
++    reason: str | None = None  # why the status is not OK, in one sentence
+     warnings: tuple[str, ...] = ()
+     meta: CallMetadata | None = None
+  
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/errors.py after/src/meridian_workbench/errors.py
+--- before/src/meridian_workbench/errors.py	1970-01-01 05:30:00.000000000 +0530
++++ after/src/meridian_workbench/errors.py	2026-10-28 19:10:22.000000000 +0530
+@@ -0,0 +1,29 @@
++"""The intake vocabulary. Every problem we expect has a name, and each name has one outcome."""
++ 
++ 
++class IntakeError(Exception):
++    """Base class for every problem we expect while taking in a batch."""
++ 
++ 
++class MalformedRecord(IntakeError):
++    """One row (or one note) cannot be read. Only that record is quarantined."""
++ 
++ 
++class RuleFailure(IntakeError):
++    """A readable record or the whole batch breaks a business rule."""
++ 
++ 
++class MissingSource(IntakeError):
++    """A required file is absent. The whole run stops before any work starts."""
++ 
++ 
++class UnreadableSource(IntakeError):
++    """A required file exists but cannot be read as a whole, for example broken JSON."""
++ 
++ 
++class QualityGateFailed(IntakeError):
++    """The batch is not good enough to use. The run halts before any model call."""
++ 
++ 
++class ReconciliationError(IntakeError):
++    """Accepted plus quarantined does not equal the input. This is a bug in our code."""
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/golden.py after/src/meridian_workbench/golden.py
+--- before/src/meridian_workbench/golden.py	2026-10-28 19:10:23.000000000 +0530
++++ after/src/meridian_workbench/golden.py	2026-10-28 19:10:21.000000000 +0530
+@@ -123,7 +123,7 @@
+                 "(rule closes this case, no model call)"
+                 if s is None
+                 else (
+-                    f"{s['issue_family'] or 'ABSTAINED'} | evidence: {s['evidence_span']!r} | "
++                    f"{s['status']} {s['issue_family'] or ''} | evidence: {s['evidence_span']!r} | "
+                     f"review_required={s['review_required']} | {s['meta']['mode']}"
+                 )
+             )
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/llm_client.py after/src/meridian_workbench/llm_client.py
+--- before/src/meridian_workbench/llm_client.py	2026-10-28 19:10:23.000000000 +0530
++++ after/src/meridian_workbench/llm_client.py	2026-10-28 19:10:22.000000000 +0530
+@@ -1,4 +1,4 @@
+-"""A thin model client. One call, bounded, with the facts we want to keep about it."""
++"""A thin model client. One call, one timeout, and every failure translated into a name we own."""
+  
+ from dataclasses import dataclass
+  
+@@ -19,11 +19,23 @@
+  
+  
+ class MissingApiKeyError(LlmError):
+-    pass
++    """No key is configured. Waiting will not add one, so this is never retried."""
++ 
++ 
++class LlmTimeout(LlmError):
++    """The service did not answer in time. Retryable."""
++ 
++ 
++class LlmRateLimited(LlmError):
++    """The service said 429 Too Many Requests. Retryable."""
++ 
++ 
++class LlmServerError(LlmError):
++    """The service answered with a 5xx error. Retryable."""
+  
+  
+ class LlmCallFailed(LlmError):
+-    pass
++    """Any other failure from the SDK. Not retried."""
+  
+  
+ def call_model(prompt: str, settings: Settings) -> LlmReply:
+@@ -33,7 +45,9 @@
+     import anthropic
+  
+     client = anthropic.Anthropic(
+-        api_key=settings.api_key, timeout=settings.timeout_seconds, max_retries=1
++        api_key=settings.api_key,
++        timeout=settings.timeout_seconds,
++        max_retries=0,  # our own retry in retry.py decides; the SDK must not add its own
+     )
+     try:
+         response = client.messages.create(
+@@ -41,7 +55,13 @@
+             max_tokens=settings.max_tokens,
+             messages=[{"role": "user", "content": prompt}],
+         )
+-    except anthropic.APIError as error:
++    except anthropic.APITimeoutError as error:  # first: a timeout is also an APIError
++        raise LlmTimeout("no reply within the timeout") from error
++    except anthropic.RateLimitError as error:
++        raise LlmRateLimited("rate limit reached (429)") from error
++    except anthropic.InternalServerError as error:
++        raise LlmServerError(f"server error ({error.status_code})") from error
++    except anthropic.APIError as error:  # last: the catch-all
+         # Name the kind of failure only. Never put the key or the request in the message.
+         raise LlmCallFailed(type(error).__name__) from error
+  
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/loaders.py after/src/meridian_workbench/loaders.py
+--- before/src/meridian_workbench/loaders.py	2026-10-28 19:10:22.000000000 +0530
++++ after/src/meridian_workbench/loaders.py	2026-10-28 19:10:20.000000000 +0530
+@@ -1,59 +1,129 @@
+-"""Read the raw files and turn each row into a typed record, or a rejected record."""
++"""Read each source file row by row. Every row is accepted, or quarantined with a reason."""
+  
+ import csv
+ import json
+-from datetime import date
+ from pathlib import Path
+  
+ from meridian_workbench.domain import (
+-    CaseBatch,
+     InventoryInfo,
+-    OrderStatus,
+-    RejectedRecord,
++    Ledger,
++    RejectCategory,
+     ShipmentInfo,
+     SourceEvidence,
+     SupportCase,
+ )
++from meridian_workbench.errors import MalformedRecord, UnreadableSource
++from meridian_workbench.parsing import (
++    parse_amount,
++    parse_date,
++    parse_status,
++    parse_units,
++    require_text,
++)
+  
+  
+-def load_cases(path: Path) -> CaseBatch:
+-    batch = CaseBatch()
++def read_csv_rows(path: Path) -> list[tuple[int, dict[str, str | None]]]:
++    """Each row with its line number. Line 1 is the header, so the first data row is line 2."""
+     with open(path, newline="", encoding="utf-8") as f:
+-        for row_number, row in enumerate(csv.DictReader(f), start=2):
+-            try:
+-                batch.cases.append(
+-                    SupportCase(
+-                        case_id=row["case_id"],
+-                        order_id=row["order_id"],
+-                        order_status=OrderStatus(row["order_status"]),
+-                        promised_date=date.fromisoformat(row["promised_date"]),
+-                    )
+-                )
+-            except ValueError as error:
+-                batch.rejected.append(
+-                    RejectedRecord(path.name, row_number, str(dict(row)), str(error))
+-                )
+-    return batch
+- 
++        return [(number, row) for number, row in enumerate(csv.DictReader(f), start=2)]
+  
+-def load_notes(path: Path) -> list[SourceEvidence]:
+-    with open(path, encoding="utf-8") as f:
+-        return [SourceEvidence(n["note_id"], n["case_id"], n["text"]) for n in json.load(f)]
+  
+- 
+-def load_shipments(path: Path) -> dict[str, ShipmentInfo]:
+-    with open(path, newline="", encoding="utf-8") as f:
+-        return {
+-            row["order_id"]: ShipmentInfo(
+-                row["carrier"], row["shipment_status"], date.fromisoformat(row["last_scan_date"])
++def load_cases(path: Path) -> tuple[list[tuple[int, SupportCase]], Ledger]:
++    ledger = Ledger(path.name)
++    rows: list[tuple[int, SupportCase]] = []
++    for row_number, row in read_csv_rows(path):
++        ledger.input_rows += 1
++        try:
++            case = SupportCase(
++                case_id=require_text(row.get("case_id"), "case_id"),
++                order_id=require_text(row.get("order_id"), "order_id"),
++                order_status=parse_status(row.get("order_status")),
++                promised_date=parse_date(row.get("promised_date")),
+             )
+-            for row in csv.DictReader(f)
+-        }
+- 
+- 
+-def load_inventory(path: Path) -> dict[str, InventoryInfo]:
+-    with open(path, newline="", encoding="utf-8") as f:
+-        return {
+-            row["order_id"]: InventoryInfo(row["sku"], int(row["units_on_hand"]))
+-            for row in csv.DictReader(f)
+-        }
++        except MalformedRecord as problem:
++            ledger.reject(row_number, RejectCategory.MALFORMED, str(dict(row)), str(problem))
++            continue
++        rows.append((row_number, case))
++    ledger.accepted = len(rows)
++    return rows, ledger
++ 
++ 
++def load_notes(path: Path) -> tuple[list[SourceEvidence], Ledger]:
++    """notes.json has no line numbers, so the row number is the item's position (1 is first)."""
++    ledger = Ledger(path.name)
++    notes: list[SourceEvidence] = []
++    try:
++        with open(path, encoding="utf-8") as f:
++            items = json.load(f)
++    except json.JSONDecodeError as error:
++        raise UnreadableSource(f"{path.name} is not valid JSON: {error}") from error
++    if not isinstance(items, list):
++        raise UnreadableSource(f"{path.name} must hold a list of notes")
++    for position, item in enumerate(items, start=1):
++        ledger.input_rows += 1
++        try:
++            if not isinstance(item, dict):
++                raise MalformedRecord("the note is not an object with fields")
++            note = SourceEvidence(
++                note_id=require_text(item.get("note_id"), "note_id"),
++                case_id=require_text(item.get("case_id"), "case_id"),
++                text=require_text(item.get("text"), "text"),
++            )
++        except MalformedRecord as problem:
++            ledger.reject(position, RejectCategory.MALFORMED, json.dumps(item), str(problem))
++            continue
++        notes.append(note)
++    ledger.accepted = len(notes)
++    return notes, ledger
++ 
++ 
++def load_shipments(path: Path) -> tuple[dict[str, ShipmentInfo], Ledger]:
++    ledger = Ledger(path.name)
++    shipments: dict[str, ShipmentInfo] = {}
++    for row_number, row in read_csv_rows(path):
++        ledger.input_rows += 1
++        try:
++            order_id = require_text(row.get("order_id"), "order_id")
++            if order_id in shipments:
++                ledger.reject(
++                    row_number,
++                    RejectCategory.DUPLICATE,
++                    str(dict(row)),
++                    f"order_id {order_id} already has a shipment; the first row is kept",
++                )
++                continue
++            shipments[order_id] = ShipmentInfo(
++                carrier=require_text(row.get("carrier"), "carrier"),
++                shipment_status=require_text(row.get("shipment_status"), "shipment_status"),
++                last_scan_date=parse_date(row.get("last_scan_date"), "last_scan_date"),
++            )
++        except MalformedRecord as problem:
++            ledger.reject(row_number, RejectCategory.MALFORMED, str(dict(row)), str(problem))
++    ledger.accepted = len(shipments)
++    return shipments, ledger
++ 
++ 
++def load_inventory(path: Path) -> tuple[dict[str, InventoryInfo], Ledger]:
++    ledger = Ledger(path.name)
++    inventory: dict[str, InventoryInfo] = {}
++    for row_number, row in read_csv_rows(path):
++        ledger.input_rows += 1
++        try:
++            order_id = require_text(row.get("order_id"), "order_id")
++            if order_id in inventory:
++                ledger.reject(
++                    row_number,
++                    RejectCategory.DUPLICATE,
++                    str(dict(row)),
++                    f"order_id {order_id} already has an inventory line; the first row is kept",
++                )
++                continue
++            inventory[order_id] = InventoryInfo(
++                sku=require_text(row.get("sku"), "sku"),
++                units_on_hand=parse_units(row.get("units_on_hand")),
++                unit_value=parse_amount(row.get("unit_value")),
++            )
++        except MalformedRecord as problem:
++            ledger.reject(row_number, RejectCategory.MALFORMED, str(dict(row)), str(problem))
++    ledger.accepted = len(inventory)
++    return inventory, ledger
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/parsing.py after/src/meridian_workbench/parsing.py
+--- before/src/meridian_workbench/parsing.py	1970-01-01 05:30:00.000000000 +0530
++++ after/src/meridian_workbench/parsing.py	2026-10-28 19:10:20.000000000 +0530
+@@ -0,0 +1,62 @@
++"""Defensive parsing: read a value only when its meaning is certain, otherwise refuse it clearly."""
++ 
++import re
++from datetime import date
++from decimal import Decimal, InvalidOperation
++ 
++from meridian_workbench.domain import OrderStatus
++from meridian_workbench.errors import MalformedRecord
++ 
++DATE_SHAPE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
++AMOUNT_SHAPE = re.compile(r"^\d+\.\d{2}$")  # money: digits, a dot, exactly two decimal places
++UNITS_SHAPE = re.compile(r"^\d+$")  # a whole, non-negative count
++ 
++ 
++def require_text(raw: str | None, field: str) -> str:
++    """A field must exist and not be blank. Surrounding spaces are removed."""
++    if raw is None or not raw.strip():
++        raise MalformedRecord(f"{field} is empty")
++    return raw.strip()
++ 
++ 
++def parse_date(raw: str | None, field: str = "promised_date") -> date:
++    """Only YYYY-MM-DD is accepted. 07/03/2025 could mean 7 March or 3 July, so we refuse it."""
++    text = require_text(raw, field)
++    if not DATE_SHAPE.match(text):
++        raise MalformedRecord(f"{field} {text!r} is not YYYY-MM-DD")
++    try:
++        return date.fromisoformat(text)
++    except ValueError as error:
++        raise MalformedRecord(f"{field} {text!r} is not a real calendar date") from error
++ 
++ 
++def parse_units(raw: str | None, field: str = "units_on_hand") -> int:
++    text = require_text(raw, field)
++    if not UNITS_SHAPE.match(text):
++        raise MalformedRecord(f"{field} {text!r} is not a whole number of zero or more")
++    return int(text)
++ 
++ 
++def parse_amount(raw: str | None, field: str = "unit_value") -> Decimal:
++    """Money in our data contract: a dot, exactly two decimal places, no thousands separator."""
++    text = require_text(raw, field)
++    if not AMOUNT_SHAPE.match(text):
++        raise MalformedRecord(
++            f"{field} {text!r} must look like 19.99 (two decimal places, no commas)"
++        )
++    try:
++        value = Decimal(text)
++    except InvalidOperation as error:  # the shape check should catch this first; belt and braces
++        raise MalformedRecord(f"{field} {text!r} is not a number") from error
++    if not value.is_finite():
++        raise MalformedRecord(f"{field} {text!r} is not a finite number")
++    return value
++ 
++ 
++def parse_status(raw: str | None, field: str = "order_status") -> OrderStatus:
++    text = require_text(raw, field)
++    try:
++        return OrderStatus(text)
++    except ValueError as error:
++        allowed = ", ".join(status.value for status in OrderStatus)
++        raise MalformedRecord(f"{field} {text!r} is not one of {allowed}") from error
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/pipeline.py after/src/meridian_workbench/pipeline.py
+--- before/src/meridian_workbench/pipeline.py	2026-10-28 19:10:24.000000000 +0530
++++ after/src/meridian_workbench/pipeline.py	2026-10-28 19:10:22.000000000 +0530
+@@ -1,62 +1,221 @@
+-"""Run the Meridian attention report from start to finish."""
++"""Run the attention report: intake gates, batch identity, rules, suggestions, rerun."""
+  
+ import json
++import sys
++from dataclasses import dataclass
++from pathlib import Path
+ from typing import Any
+  
+-from meridian_workbench.ai_client import get_suggestion
++from meridian_workbench.ai_client import Caller, get_suggestion
++from meridian_workbench.batch import (
++    batch_id_for,
++    log_attempt,
++    new_attempt_id,
++    write_json_atomic,
++    write_quarantine,
++)
+ from meridian_workbench.config import Settings, load_settings
+ from meridian_workbench.context import build_contexts
++from meridian_workbench.domain import (
++    InventoryInfo,
++    Ledger,
++    RejectedRecord,
++    ShipmentInfo,
++    SourceEvidence,
++    SupportCase,
++)
++from meridian_workbench.errors import IntakeError, ReconciliationError
++from meridian_workbench.llm_client import call_model
+ from meridian_workbench.loaders import load_cases, load_inventory, load_notes, load_shipments
++from meridian_workbench.reconcile import (
++    REQUIRED_SOURCES,
++    apply_duplicate_policy,
++    check_quality,
++    reconcile,
++    require_sources,
++)
+ from meridian_workbench.results import build_result, suggestion_to_dict
+  
+  
+-def run(settings: Settings) -> list[dict[str, Any]]:
+-    batch = load_cases(settings.data_dir / "cases.csv")
+-    notes = load_notes(settings.data_dir / "notes.json")
+-    contexts = build_contexts(
+-        batch.cases,
+-        notes,
+-        load_shipments(settings.data_dir / "shipments.csv"),
+-        load_inventory(settings.data_dir / "inventory.csv"),
++@dataclass(frozen=True)
++class Intake:
++    cases: list[SupportCase]
++    notes: list[SourceEvidence]
++    shipments: dict[str, ShipmentInfo]
++    inventory: dict[str, InventoryInfo]
++    ledgers: list[Ledger]
++    rejected: list[RejectedRecord]
++ 
++ 
++def run_intake(data_dir: Path, settings: Settings, out_dir: Path) -> Intake:
++    """Steps in order: files, rows, duplicates, quarantine, gate, books."""
++    require_sources(data_dir)
++    case_rows, cases_ledger = load_cases(data_dir / "cases.csv")
++    notes, notes_ledger = load_notes(data_dir / "notes.json")
++    shipments, shipments_ledger = load_shipments(data_dir / "shipments.csv")
++    inventory, inventory_ledger = load_inventory(data_dir / "inventory.csv")
++    case_rows = apply_duplicate_policy(case_rows, cases_ledger, settings.duplicate_policy)
++ 
++    ledgers = [cases_ledger, notes_ledger, shipments_ledger, inventory_ledger]
++    rejected = [record for ledger in ledgers for record in ledger.rejected]
++    write_quarantine(
++        rejected, out_dir / "quarantine.csv"
++    )  # written before any gate can halt the run
++    for ledger in ledgers:
++        check_quality(ledger, settings.max_quarantine_share)
++        reconcile(ledger)
++    return Intake(
++        cases=[case for _, case in case_rows],
++        notes=notes,
++        shipments=shipments,
++        inventory=inventory,
++        ledgers=ledgers,
++        rejected=rejected,
+     )
+  
+-    for rejected in batch.rejected:
+-        print(f"REJECTED row {rejected.row_number} of {rejected.source}: {rejected.reason}")
+  
++def process_cases(intake: Intake, settings: Settings, caller: Caller) -> list[dict[str, Any]]:
++    contexts = build_contexts(intake.cases, intake.notes, intake.shipments, intake.inventory)
+     results = []
+     for context in contexts:
+         note = context.notes[-1] if context.notes else None  # the latest note wins
+         result = build_result(context.case, note, settings.batch_date)
+         if result["needs_interpretation"] and note is not None:
+-            suggestion = get_suggestion(context.case.case_id, note, settings)
++            suggestion = get_suggestion(context.case.case_id, note, settings, caller=caller)
+             result["suggestion"] = suggestion_to_dict(suggestion)
+         results.append(result)
+- 
+-    assert len(results) == len(batch.cases)
+-    assert len({r["case_id"] for r in results}) == len(results)
+     return results
+  
+  
+-def main() -> None:
+-    settings = load_settings()
+-    results = run(settings)
+- 
+-    settings.output_dir.mkdir(exist_ok=True)
+-    with open(settings.output_dir / "attention_report.json", "w", encoding="utf-8") as f:
+-        json.dump(results, f, indent=2)
+- 
+-    flagged_count = 0
++def build_summary(
++    batch_id: str,
++    attempt_id: str,
++    settings: Settings,
++    intake: Intake,
++    results: list[dict[str, Any]],
++) -> dict[str, Any]:
++    flagged = []
+     for r in results:
+-        if r["needs_attention"]:
+-            flagged_count += 1
+-            print(f"{r['case_id']}: {r['reason']} ({r['days_overdue']} days)")
+-            s = r["suggestion"]
+-            if s:
+-                label = s["issue_family"] or "ABSTAINED"
+-                mode = s["meta"]["mode"]
+-                print(f"    suggestion ({mode}): {label}, review_required={s['review_required']}")
+-    print(f"{flagged_count} of {len(results)} cases need attention")
++        if not r["needs_attention"]:
++            continue
++        s = r["suggestion"]
++        flagged.append(
++            {
++                "case_id": r["case_id"],
++                "reason": r["reason"],
++                "days_overdue": r["days_overdue"],
++                "suggestion": None
++                if s is None
++                else {
++                    "status": s["status"],
++                    "mode": s["meta"]["mode"],
++                    "issue_family": s["issue_family"],
++                    "review_required": s["review_required"],
++                    "reason": s["reason"],
++                },
++            }
++        )
++    return {
++        "batch_id": batch_id,
++        "batch_date": settings.batch_date.isoformat(),
++        "attempt_id": attempt_id,
++        "duplicate_policy": settings.duplicate_policy,
++        "files": [
++            {
++                "source": ledger.source,
++                "input_rows": ledger.input_rows,
++                "accepted": ledger.accepted,
++                "quarantined": len(ledger.rejected),
++            }
++            for ledger in intake.ledgers
++        ],
++        "cases_total": len(results),
++        "flagged": flagged,
++        "rejected": [
++            {
++                "source": record.source,
++                "row_number": record.row_number,
++                "category": str(record.category),
++                "reason": record.reason,
++            }
++            for record in intake.rejected
++        ],
++    }
++ 
++ 
++def run_batch(data_dir: Path, settings: Settings, caller: Caller = call_model) -> dict[str, Any]:
++    """Run one batch, or return the finished result of an earlier attempt at the same batch."""
++    require_sources(data_dir)
++    files = [data_dir / name for name in REQUIRED_SOURCES]
++    rules = {
++        "ai_mode": settings.ai_mode,
++        "model": settings.model,
++        "prompt_version": settings.prompt_version,
++        "duplicate_policy": settings.duplicate_policy,
++        "max_quarantine_share": settings.max_quarantine_share,
++    }
++    batch_id = batch_id_for(files, settings.batch_date, json.dumps(rules, sort_keys=True))
++    out_dir = settings.output_dir / "batches" / batch_id
++    attempt = new_attempt_id()
++    summary_path = out_dir / "summary.json"
++ 
++    if (
++        summary_path.is_file()
++    ):  # the marker is written last, so its presence means the batch finished
++        log_attempt(out_dir, attempt, "reused finished batch; no work repeated")
++        return json.loads(summary_path.read_text(encoding="utf-8"))
++ 
++    out_dir.mkdir(parents=True, exist_ok=True)
++    try:
++        intake = run_intake(data_dir, settings, out_dir)
++        results = process_cases(intake, settings, caller)
++        if len(results) != intake.ledgers[0].accepted:
++            raise ReconciliationError(
++                f"{len(results)} results for {intake.ledgers[0].accepted} accepted cases"
++            )
++    except IntakeError as problem:
++        log_attempt(out_dir, attempt, f"halted: {problem}")
++        raise
++ 
++    write_json_atomic(out_dir / "attention_report.json", results)
++    summary = build_summary(batch_id, attempt, settings, intake, results)
++    write_json_atomic(summary_path, summary)
++    log_attempt(out_dir, attempt, "completed")
++    return summary
+  
+  
+-if __name__ == "__main__":
+-    main()
++def main() -> int:
++    settings = load_settings()
++    try:
++        summary = run_batch(settings.data_dir, settings)
++    except IntakeError as problem:
++        print(f"HALTED: {problem}", file=sys.stderr)
++        return 2
++ 
++    for record in summary["rejected"]:
++        print(
++            f"REJECTED {record['source']} row {record['row_number']} "
++            f"({record['category']}): {record['reason']}"
++        )
++    for ledger in summary["files"]:
++        balanced = ledger["accepted"] + ledger["quarantined"] == ledger["input_rows"]
++        print(
++            f"{ledger['source']}: input {ledger['input_rows']}, accepted {ledger['accepted']}, "
++            f"quarantined {ledger['quarantined']}, reconciled {'yes' if balanced else 'NO'}"
++        )
++    for item in summary["flagged"]:
++        print(f"{item['case_id']}: {item['reason']} ({item['days_overdue']} days)")
++        s = item["suggestion"]
++        if s is None:
++            continue
++        if s["status"] == "OK":
++            print(
++                f"    suggestion ({s['mode']}): {s['issue_family']}, "
++                f"review_required={s['review_required']}"
++            )
++        else:
++            print(f"    suggestion ({s['mode']}): {s['status']} - {s['reason']}")
++    flagged = len(summary["flagged"])
++    print(f"{flagged} of {summary['cases_total']} cases need attention")
++    print(f"batch {summary['batch_id']} (attempt {summary['attempt_id']})")
++    return 0
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/reconcile.py after/src/meridian_workbench/reconcile.py
+--- before/src/meridian_workbench/reconcile.py	1970-01-01 05:30:00.000000000 +0530
++++ after/src/meridian_workbench/reconcile.py	2026-10-28 19:10:22.000000000 +0530
+@@ -0,0 +1,76 @@
++"""Batch-level checks: required files, duplicate policy, the quality gate and the books."""
++ 
++from pathlib import Path
++ 
++from meridian_workbench.domain import Ledger, RejectCategory, SupportCase
++from meridian_workbench.errors import (
++    MissingSource,
++    QualityGateFailed,
++    ReconciliationError,
++    RuleFailure,
++)
++ 
++REQUIRED_SOURCES = ("cases.csv", "notes.json", "shipments.csv", "inventory.csv")
++DUPLICATE_POLICIES = ("first_wins", "reject_batch")
++ 
++ 
++def require_sources(data_dir: Path) -> None:
++    """Check every required file before reading any of them. Name all the missing ones at once."""
++    missing = [name for name in REQUIRED_SOURCES if not (data_dir / name).is_file()]
++    if missing:
++        raise MissingSource(f"required source(s) missing from {data_dir}: {', '.join(missing)}")
++ 
++ 
++def apply_duplicate_policy(
++    rows: list[tuple[int, SupportCase]], ledger: Ledger, policy: str
++) -> list[tuple[int, SupportCase]]:
++    """A case_id must appear once. first_wins keeps the first row; reject_batch stops the batch."""
++    if policy not in DUPLICATE_POLICIES:
++        raise ValueError(f"unknown duplicate policy {policy!r}; use one of {DUPLICATE_POLICIES}")
++    first_row: dict[str, int] = {}
++    kept: list[tuple[int, SupportCase]] = []
++    for row_number, case in rows:
++        if case.case_id in first_row:
++            if policy == "reject_batch":
++                raise RuleFailure(
++                    f"case_id {case.case_id} appears on rows {first_row[case.case_id]} "
++                    f"and {row_number}; duplicate_policy is reject_batch"
++                )
++            ledger.reject(
++                row_number,
++                RejectCategory.DUPLICATE,
++                f"{case.case_id},{case.order_id}",
++                f"case_id {case.case_id} already appears on row {first_row[case.case_id]}; "
++                "first_wins keeps that row",
++            )
++            continue
++        first_row[case.case_id] = row_number
++        kept.append((row_number, case))
++    ledger.accepted = len(kept)
++    return kept
++ 
++ 
++def check_quality(ledger: Ledger, max_share: float) -> None:
++    """Halt when too many rows were quarantined, or when the file is empty."""
++    if ledger.input_rows == 0:
++        raise QualityGateFailed(
++            f"{ledger.source} has no data rows; an empty file is a problem, not a quiet success"
++        )
++    quarantined = len(ledger.rejected)
++    share = quarantined / ledger.input_rows
++    if share > max_share:
++        raise QualityGateFailed(
++            f"{ledger.source}: {quarantined} of {ledger.input_rows} rows ({share:.0%}) were "
++            f"quarantined; the limit is {max_share:.0%}"
++        )
++ 
++ 
++def reconcile(ledger: Ledger) -> None:
++    """Every input row is accepted or quarantined. Anything else is a bug, and we say so."""
++    quarantined = len(ledger.rejected)
++    if ledger.accepted + quarantined != ledger.input_rows:
++        difference = ledger.input_rows - ledger.accepted - quarantined
++        raise ReconciliationError(
++            f"{ledger.source}: {ledger.input_rows} rows in, {ledger.accepted} accepted and "
++            f"{quarantined} quarantined; difference of {difference} (not zero)"
++        )
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/results.py after/src/meridian_workbench/results.py
+--- before/src/meridian_workbench/results.py	2026-10-28 19:10:22.000000000 +0530
++++ after/src/meridian_workbench/results.py	2026-10-28 19:10:20.000000000 +0530
+@@ -41,6 +41,7 @@
+ def suggestion_to_dict(suggestion: CaseSuggestion) -> dict[str, Any]:
+     """Plain data for the JSON report. Enums become their text values."""
+     data = asdict(suggestion)
++    data["status"] = str(suggestion.status)
+     data["issue_family"] = str(suggestion.issue_family) if suggestion.issue_family else None
+     data["warnings"] = list(suggestion.warnings)
+     return data
+diff -ruN -x '*.pyc' -x __pycache__ before/src/meridian_workbench/retry.py after/src/meridian_workbench/retry.py
+--- before/src/meridian_workbench/retry.py	1970-01-01 05:30:00.000000000 +0530
++++ after/src/meridian_workbench/retry.py	2026-10-28 19:10:21.000000000 +0530
+@@ -0,0 +1,40 @@
++"""Bounded retry with exponential backoff and full jitter. Only transient failures are retried."""
++ 
++import random
++import time
++from collections.abc import Callable
++from typing import TypeVar
++ 
++from meridian_workbench.llm_client import LlmRateLimited, LlmServerError, LlmTimeout
++ 
++T = TypeVar("T")
++RETRYABLE: tuple[type[Exception], ...] = (LlmTimeout, LlmRateLimited, LlmServerError)
++ 
++ 
++def backoff_delay(attempt: int, base: float, cap: float, rng: random.Random) -> float:
++    """A random wait from 0 up to the current ceiling. The ceiling doubles, up to the cap."""
++    ceiling = min(cap, base * 2 ** (attempt - 1))
++    return rng.uniform(0, ceiling)
++ 
++ 
++def call_with_retry(
++    operation: Callable[[], T],
++    *,
++    max_attempts: int,
++    base: float,
++    cap: float,
++    rng: random.Random,
++    sleep: Callable[[float], None] = time.sleep,
++) -> T:
++    if max_attempts < 1:
++        raise ValueError("max_attempts must be at least 1")
++    for attempt in range(1, max_attempts + 1):
++        try:
++            return operation()
++        except RETRYABLE as error:
++            if attempt == max_attempts:
++                raise  # out of attempts: pass the original error up, with its traceback
++            delay = backoff_delay(attempt, base, cap, rng)
++            print(f"attempt {attempt} failed ({type(error).__name__}); waiting {delay:.2f}s")
++            sleep(delay)
++    raise AssertionError("unreachable: the loop always returns or raises")
+diff -ruN -x '*.pyc' -x __pycache__ before/tests/test_ai_client.py after/tests/test_ai_client.py
+--- before/tests/test_ai_client.py	2026-10-28 19:10:19.000000000 +0530
++++ after/tests/test_ai_client.py	2026-10-28 19:10:16.000000000 +0530
+@@ -1,90 +1,144 @@
+-"""The suggestion step: metadata, fallback, grounding and the case_id / source_note_id rule."""
++"""The suggestion step: statuses, metadata, grounding, cache and ID rules."""
+  
+ import json
+-from dataclasses import replace
++from collections.abc import Callable
+ from pathlib import Path
+  
+ from meridian_workbench.ai_client import Caller, build_prompt, get_suggestion
+ from meridian_workbench.config import Settings, load_settings
+-from meridian_workbench.domain import IssueFamily, SourceEvidence
++from meridian_workbench.domain import IssueFamily, SourceEvidence, SuggestionStatus
+ from meridian_workbench.llm_client import LlmCallFailed, LlmReply, MissingApiKeyError
+  
+ NOTE = SourceEvidence("N-01", "C-1002", "Held at depot awaiting address confirmation")
+  
+  
+-def live_settings() -> Settings:
+-    return replace(load_settings(), ai_mode="live", api_key="test-key-not-real")
+- 
+- 
+-def fake_reply(text: str) -> Caller:
++def fake_reply(text: str, calls: list[str] | None = None) -> Caller:
+     def caller(prompt: str, settings: Settings) -> LlmReply:
+         assert NOTE.text in prompt
++        if calls is not None:
++            calls.append(prompt)
+         return LlmReply(text, "test-model", 120, 40, "end_turn")
+  
+     return caller
+  
+  
++GOOD_REPLY = json.dumps(
++    {
++        "issue_family": "ADDRESS_CONFIRMATION",
++        "summary": "Held until the address is confirmed.",
++        "evidence_span": "awaiting address confirmation",
++        "review_required": False,
++    }
++)
++ 
++ 
+ def test_recorded_mode_needs_no_key() -> None:
+     suggestion = get_suggestion("C-1002", NOTE, load_settings())
+     assert suggestion.issue_family is IssueFamily.ADDRESS_CONFIRMATION
+     assert suggestion.meta is not None and suggestion.meta.mode == "recorded"
+  
+  
+-def test_live_call_keeps_model_prompt_version_usage_and_finish_status() -> None:
+-    reply = json.dumps(
+-        {
+-            "issue_family": "ADDRESS_CONFIRMATION",
+-            "summary": "Held until the address is confirmed.",
+-            "evidence_span": "awaiting address confirmation",
+-            "review_required": False,
+-        }
++def test_live_call_keeps_model_prompt_version_usage_and_finish_status(
++    settings_for: Callable[..., Settings],
++) -> None:
++    suggestion = get_suggestion(
++        "C-1002", NOTE, settings_for(), fake_reply(GOOD_REPLY), sleep=lambda s: None
+     )
+-    suggestion = get_suggestion("C-1002", NOTE, live_settings(), fake_reply(reply))
+     meta = suggestion.meta
+     assert meta is not None
+     assert (meta.mode, meta.model, meta.prompt_version) == ("live", "test-model", "v1")
+     assert (meta.input_tokens, meta.output_tokens, meta.finish_reason) == (120, 40, "end_turn")
++    assert suggestion.status is SuggestionStatus.OK
+     assert suggestion.review_required is False
+  
+  
+-def test_missing_key_falls_back_to_recorded() -> None:
++def test_missing_key_is_unavailable_not_invented(settings_for: Callable[..., Settings]) -> None:
+     def no_key(prompt: str, settings: Settings) -> LlmReply:
+         raise MissingApiKeyError("MERIDIAN_LLM_API_KEY is not set")
+  
+-    suggestion = get_suggestion("C-1002", NOTE, live_settings(), no_key)
+-    assert suggestion.meta is not None
+-    assert suggestion.meta.mode == "recorded_fallback"
+-    assert suggestion.meta.fallback_reason == "MERIDIAN_LLM_API_KEY is not set"
+-    assert suggestion.issue_family is IssueFamily.ADDRESS_CONFIRMATION
++    suggestion = get_suggestion("C-1002", NOTE, settings_for(), no_key, sleep=lambda s: None)
++    assert suggestion.status is SuggestionStatus.UNAVAILABLE
++    assert suggestion.issue_family is None
++    assert suggestion.reason == "MERIDIAN_LLM_API_KEY is not set"
+  
+  
+-def test_failed_call_falls_back_to_recorded() -> None:
++def test_failed_call_is_unavailable_and_never_uses_recorded_answers(
++    settings_for: Callable[..., Settings],
++) -> None:
+     def failing(prompt: str, settings: Settings) -> LlmReply:
+-        raise LlmCallFailed("APITimeoutError")
++        raise LlmCallFailed("APIConnectionError")
+  
+-    suggestion = get_suggestion("C-1002", NOTE, live_settings(), failing)
+-    assert suggestion.meta is not None and suggestion.meta.mode == "recorded_fallback"
++    suggestion = get_suggestion("C-1002", NOTE, settings_for(), failing, sleep=lambda s: None)
++    assert suggestion.status is SuggestionStatus.UNAVAILABLE
++    assert suggestion.issue_family is None
++    assert suggestion.meta is not None and suggestion.meta.mode == "live"
+  
+  
+-def test_ungrounded_evidence_forces_review() -> None:
++def test_ungrounded_evidence_forces_review(settings_for: Callable[..., Settings]) -> None:
+     reply = json.dumps(
+         {
+             "issue_family": "ADDRESS_CONFIRMATION",
++            "summary": "Held at depot.",
+             "evidence_span": "made up quote",
+             "review_required": False,
+         }
+     )
+-    suggestion = get_suggestion("C-1002", NOTE, live_settings(), fake_reply(reply))
++    suggestion = get_suggestion(
++        "C-1002", NOTE, settings_for(), fake_reply(reply), sleep=lambda s: None
++    )
++    assert suggestion.status is SuggestionStatus.OK
+     assert suggestion.review_required is True
+     assert "evidence_span does not appear in the note" in suggestion.warnings
+  
+  
+-def test_unreadable_reply_becomes_an_abstention_that_keeps_its_ids() -> None:
+-    suggestion = get_suggestion("C-1002", NOTE, live_settings(), fake_reply("Sorry, I cannot help"))
+-    assert suggestion.abstained
++def test_unreadable_reply_is_invalid_and_keeps_its_ids(
++    settings_for: Callable[..., Settings],
++) -> None:
++    suggestion = get_suggestion(
++        "C-1002", NOTE, settings_for(), fake_reply("Sorry, I cannot help"), sleep=lambda s: None
++    )
++    assert suggestion.status is SuggestionStatus.INVALID_REPLY
+     assert (suggestion.case_id, suggestion.source_note_id) == ("C-1002", "N-01")
+  
+  
++def test_unknown_family_is_invalid_not_guessed(settings_for: Callable[..., Settings]) -> None:
++    reply = json.dumps({"issue_family": "WEATHER", "evidence_span": None})
++    suggestion = get_suggestion(
++        "C-1002", NOTE, settings_for(), fake_reply(reply), sleep=lambda s: None
++    )
++    assert suggestion.status is SuggestionStatus.INVALID_REPLY
++    assert suggestion.issue_family is None
++ 
++ 
++def test_successful_reply_is_reused_from_the_cache(settings_for: Callable[..., Settings]) -> None:
++    calls: list[str] = []
++    settings = settings_for()
++    first = get_suggestion(
++        "C-1002", NOTE, settings, fake_reply(GOOD_REPLY, calls), sleep=lambda s: None
++    )
++    second = get_suggestion(
++        "C-1002", NOTE, settings, fake_reply(GOOD_REPLY, calls), sleep=lambda s: None
++    )
++    assert len(calls) == 1  # the second answer came from the cache, not from the model
++    assert second.status is SuggestionStatus.OK
++    assert second.issue_family == first.issue_family
++    assert second.meta is not None and second.meta.mode == "cached"
++ 
++ 
++def test_failures_are_never_cached(settings_for: Callable[..., Settings]) -> None:
++    calls: list[str] = []
++    settings = settings_for()
++ 
++    def failing(prompt: str, s: Settings) -> LlmReply:
++        calls.append(prompt)
++        raise LlmCallFailed("APIConnectionError")
++ 
++    get_suggestion("C-1002", NOTE, settings, failing, sleep=lambda s: None)
++    get_suggestion("C-1002", NOTE, settings, failing, sleep=lambda s: None)
++    assert len(calls) == 2
++    assert not settings.cache_path.exists()
++ 
++ 
+ def test_every_recorded_suggestion_keeps_case_id_and_source_note_id() -> None:
+     settings = load_settings()
+     recorded = json.loads((settings.fixtures_dir / "recorded_responses.json").read_text("utf-8"))
+@@ -101,8 +155,8 @@
+     assert "Do not guess" in prompt
+  
+  
+-def test_settings_repr_hides_the_key() -> None:
+-    assert "test-key-not-real" not in repr(live_settings())
++def test_settings_repr_hides_the_key(settings_for: Callable[..., Settings]) -> None:
++    assert "test-key-not-real" not in repr(settings_for())
+  
+  
+ def test_rules_file_stays_free_of_ai_code() -> None:
+diff -ruN -x '*.pyc' -x __pycache__ before/tests/test_domain.py after/tests/test_domain.py
+--- before/tests/test_domain.py	2026-10-28 19:10:19.000000000 +0530
++++ after/tests/test_domain.py	2026-10-28 19:10:16.000000000 +0530
+@@ -6,9 +6,10 @@
+ import pytest
+  
+ from meridian_workbench.domain import (
+-    CaseBatch,
+     CaseSuggestion,
++    Ledger,
+     OrderStatus,
++    RejectCategory,
+     SupportCase,
+ )
+  
+@@ -28,10 +29,10 @@
+         OrderStatus("RETURNED")
+  
+  
+-def test_batches_do_not_share_their_lists() -> None:
+-    first, second = CaseBatch(), CaseBatch()
+-    first.cases.append(make_case())
+-    assert second.cases == []
++def test_ledgers_do_not_share_their_lists() -> None:
++    first, second = Ledger("a.csv"), Ledger("b.csv")
++    first.reject(2, RejectCategory.MALFORMED, "raw", "reason")
++    assert second.rejected == []
+  
+  
+ def test_suggestion_must_keep_case_id_and_source_note_id() -> None:
+diff -ruN -x '*.pyc' -x __pycache__ before/tests/test_failures.py after/tests/test_failures.py
+--- before/tests/test_failures.py	2026-10-28 19:10:19.000000000 +0530
++++ after/tests/test_failures.py	2026-10-28 19:10:16.000000000 +0530
+@@ -1,56 +1,126 @@
+-"""Failure-path checks. Starter stubs: each one fails until you fill in its body in Section 8.
++"""The failure paths. Each test names one promise we made to the business."""
+  
+-Read the docstring of each test. It says which promise the test protects and what to write.
+-Do not weaken an assertion to make a test pass. Make the program meet the promise.
+-"""
+- 
+-import pytest  # noqa: F401  (you will use pytest.raises in Section 8)
+- 
+- 
+-def test_malformed_date_is_quarantined(tmp_path):
+-    """Promise: a date we cannot read is never guessed. Write a one-row cases.csv whose promised_date is 07/03/2025.
+-    Load it with load_cases(). Assert: no accepted case, one rejected record, category MALFORMED, row_number 2,
+-    and the raw text still contains 07/03/2025."""
+-    assert False, "TODO (Section 8): write test_malformed_date_is_quarantined"
+- 
+- 
+-def test_impossible_date_is_quarantined(tmp_path):
+-    """Promise: 2025-02-30 looks like a date but is not one. Same pattern as the test above, with 2025-02-30.
+-    Assert that the reason says 'not a real calendar date'."""
+-    assert False, "TODO (Section 8): write test_impossible_date_is_quarantined"
+- 
+- 
+-def test_duplicate_case_id_first_wins(tmp_path):
+-    """Promise: a repeated case_id follows the declared policy, and the second row stays in the books.
+-    Write two rows with the same case_id. Apply apply_duplicate_policy with 'first_wins'.
+-    Assert: the first order_id is kept, ledger.accepted is 1, and the second row is a DUPLICATE on row 3."""
+-    assert False, "TODO (Section 8): write test_duplicate_case_id_first_wins"
+- 
+- 
+-def test_missing_required_source_stops_run(tmp_path):
+-    """Promise: a missing file stops the run before any work. Create a folder with only cases.csv.
+-    Assert that require_sources() raises MissingSource and the message names notes.json."""
+-    assert False, "TODO (Section 8): write test_missing_required_source_stops_run"
+- 
+- 
+-def test_reconciliation_balances():
+-    """Promise: every input row is accepted or quarantined. Load fixtures/cases_failures.csv,
+-    apply first_wins, then assert input_rows 8, accepted 4, quarantined 4. reconcile() must not raise.
+-    Then set accepted to 3 and assert reconcile() raises ReconciliationError."""
+-    assert False, "TODO (Section 8): write test_reconciliation_balances"
+- 
+- 
+-def test_timeout_is_unavailable_and_keeps_facts(settings_for):
+-    """Promise: a timeout never becomes an invented suggestion, and the facts stay.
+-    Use a fake caller that always raises LlmTimeout, and sleep=lambda s: None.
+-    Assert: status UNAVAILABLE, issue_family None, the caller was called settings.retry_max_attempts times,
+-    and build_result() still shows the order_status and promised_date unchanged."""
+-    assert False, "TODO (Section 8): write test_timeout_is_unavailable_and_keeps_facts"
+- 
+- 
+-def test_rate_limit_is_retried_then_unavailable(settings_for):
+-    """Promise: a rate limit gets bounded retries, then an honest UNAVAILABLE.
+-    Use a fake caller that always raises LlmRateLimited, and sleep=waits.append.
+-    Assert: UNAVAILABLE, the reason mentions 'rate limited', the caller ran 3 times,
+-    and there were exactly 2 waits, each no longer than retry_cap_seconds."""
+-    assert False, "TODO (Section 8): write test_rate_limit_is_retried_then_unavailable"
++from collections.abc import Callable
++from datetime import date
++from pathlib import Path
++ 
++import pytest
++ 
++from meridian_workbench.ai_client import get_suggestion
++from meridian_workbench.config import Settings, load_settings
++from meridian_workbench.domain import (
++    OrderStatus,
++    RejectCategory,
++    SourceEvidence,
++    SuggestionStatus,
++    SupportCase,
++)
++from meridian_workbench.errors import MissingSource, ReconciliationError
++from meridian_workbench.llm_client import LlmRateLimited, LlmReply, LlmTimeout
++from meridian_workbench.loaders import load_cases
++from meridian_workbench.reconcile import apply_duplicate_policy, reconcile, require_sources
++from meridian_workbench.results import build_result, suggestion_to_dict
++ 
++NOTE = SourceEvidence("N-01", "C-1002", "Held at depot awaiting address confirmation")
++ 
++ 
++def write_cases(path: Path, *rows: str) -> Path:
++    path.write_text(
++        "case_id,order_id,order_status,promised_date\n" + "\n".join(rows) + "\n", encoding="utf-8"
++    )
++    return path
++ 
++ 
++def test_malformed_date_is_quarantined(tmp_path: Path) -> None:
++    path = write_cases(tmp_path / "cases.csv", "C-1,O-1,SHIPPED,07/03/2025")
++    rows, ledger = load_cases(path)
++    assert rows == []
++    assert ledger.accepted == 0
++    assert len(ledger.rejected) == 1
++    rejected = ledger.rejected[0]
++    assert rejected.category is RejectCategory.MALFORMED
++    assert rejected.row_number == 2
++    assert "07/03/2025" in rejected.raw
++    assert "YYYY-MM-DD" in rejected.reason
++ 
++ 
++def test_impossible_date_is_quarantined(tmp_path: Path) -> None:
++    path = write_cases(tmp_path / "cases.csv", "C-1,O-1,SHIPPED,2025-02-30")
++    rows, ledger = load_cases(path)
++    assert rows == []
++    assert ledger.rejected[0].category is RejectCategory.MALFORMED
++    assert "not a real calendar date" in ledger.rejected[0].reason
++ 
++ 
++def test_duplicate_case_id_first_wins(tmp_path: Path) -> None:
++    path = write_cases(
++        tmp_path / "cases.csv",
++        "C-1,O-1,PROCESSING,2025-03-09",
++        "C-1,O-2,SHIPPED,2025-03-06",
++    )
++    rows, ledger = load_cases(path)
++    kept = apply_duplicate_policy(rows, ledger, "first_wins")
++    assert [case.order_id for _, case in kept] == ["O-1"]
++    assert ledger.accepted == 1
++    assert ledger.rejected[0].category is RejectCategory.DUPLICATE
++    assert ledger.rejected[0].row_number == 3
++ 
++ 
++def test_missing_required_source_stops_run(tmp_path: Path) -> None:
++    (tmp_path / "cases.csv").write_text("case_id\n", encoding="utf-8")
++    with pytest.raises(MissingSource, match="notes.json"):
++        require_sources(tmp_path)
++ 
++ 
++def test_reconciliation_balances() -> None:
++    settings = load_settings()
++    rows, ledger = load_cases(settings.fixtures_dir / "cases_failures.csv")
++    apply_duplicate_policy(rows, ledger, "first_wins")
++    assert ledger.input_rows == 8
++    assert ledger.accepted == 4
++    assert len(ledger.rejected) == 4
++    reconcile(ledger)  # 4 accepted + 4 quarantined = 8 input rows: no error
++    ledger.accepted = 3  # now one row is unaccounted for
++    with pytest.raises(ReconciliationError, match="difference of 1"):
++        reconcile(ledger)
++ 
++ 
++def test_timeout_is_unavailable_and_keeps_facts(settings_for: Callable[..., Settings]) -> None:
++    calls: list[str] = []
++ 
++    def always_times_out(prompt: str, settings: Settings) -> LlmReply:
++        calls.append(prompt)
++        raise LlmTimeout("no reply within the timeout")
++ 
++    settings = settings_for()
++    case = SupportCase("C-1002", "O-5002", OrderStatus.SHIPPED, date(2025, 3, 7))
++    suggestion = get_suggestion(
++        "C-1002", NOTE, settings, caller=always_times_out, sleep=lambda s: None
++    )
++    assert suggestion.status is SuggestionStatus.UNAVAILABLE
++    assert suggestion.issue_family is None
++    assert suggestion.summary is None
++    assert len(calls) == settings.retry_max_attempts
++ 
++    row = build_result(case, NOTE, settings.batch_date)
++    row["suggestion"] = suggestion_to_dict(suggestion)
++    assert row["order_status"] == "SHIPPED"
++    assert row["promised_date"] == "2025-03-07"
++    assert row["suggestion"]["status"] == "UNAVAILABLE"
++ 
++ 
++def test_rate_limit_is_retried_then_unavailable(settings_for: Callable[..., Settings]) -> None:
++    calls: list[str] = []
++    waits: list[float] = []
++ 
++    def limited(prompt: str, settings: Settings) -> LlmReply:
++        calls.append(prompt)
++        raise LlmRateLimited("rate limit reached (429)")
++ 
++    settings = settings_for()
++    suggestion = get_suggestion("C-1002", NOTE, settings, caller=limited, sleep=waits.append)
++    assert suggestion.status is SuggestionStatus.UNAVAILABLE
++    assert "rate limited" in (suggestion.reason or "")
++    assert len(calls) == settings.retry_max_attempts == 3
++    assert len(waits) == 2  # no wait after the last attempt
++    assert all(0 <= wait <= settings.retry_cap_seconds for wait in waits)
+diff -ruN -x '*.pyc' -x __pycache__ before/tests/test_golden.py after/tests/test_golden.py
+--- before/tests/test_golden.py	2026-10-28 19:10:20.000000000 +0530
++++ after/tests/test_golden.py	2026-10-28 19:10:16.000000000 +0530
+@@ -2,15 +2,17 @@
+  
+ from pathlib import Path
+  
++from meridian_workbench.ai_client import get_suggestion
+ from meridian_workbench.config import load_settings
++from meridian_workbench.domain import SuggestionStatus
+ from meridian_workbench.golden import load_golden, summarize_scores
+  
+ REQUIRED_KINDS = {"CLEAR", "RULE_ONLY", "AMBIGUOUS", "INSUFFICIENT", "ABSTAIN"}
+  
+  
+-def test_golden_set_has_8_to_10_items_and_every_kind() -> None:
++def test_golden_set_has_twelve_items_and_every_kind() -> None:
+     items = load_golden(load_settings().golden_dir / "golden_set.json")
+-    assert 8 <= len(items) <= 10
++    assert len(items) == 12
+     assert {item.kind for item in items} == REQUIRED_KINDS
+     assert len({item.golden_id for item in items}) == len(items)
+  
+@@ -29,6 +31,14 @@
+             assert item.acceptable_issue_families == ()
+  
+  
++def test_insufficient_note_abstains_in_recorded_mode() -> None:
++    settings = load_settings()
++    items = load_golden(settings.golden_dir / "golden_set.json")
++    item = next(i for i in items if i.golden_id == "G-12")
++    suggestion = get_suggestion(item.case.case_id, item.note, settings)
++    assert suggestion.status is SuggestionStatus.ABSTAINED
++ 
++ 
+ def test_score_summary_counts_hand_marks(tmp_path: Path) -> None:
+     sheet = tmp_path / "scores.csv"
+     sheet.write_text(
+diff -ruN -x '*.pyc' -x __pycache__ before/tests/test_loading.py after/tests/test_loading.py
+--- before/tests/test_loading.py	2026-10-28 19:10:19.000000000 +0530
++++ after/tests/test_loading.py	2026-10-28 19:10:16.000000000 +0530
+@@ -1,43 +1,40 @@
+-"""Case grain and source linkage, checked on the real data files."""
++"""Case grain and source linkage, checked on the real data files and on the fixtures."""
+  
+ from meridian_workbench.config import load_settings
+ from meridian_workbench.context import build_contexts
+-from meridian_workbench.loaders import (
+-    load_cases,
+-    load_inventory,
+-    load_notes,
+-    load_shipments,
+-)
++from meridian_workbench.domain import RejectCategory
++from meridian_workbench.loaders import load_cases, load_inventory, load_notes, load_shipments
+  
+  
+ def test_one_row_per_case() -> None:
+     settings = load_settings()
+-    batch = load_cases(settings.data_dir / "cases.csv")
+-    ids = [case.case_id for case in batch.cases]
++    rows, ledger = load_cases(settings.data_dir / "cases.csv")
++    ids = [case.case_id for _, case in rows]
+     assert len(ids) == 7
+     assert len(set(ids)) == len(ids)
+-    assert batch.rejected == []
++    assert ledger.input_rows == 7
++    assert ledger.rejected == []
+  
+  
+ def test_every_note_points_at_a_real_case() -> None:
+     settings = load_settings()
+-    case_ids = {c.case_id for c in load_cases(settings.data_dir / "cases.csv").cases}
+-    notes = load_notes(settings.data_dir / "notes.json")
++    rows, _ = load_cases(settings.data_dir / "cases.csv")
++    case_ids = {case.case_id for _, case in rows}
++    notes, ledger = load_notes(settings.data_dir / "notes.json")
+     assert notes
++    assert ledger.rejected == []
+     assert all(note.case_id in case_ids for note in notes)
+  
+  
+ def test_context_links_notes_shipments_and_inventory() -> None:
+     settings = load_settings()
+-    batch = load_cases(settings.data_dir / "cases.csv")
+-    contexts = build_contexts(
+-        batch.cases,
+-        load_notes(settings.data_dir / "notes.json"),
+-        load_shipments(settings.data_dir / "shipments.csv"),
+-        load_inventory(settings.data_dir / "inventory.csv"),
+-    )
++    rows, _ = load_cases(settings.data_dir / "cases.csv")
++    notes, _ = load_notes(settings.data_dir / "notes.json")
++    shipments, _ = load_shipments(settings.data_dir / "shipments.csv")
++    inventory, _ = load_inventory(settings.data_dir / "inventory.csv")
++    contexts = build_contexts([case for _, case in rows], notes, shipments, inventory)
+     by_case = {c.case.case_id: c for c in contexts}
+-    assert len(contexts) == len(batch.cases)
++    assert len(contexts) == len(rows)
+     assert [n.note_id for n in by_case["C-1002"].notes] == ["N-01"]
+     assert by_case["C-1002"].shipment is not None
+     assert by_case["C-1002"].shipment.shipment_status == "HELD_AT_DEPOT"
+@@ -49,8 +46,9 @@
+  
+ def test_bad_rows_become_rejected_records() -> None:
+     settings = load_settings()
+-    batch = load_cases(settings.fixtures_dir / "cases_bad_rows.csv")
+-    assert [c.case_id for c in batch.cases] == ["C-2001", "C-2004"]
+-    assert [r.row_number for r in batch.rejected] == [3, 4]
+-    assert "RETURNED" in batch.rejected[0].reason
+-    assert "07/03/2025" in batch.rejected[1].reason
++    rows, ledger = load_cases(settings.fixtures_dir / "cases_bad_rows.csv")
++    assert [case.case_id for _, case in rows] == ["C-2001", "C-2004"]
++    assert [r.row_number for r in ledger.rejected] == [3, 4]
++    assert all(r.category is RejectCategory.MALFORMED for r in ledger.rejected)
++    assert "RETURNED" in ledger.rejected[0].reason
++    assert "07/03/2025" in ledger.rejected[1].reason
+diff -ruN -x '*.pyc' -x __pycache__ before/tests/test_parsing.py after/tests/test_parsing.py
+--- before/tests/test_parsing.py	1970-01-01 05:30:00.000000000 +0530
++++ after/tests/test_parsing.py	2026-10-28 19:10:16.000000000 +0530
+@@ -0,0 +1,37 @@
++"""Defensive parsing: each parser accepts one meaning and refuses everything else with a reason."""
++ 
++from decimal import Decimal
++ 
++import pytest
++ 
++from meridian_workbench.domain import OrderStatus
++from meridian_workbench.errors import MalformedRecord
++from meridian_workbench.parsing import parse_amount, parse_date, parse_status, parse_units
++ 
++ 
++def test_date_refuses_the_basic_iso_form_and_day_first_text() -> None:
++    assert parse_date("2025-03-07").isoformat() == "2025-03-07"
++    with pytest.raises(MalformedRecord):
++        parse_date("20250307")
++    with pytest.raises(MalformedRecord):
++        parse_date("07/03/2025")
++ 
++ 
++def test_amount_needs_exactly_two_decimal_places() -> None:
++    assert parse_amount("19.99") == Decimal("19.99")
++    for refused in ("1.250", "1,250.00", "NaN", "Infinity", "-3.00"):
++        with pytest.raises(MalformedRecord):
++            parse_amount(refused)
++ 
++ 
++def test_units_are_whole_non_negative_numbers() -> None:
++    assert parse_units("14") == 14
++    for refused in ("-3", "1,000", "2.5", ""):
++        with pytest.raises(MalformedRecord):
++            parse_units(refused)
++ 
++ 
++def test_status_trims_spaces_but_not_case() -> None:
++    assert parse_status("  SHIPPED ") is OrderStatus.SHIPPED
++    with pytest.raises(MalformedRecord):
++        parse_status("shipped")
+diff -ruN -x '*.pyc' -x __pycache__ before/tests/test_rerun.py after/tests/test_rerun.py
+--- before/tests/test_rerun.py	2026-10-28 19:10:19.000000000 +0530
++++ after/tests/test_rerun.py	2026-10-28 19:10:16.000000000 +0530
+@@ -1,9 +1,38 @@
+-"""A rerun of the same batch must not repeat business work. Starter stub for Section 8."""
++"""A rerun of the same batch does not repeat business work."""
+  
++from collections.abc import Callable
++from pathlib import Path
+  
+-def test_rerun_same_batch_does_not_duplicate(settings_for, data_dir):
+-    """Promise: a second run of the same batch makes no new model calls and writes no second result.
+-    Use a fake caller that counts its calls and returns one valid JSON reply.
+-    Run run_batch() twice with the same settings. Assert: the call count does not change after the second run,
+-    the batch_id is the same, there is exactly one batch folder, and attempts.log has two lines."""
+-    assert False, "TODO (Section 8): write test_rerun_same_batch_does_not_duplicate"
++from meridian_workbench.config import Settings
++from meridian_workbench.llm_client import LlmReply
++from meridian_workbench.pipeline import run_batch
++ 
++REPLY = (
++    '{"issue_family": "ADDRESS_CONFIRMATION", "summary": "Held at the depot.", '
++    '"evidence_span": "awaiting address confirmation", "review_required": false}'
++)
++ 
++ 
++def test_rerun_same_batch_does_not_duplicate(
++    settings_for: Callable[..., Settings], data_dir: Path
++) -> None:
++    calls: list[str] = []
++ 
++    def counting(prompt: str, settings: Settings) -> LlmReply:
++        calls.append(prompt)
++        return LlmReply(REPLY, "test-model", 10, 5, "end_turn")
++ 
++    settings = settings_for()
++    first = run_batch(data_dir, settings, caller=counting)
++    calls_after_first = len(calls)
++    assert calls_after_first == 3  # three flagged cases have a note
++ 
++    second = run_batch(data_dir, settings, caller=counting)
++    assert len(calls) == calls_after_first  # no new model calls on the rerun
++    assert second["batch_id"] == first["batch_id"]
++    batches = list((settings.output_dir / "batches").iterdir())
++    assert len(batches) == 1  # still one folder for one batch
++ 
++    log = (batches[0] / "attempts.log").read_text(encoding="utf-8").splitlines()
++    assert len(log) == 2
++    assert log[1].endswith("reused finished batch; no work repeated")
+diff -ruN -x '*.pyc' -x __pycache__ before/tests/test_retry.py after/tests/test_retry.py
+--- before/tests/test_retry.py	1970-01-01 05:30:00.000000000 +0530
++++ after/tests/test_retry.py	2026-10-28 19:10:14.000000000 +0530
+@@ -0,0 +1,61 @@
++"""Bounded retry: waits stay under the cap, and only transient errors are retried."""
++ 
++import random
++ 
++import pytest
++ 
++from meridian_workbench.errors import MalformedRecord
++from meridian_workbench.llm_client import LlmTimeout, MissingApiKeyError
++from meridian_workbench.retry import backoff_delay, call_with_retry
++ 
++ 
++def test_backoff_never_exceeds_the_cap() -> None:
++    rng = random.Random(7)
++    for attempt in range(1, 11):
++        assert 0 <= backoff_delay(attempt, base=0.5, cap=8.0, rng=rng) <= 8.0
++ 
++ 
++def test_transient_error_then_success_is_retried() -> None:
++    calls = []
++    waits: list[float] = []
++ 
++    def flaky() -> str:
++        calls.append(1)
++        if len(calls) < 3:
++            raise LlmTimeout("slow")
++        return "ok"
++ 
++    result = call_with_retry(
++        flaky, max_attempts=3, base=0.5, cap=8.0, rng=random.Random(1), sleep=waits.append
++    )
++    assert result == "ok"
++    assert len(calls) == 3
++    assert len(waits) == 2
++ 
++ 
++def test_missing_key_is_never_retried() -> None:
++    calls = []
++ 
++    def no_key() -> str:
++        calls.append(1)
++        raise MissingApiKeyError("MERIDIAN_LLM_API_KEY is not set")
++ 
++    with pytest.raises(MissingApiKeyError):
++        call_with_retry(
++            no_key, max_attempts=3, base=0.5, cap=8.0, rng=random.Random(1), sleep=lambda s: None
++        )
++    assert len(calls) == 1
++ 
++ 
++def test_data_errors_are_never_retried() -> None:
++    calls = []
++ 
++    def bad_data() -> str:
++        calls.append(1)
++        raise MalformedRecord("date is wrong")
++ 
++    with pytest.raises(MalformedRecord):
++        call_with_retry(
++            bad_data, max_attempts=3, base=0.5, cap=8.0, rng=random.Random(1), sleep=lambda s: None
++        )
++    assert len(calls) == 1

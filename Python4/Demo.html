@@ -1,0 +1,400 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Class 4 · When the Data Fights Back</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b0f16;color:#e8edf3;font-family:system-ui,Segoe UI,Arial,sans-serif;overflow:hidden}
+.slide{position:absolute;inset:0 0 6px 0;padding:3.5vh 6vw;display:none;overflow:auto;animation:fade .35s}
+.slide.on{display:block}@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1}}
+h1{font-size:3.4vw;margin:.2em 0;color:#ffd866}h2{font-size:2.6vw;margin:.2em 0 .5em;color:#7ee787}
+p,li,td,th{font-size:1.65vw;line-height:1.45}small{color:#8b949e}
+code,pre{font-family:ui-monospace,Consolas,monospace}code{background:#1c2330;color:#ffa657;padding:0 .3em;border-radius:4px}
+pre{background:#111824;border:1px solid #2a3446;border-radius:8px;padding:1vw;font-size:1.2vw;line-height:1.4;overflow:auto;margin:.4em 0}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #2a3446;padding:.35em .6em;text-align:left}th{background:#1a2230}
+.tag{display:inline-block;padding:.1em .6em;border-radius:6px;font-weight:600}
+.ok{background:#1f6f3a}.bad{background:#8b2525}.warn{background:#8a6d1a}.info{background:#1f4f8a}
+#bar{position:fixed;bottom:0;left:0;height:6px;background:#58a6ff;transition:width .3s}
+#count{position:fixed;bottom:12px;right:18px;color:#8b949e;font-size:14px}
+#notes{position:fixed;right:0;top:0;bottom:6px;width:34vw;background:#161b22f2;border-left:2px solid #d2a8ff;padding:16px;overflow:auto;display:none;font-size:15px;z-index:9}
+#notes h3{color:#d2a8ff;margin-top:0}#notes li,#notes p{font-size:15px}
+button{font-size:1.3vw;background:#238636;color:#fff;border:0;border-radius:6px;padding:.35em .9em;cursor:pointer;margin:.2em}
+button.alt{background:#30363d}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
+.big{font-size:2.2vw}.center{text-align:center}
+.quiz .opt{display:block;width:100%;text-align:left;background:#1a2230;border:2px solid #2a3446;font-size:1.6vw;margin:.4em 0}
+.quiz .opt.right{border-color:#2ea043;background:#12361f}.quiz .opt.wrong{border-color:#f85149;background:#3a1414}
+.why{display:none;background:#1a2230;border-left:4px solid #d2a8ff;padding:.5em 1em;margin-top:.5em}
+/* row flow */
+.flow{display:grid;grid-template-columns:1.2fr .9fr 1.2fr;gap:1.5vw;align-items:start}
+.lane{min-height:42vh;border:2px dashed #2a3446;border-radius:10px;padding:.6vw}
+.lane h4{margin:.2em 0 .5em;font-size:1.4vw}
+.row{font-family:ui-monospace,monospace;font-size:1.05vw;padding:.35em .5em;margin:.25em 0;border-radius:6px;background:#1a2230;transition:all .4s}
+.row.go{background:#1f6f3a}.row.no{background:#8b2525}.row.dup{background:#8a6d1a}.row.cur{outline:3px solid #58a6ff;transform:scale(1.03)}
+.gate{border:3px solid #58a6ff;border-radius:12px;padding:1vw;text-align:center;min-height:42vh}
+.gate .msg{font-size:1.25vw;min-height:5em;margin-top:.6em;color:#ffd866}
+.meter{height:3vh;background:#1a2230;border-radius:6px;overflow:hidden;position:relative;margin:.5em 0}
+.meter i{display:block;height:100%;background:#2ea043;transition:width .3s}
+.meter b{position:absolute;top:0;bottom:0;width:3px;background:#ffd866}
+.step{opacity:.25;transition:opacity .3s}.step.lit{opacity:1}
+.blk{padding:.3em .7em;border-radius:6px;margin:.25em 0;border:2px solid #2a3446;font-family:ui-monospace,monospace;font-size:1.3vw;transition:all .3s}
+.blk.run{border-color:#2ea043;background:#12361f}.blk.skip{opacity:.3}
+.bars{display:flex;align-items:flex-end;gap:1vw;height:30vh;border-bottom:2px solid #2a3446;margin-top:1em}
+.bars div{flex:1;position:relative;background:#1f4f8a55;border:1px solid #1f4f8a;transition:height .4s}
+.bars div span{position:absolute;bottom:0;left:0;right:0;background:#58a6ff;transition:height .6s}
+.bars div em{position:absolute;top:-1.6em;left:0;right:0;text-align:center;font-size:1vw;font-style:normal;color:#8b949e}
+.log{font-family:ui-monospace,monospace;font-size:1.15vw;background:#111824;border-radius:8px;padding:.6em;min-height:8em;white-space:pre-wrap}
+img.cue{max-height:55vh;max-width:100%;border-radius:8px;display:block;margin:auto}
+</style></head><body>
+
+<!-- 1 -->
+<section class="slide" data-time="Class 4 · 120 min" data-notes="<p>Business anchor: the ops lead asks, &ldquo;Last night&rsquo;s batch finished with no error. Did every case get checked, and can I trust the number?&rdquo; By the end, learners can prove the answer.</p><p>Starting point: the finished Class 3 repo (26 passing checks, recorded mode) plus the starter pack. Deliverable: 46 passing checks and one incident-style update.</p><p>Not in this class: no database, queue, scheduler or dashboard. Outages are simulated with fake callers. tenacity is compared, not used.</p>">
+<small>FDE Module 2 · Python for FDEs · Class 4</small>
+<h1 style="font-size:5vw;margin-top:12vh">When the Data Fights Back</h1>
+<p class="big">Making the Workbench survive bad rows, missing files, failing services and reruns, without losing a record or inventing an answer.</p>
+<p><small>← → / Space to move · P presenter notes · F fullscreen</small></p>
+<img class="cue" style="max-height:30vh;margin:0" src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/250/473/original/1.png?1793276219" alt="" onerror="this.style.display='none'">
+</section>
+
+<!-- 2 -->
+<section class="slide" data-time="Section 1 · 0–5 min" data-notes="<p><b>Say:</b> Last Monday the batch printed 4 of 7 cases need attention, and we believed it. Nobody asked whether all seven cases were really read. A crash is loud, so someone fixes it. A quiet mistake gets believed. Today we make the quiet mistakes loud.</p><p><b>Attendance register:</b> 40 names, one card slipped under the desk, the register says 39, and nobody notices.</p><p>Demo: the Class 3 program on cases_failures.csv. Ask them to predict how many rows get rejected and whether it finishes.</p>">
+<h2>1 · The run that lied</h2>
+<p>The Class 3 program, fed a file with four planted faults (<code>fixtures/cases_failures.csv</code>). Toggle what it said vs. what really happened:</p>
+<button onclick="t1(0)">What Class 3 printed</button><button class="alt" onclick="t1(1)">What we needed</button>
+<pre id="t1a">REJECTED row 3 of cases.csv: 'RETURNED' is not a valid OrderStatus
+REJECTED row 4 of cases.csv: Invalid isoformat string: '07/03/2025'
+REJECTED row 7 of cases.csv: day is out of range for month
+Traceback (most recent call last):
+  ...
+  File ".../pipeline.py", line 36, in run
+    assert len({r["case_id"] for r in results}) == len(results)
+AssertionError</pre>
+<pre id="t1b" style="display:none">HALTED: cases.csv: 4 of 8 rows (50%) were quarantined; the limit is 5%
+exit code 2
+
+quarantine.csv
+cases.csv,3,MALFORMED,"order_status 'RETURNED' is not one of PROCESSING, SHIPPED, DELIVERED, CANCELLED",...
+cases.csv,4,MALFORMED,promised_date '07/03/2025' is not YYYY-MM-DD,...
+cases.csv,6,DUPLICATE,case_id C-3004 already appears on row 5; first_wins keeps that row,...
+cases.csv,7,MALFORMED,promised_date '2025-02-30' is not a real calendar date,...</pre>
+<ul id="t1c"><li>Raw Python messages a support agent cannot act on</li><li>C-3004 appears twice, and both rows were accepted</li><li>A bare <code>AssertionError</code>, no message, no report</li></ul>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-time="Section 1 · 0–5 min" data-notes="<p>Ask: Did the Class 3 program say anything useful about the second C-3004 row? <b>No.</b> It accepted both rows and failed at the end with an empty AssertionError. A check that runs after all the work cannot tell anyone which row to fix.</p><p>Transition: to keep these promises we need names for the kinds of failure, and Python gives us four small words for reacting to each.</p>">
+<h2>Today we keep three promises</h2>
+<div class="grid2" style="grid-template-columns:1fr 1fr 1fr">
+<div class="blk run" style="font-family:inherit;font-size:1.7vw;padding:1.2vw">① Every source row is <b>accounted for</b>: in the report, or in a quarantine file with a reason.</div>
+<div class="blk run" style="font-family:inherit;font-size:1.7vw;padding:1.2vw">② Every failure has a <b>controlled outcome</b>: a row set aside, a run halted, or a model answer marked UNAVAILABLE.</div>
+<div class="blk run" style="font-family:inherit;font-size:1.7vw;padding:1.2vw">③ A rerun <b>does not repeat business work</b>. A payment, an email or a model call happens once.</div>
+</div>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-time="Section 2 · 5–20 min" data-notes="<p><b>Say:</b> A problem with data is not one thing. Treat every problem the same way and we either stop too often or hide too much.</p><p><b>Delivery van:</b> torn label → that parcel is put aside. Address outside the area → goes back with a note. Van never reaches the depot → nobody starts the round. Phone busy → try again later, then write &ldquo;not reachable&rdquo;, never &ldquo;delivered&rdquo;.</p>">
+<h2>2 · Four kinds of failure</h2>
+<table><tr><th>Kind</th><th>Meridian example</th><th>Planned outcome</th></tr>
+<tr><td><span class="tag bad">Malformed record</span></td><td>Date <code>07/03/2025</code>, status <code>RETURNED</code></td><td>Set that one row aside. The batch continues.</td></tr>
+<tr><td><span class="tag warn">Business-rule failure</span></td><td>C-3004 on two rows</td><td>Apply the declared duplicate policy</td></tr>
+<tr><td><span class="tag info">Missing / unreadable source</span></td><td>shipments.csv absent, notes.json broken</td><td>Stop before any work, and name the file</td></tr>
+<tr><td><span class="tag ok">Outside service fails</span></td><td>Timeout, 429 Too Many Requests</td><td>Retry a few times, then UNAVAILABLE. The facts stay.</td></tr></table>
+<img class="cue" style="max-height:32vh;margin-top:1em" src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/250/474/original/2.png?1793276267" alt="" onerror="this.style.display='none'">
+</section>
+
+<!-- 5 try stepper -->
+<section class="slide" data-time="Section 2 · type live" data-notes="<p>Type scratch_keywords.py live. Before running, ask: &ldquo;For C-3003 the date fails. Which line prints first?&rdquo; → <b>checked C-3003</b>, because finally runs before the function hands back its answer.</p><p><b>Tea analogy:</b> try = boil the water. except = gas runs out, use the kettle. else = nothing went wrong, add the leaves. finally = switch off the stove, every time.</p><p>Mistakes: bare except / except Exception hides real bugs. Success code inside try. return inside finally swallows the error.</p>">
+<h2>try · except · else · finally</h2>
+<div class="grid2"><div>
+<button onclick="tryRun(false)">Row C-3003 · "07/03/2025"</button><button onclick="tryRun(true)">Row C-3001 · "2025-03-07"</button>
+<div class="blk" id="b-try">try: promised = read_promised(row["promised_date"])</div>
+<div class="blk" id="b-exc">except ValueError: return "quarantined: promised_date is not a date"</div>
+<div class="blk" id="b-else">else: return f"accepted, due {promised.isoformat()}"</div>
+<div class="blk" id="b-fin">finally: print(f"checked {row['case_id']}")</div>
+</div><div><p>Terminal:</p><div class="log" id="trylog"></div>
+<p><small>Real output when run: <code>checked C-3003</code> → <code>quarantined…</code> → <code>checked C-3001</code> → <code>accepted, due 2025-03-07</code></small></p></div></div>
+</section>
+
+<!-- 6 errors + raise from -->
+<section class="slide" data-time="Section 2 · type live / paste" data-notes="<p>Type errors.py live: a new exception class needs no code, because its name is the point. The family lets a caller catch one kind exactly (except MalformedRecord) or every intake problem at once (except IntakeError).</p><p>raise … from: read the traceback from the bottom. Without from error, Python says the second error happened &ldquo;during handling&rdquo; of the first, which reads like a second bug.</p><p>Check: MalformedRecord vs MissingSource? One row → set it aside and carry on. Whole run → stop before any work and name the file.</p>">
+<h2>Give each kind a name · keep the cause</h2>
+<div class="grid2"><pre>class IntakeError(Exception): ...
+class MalformedRecord(IntakeError): ...
+class RuleFailure(IntakeError): ...
+class MissingSource(IntakeError): ...
+class UnreadableSource(IntakeError): ...
+class QualityGateFailed(IntakeError): ...
+class ReconciliationError(IntakeError): ...</pre>
+<pre>try:
+    return date.fromisoformat(text)
+except ValueError as error:
+    raise MalformedRecord(
+      f"{field} {text!r} is not a real calendar date"
+    ) <b style="color:#7ee787">from error</b></pre></div>
+<pre>ValueError: day is out of range for month
+
+The above exception was the direct cause of the following exception:
+...
+meridian_workbench.errors.MalformedRecord: promised_date '2025-02-30' is not a real calendar date</pre>
+</section>
+
+<!-- 7 quiz1 -->
+<section class="slide quiz" data-time="Quiz 1 · minute 20 · ~90 s" data-notes="<p>Tip: point at the drill output. &ldquo;checked C-3001&rdquo; comes first, then &ldquo;accepted, due 2025-03-07&rdquo;.</p>" data-ans="C">
+<h2>Quiz 1 · In check_row, the date is valid. Which blocks run?</h2>
+<button class="opt" data-k="A">A. try, except and else</button><button class="opt" data-k="B">B. try, except and finally</button>
+<button class="opt" data-k="C">C. try, else and finally</button><button class="opt" data-k="D">D. try and finally only</button>
+<div class="why"><b>C.</b> There was no error, so except is skipped. else runs because try succeeded, and finally always runs. A and B include except, which needs an error. D forgets else, which is exactly where the success code lives.</div>
+</section>
+
+<!-- 8 parsers -->
+<section class="slide" data-time="Section 3 · 20–38 min" data-notes="<p><b>Say:</b> Every field in a file is a claim. A parser accepts a claim only when it can read it without guessing. A guess looks exactly like a fact in a report.</p><p><b>Barcode that won&rsquo;t scan:</b> the cashier puts the item aside, rings up the rest, and calls a supervisor. She doesn&rsquo;t type a price that &ldquo;looks about right&rdquo;.</p><p>Gotcha: Decimal(&quot;1.250&quot;) is one and a quarter, but a supplier who uses a dot for thousands means 1250. The fix is a rule: a dot and exactly two decimals.</p>">
+<h2>3 · Parsers that refuse to guess</h2>
+<p>Click a value to test it (results are from the real parsers):</p>
+<div id="ptest"></div><div class="log" id="plog" style="min-height:3em"></div>
+</section>
+
+<!-- 9 row flow -->
+<section class="slide" data-time="Sections 3–4 · demo" data-notes="<p>Every row goes through exactly one door: accepted or quarantined, never lost. ledger.input_rows += 1 runs first, so even a broken row is counted.</p><p>Loader result: input 8, accepted 5, quarantined 3. The duplicate row 6 is still accepted by the loader, because it reads one row at a time. The duplicate policy (Section 5) catches it, which makes 4 quarantined.</p><p>Ask: Row 3 says RETURNED. Should we guess CANCELLED? No. A person decides.</p><p>Common mistakes: &ldquo;fixing&rdquo; values in the parser, cleaning the raw text before quarantine, counting a row only after it passes, .lower()/.upper() on statuses.</p>">
+<h2>Every row leaves through one of two doors</h2>
+<button onclick="flowStep()">Next row ▶</button><button class="alt" onclick="flowAll()">Run all</button><button class="alt" onclick="flowReset()">Reset</button>
+<span id="ledger" class="big" style="margin-left:1em"></span>
+<div class="flow" style="margin-top:.6em">
+<div class="lane"><h4>fixtures/cases_failures.csv</h4><div id="src"></div></div>
+<div class="gate"><b class="big">parsers + duplicate policy</b><div class="msg" id="gmsg">…</div></div>
+<div><div class="lane" style="min-height:20vh"><h4>✅ accepted</h4><div id="acc"></div></div><div class="lane" style="min-height:20vh;margin-top:1vw"><h4>🚧 quarantine.csv</h4><div id="qua"></div></div></div>
+</div>
+</section>
+
+<!-- 10 quiz2 -->
+<section class="slide quiz" data-time="Quiz 2 · minute 38 · ~90 s" data-notes="<p>Tip: ask the room which date it is before you reveal. You&rsquo;ll get both answers. That is the point.</p>" data-ans="A">
+<h2>Quiz 2 · parse_date receives <code>07/03/2025</code>. What should happen?</h2>
+<button class="opt" data-k="A">A. Raise MalformedRecord, so the row is quarantined</button><button class="opt" data-k="B">B. Read it as 7 March, the most common meaning</button>
+<button class="opt" data-k="C">C. Read it as 3 July, the meaning used in the US</button><button class="opt" data-k="D">D. Skip the row without leaving any record of it</button>
+<div class="why"><b>A.</b> Two possible meanings, and the parser can&rsquo;t know which was meant. It refuses, keeps the raw text, and a person decides. B and C are guesses that would look like facts. D loses a row with no trace and breaks promise ①.</div>
+</section>
+
+<!-- 11 gate -->
+<section class="slide" data-time="Section 4 · 38–50 min" data-notes="<p><b>Say:</b> A batch is four files that must agree. Order: are all the files here? Is the batch good enough to use? Do the books balance? Don&rsquo;t run pytest until Section 8.</p><p>require_sources names every missing file at once (school admission desk). Quality gate: max_quarantine_share = 0.05. An empty file halts too (sack of rice). Reconciliation: accepted + quarantined must equal input. If it fails, our code has a bug (cash drawer).</p><p>The quarantine is written BEFORE any gate, so a halted run still leaves the worklist. Exit code 2 tells a scheduler the batch didn&rsquo;t finish.</p><p>Check: 100 rows, 96 accepted, 4 quarantined → books balance, and 4% is under 5%, so it passes.</p>">
+<h2>4 · The quality gate and the books</h2>
+<p>Rows in file: <input id="gin" type="number" value="8" min="0" style="width:5em;font-size:1.4vw"> · quarantined: <input id="gq" type="range" min="0" max="8" value="4" style="width:25vw"> <b id="gqv">4</b></p>
+<div class="meter"><i id="gbar"></i><b style="left:5%"></b></div><small>yellow line = 5% limit (config/settings.toml)</small>
+<p id="gres" class="big"></p>
+<div class="grid2"><div class="step lit"><b>Order of checks</b><ol><li>require_sources: every file present?</li><li>load each file → Ledger</li><li>apply_duplicate_policy</li><li><b>write quarantine.csv</b></li><li>check_quality (gate)</li><li>reconcile (books)</li></ol></div>
+<img class="cue" style="max-height:34vh" src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/250/476/original/4.png?1793276378" alt="" onerror="this.style.display='none'"></div>
+</section>
+
+<!-- 12 quiz3 -->
+<section class="slide quiz" data-time="Quiz 3 · minute 50 · ~90 s" data-notes="<p>Tip: put the halted output back on screen and read it aloud, word by word.</p>" data-ans="D">
+<h2>Quiz 3 · cases.csv has 8 rows, 4 quarantined, limit 5%. What happens?</h2>
+<button class="opt" data-k="A">A. The 4 good rows are reported and the run passes</button><button class="opt" data-k="B">B. The file is read again three times to be sure</button>
+<button class="opt" data-k="C">C. The 4 bad rows are corrected automatically</button><button class="opt" data-k="D">D. The run halts with HALTED and exits with code 2</button>
+<div class="why"><b>D.</b> 50% is far above 5%. The run halts before any model call, but the quarantine file is still written. A publishes a report built on half a file. B: re-reading bad data gives the same bad data. C is guessing.</div>
+</section>
+
+<!-- 13 batch -->
+<section class="slide" data-time="Section 5 · 50–67 min" data-notes="<p><b>Say:</b> Trouble starts when a run is started twice, or crashes and is restarted. That&rsquo;s how payments get paid twice.</p><p><b>Train PNR:</b> check the status ten times and it&rsquo;s still the same reference and one seat. The batch ID is the booking reference; each run is an attempt.</p><p>Batch ID = sha256(date + rules_text + sorted file names and bytes)[:12]. rules_text = AI mode, model, prompt version, duplicate policy, quarantine limit. That fixed a real bug: a live run had been reusing recorded answers.</p><p>write_json_atomic: write .tmp, then os.replace (price-board analogy). summary.json is written LAST, so its presence means the batch finished.</p><p>Predict: someone fixes line 3 → the bytes change → new batch ID and new folder. The old folder stays as the record of the halt.</p>">
+<h2>5 · Batch ID, attempt ID and the safe rerun</h2>
+<div class="grid2"><div>
+<p>AI mode: <button class="alt" id="modeBtn" onclick="toggleMode()">recorded</button> <button class="alt" onclick="reorder()">shuffle file order</button></p>
+<pre id="bid">batch_id_for(files, 2025-03-10, rules)</pre>
+<button onclick="runBatch()">▶ python -m meridian_workbench</button><button class="alt" onclick="resetBatch()">rm -rf outputs</button>
+<p><small>Policy for duplicates: <code>first_wins</code> (quarantine the repeat) or <code>reject_batch</code> (halt with RuleFailure)</small></p>
+</div><div><p>outputs/batches/<span id="bidn"></span>/attempts.log</p><div class="log" id="alog"></div><p id="calls"></p></div></div>
+</section>
+
+<!-- 14 quiz4 -->
+<section class="slide quiz" data-time="Quiz 4 · minute 67 · ~90 s" data-notes="<p>Tip: show the two-line output from Step 1: recorded and live, same files, two IDs.</p>" data-ans="B">
+<h2>Quiz 4 · Which change gives a different batch ID?</h2>
+<button class="opt" data-k="A">A. Running the same files on another laptop</button><button class="opt" data-k="B">B. Changing ai.mode from recorded to live</button>
+<button class="opt" data-k="C">C. Listing the four files in a different order</button><button class="opt" data-k="D">D. Copying the data folder to a new location</button>
+<div class="why"><b>B.</b> The AI mode is part of the rules text inside the fingerprint. A, C and D keep the same names, bytes, date and rules. Files are sorted by name before hashing, so order doesn&rsquo;t matter.</div>
+</section>
+
+<!-- 15 retry -->
+<section class="slide" data-time="Section 6 · 67–81 min" data-notes="<p><b>Say:</b> A good retry needs three things: a rule for which errors to retry, a limit, and a wait that grows.</p><p><b>Calling a friend:</b> busy → call back in a minute, then five, then text and stop. Number doesn&rsquo;t exist → calling again never helps.</p><p>ceiling = min(cap, base·2^(attempt−1)), wait = uniform(0, ceiling) = full jitter. Base 0.5 s, cap 8 s. School bell: random waits spread the crowd.</p><p>tenacity does the same with a decorator, shown for recognition only. Never stack retry layers: 3×3×3 = 27 calls. llm_client sets max_retries=0.</p><p>Drill output: attempt 1 failed (LlmTimeout); waiting 0.12s / attempt 2 … 0.10s / result: ok / calls: 3</p>">
+<h2>6 · Bounded retry: backoff + jitter</h2>
+<div class="grid2"><div>
+<table><tr><th>Error</th><th>Retry?</th></tr><tr><td>LlmTimeout</td><td>✅</td></tr><tr><td>LlmRateLimited (429)</td><td>✅</td></tr><tr><td>LlmServerError (5xx)</td><td>✅</td></tr><tr><td>MissingApiKeyError</td><td>❌ waiting won&rsquo;t add a key</td></tr><tr><td>LlmCallFailed / bad reply</td><td>❌ same request fails the same way</td></tr></table>
+<button onclick="simRetry()">Simulate 6 retries (jitter)</button>
+</div><div><div class="bars" id="bars"></div><small>light = ceiling (0.5, 1, 2, 4, 8, 8 s) · blue = the random wait actually chosen</small></div></div>
+</section>
+
+<!-- 16 quiz5 -->
+<section class="slide quiz" data-time="Quiz 5 · minute 81 · ~90 s" data-notes="<p>Tip: ask learners to say &ldquo;could a later try succeed?&rdquo; out loud for each option.</p>" data-ans="D">
+<h2>Quiz 5 · Which error does call_with_retry never retry?</h2>
+<button class="opt" data-k="A">A. LlmTimeout, when the call takes too long</button><button class="opt" data-k="B">B. LlmRateLimited, when there are too many calls</button>
+<button class="opt" data-k="C">C. LlmServerError, when the service has a fault</button><button class="opt" data-k="D">D. MissingApiKeyError, when no key is set</button>
+<div class="why"><b>D.</b> A missing key is still missing after any wait. A, B and C are temporary problems, so a later try can work.</div>
+</section>
+
+<!-- 17 statuses -->
+<section class="slide" data-time="Section 7 · 81–98 min" data-notes="<p><b>Say:</b> A model is an outside service. Each failure becomes one status a person can read, and we never fill the gap with an invented answer.</p><p><b>Weather on the news:</b> &ldquo;forecast unavailable this morning&rdquo;, not yesterday&rsquo;s forecast.</p><p>In llm_client, APITimeoutError is caught BEFORE APIError, the catch-all. Never put the key or the note text in an error message.</p><p>Grounding: the evidence_span must appear in the note. G-09&rsquo;s note says &ldquo;Customer asking about parcel&rdquo; but the quote is &ldquo;parcel delayed&rdquo; → warning, review forced.</p><p>Cache key: note_id:model:prompt_version. Only OK and ABSTAINED get cached.</p>">
+<h2>7 · Every model outcome gets one status</h2>
+<p>Click a reply and watch interpret_reply classify it (outputs from a real run):</p>
+<div id="replies"></div>
+<div class="log" id="rlog" style="min-height:4em"></div>
+<table style="margin-top:.6em"><tr><td><span class="tag ok">OK</span> valid JSON, known family</td><td><span class="tag info">ABSTAINED</span> model says the note doesn&rsquo;t say</td><td><span class="tag warn">INVALID_REPLY</span> not JSON / no field / unknown family</td><td><span class="tag bad">UNAVAILABLE</span> retries ran out, other failure, or no key</td></tr></table>
+</section>
+
+<!-- 18 before/after -->
+<section class="slide" data-time="Section 7 · no invented fallback" data-notes="<p>In Class 3 a failed live call fell back to the recorded answer. That was convenient, and wrong: recorded answers are test data, not a backup.</p><p>Run MERIDIAN_AI_MODE=live with no key → every flagged case keeps its facts; only the suggestion says UNAVAILABLE. The batch ID differs from the recorded run.</p><p>Golden set grows to 12: G-11 AMBIGUOUS → CARRIER_DELAY with review required (one of its two acceptable answers). G-12 INSUFFICIENT → ABSTAINED. The runner doesn&rsquo;t grade; people do.</p><p>Check: C-1005 times out in live mode → still flagged with its facts and days overdue, UNAVAILABLE plus the reason.</p>">
+<h2>Before → after: when the model call fails</h2>
+<button onclick="ba(0)">Class 3 (before)</button><button class="alt" onclick="ba(1)">Class 4 (after)</button>
+<div class="grid2"><pre id="ba0">except LlmError as error:
+    return read_recorded(case_id, note, settings,
+        "recorded_fallback", str(error))
+# ⚠ test data passed off as a live answer</pre>
+<pre id="ba1" style="opacity:.25">except LlmTimeout:
+    return _unavailable(..., f"model timed out after {settings.retry_max_attempts} attempts")
+except LlmRateLimited:
+    return _unavailable(..., f"rate limited after {settings.retry_max_attempts} attempts")
+except LlmError as error:
+    return _unavailable(case_id, note, settings, str(error))</pre></div>
+<pre>$ MERIDIAN_AI_MODE=live python -m meridian_workbench
+C-1002: OVERDUE_NOT_CLOSED (3 days)
+    suggestion (live): UNAVAILABLE - MERIDIAN_LLM_API_KEY is not set
+C-1004: OVERDUE_NOT_CLOSED (2 days)
+C-1005: OVERDUE_NOT_CLOSED (4 days)
+    suggestion (live): UNAVAILABLE - MERIDIAN_LLM_API_KEY is not set
+C-1006: OVERDUE_NOT_CLOSED (2 days)
+    suggestion (live): UNAVAILABLE - MERIDIAN_LLM_API_KEY is not set
+4 of 7 cases need attention</pre>
+</section>
+
+<!-- 19 quiz6 -->
+<section class="slide quiz" data-time="Quiz 6 · minute 98 · ~90 s" data-notes="<p>Tip: point back at the live run with no key. Every flagged case is still there.</p>" data-ans="A">
+<h2>Quiz 6 · Live mode, the model times out on all 3 attempts for C-1002. What does the report show?</h2>
+<button class="opt" data-k="A">A. The flagged case, with UNAVAILABLE and the reason</button><button class="opt" data-k="B">B. The recorded answer for C-1002, marked recorded</button>
+<button class="opt" data-k="C">C. Nothing, as the case is removed from the report</button><button class="opt" data-k="D">D. The most common issue family, marked for review</button>
+<div class="why"><b>A.</b> The rule facts don&rsquo;t depend on the model, so the case stays flagged with &ldquo;UNAVAILABLE - model timed out after 3 attempts&rdquo;. B uses test data as a live answer. C loses a flagged case. D is a guess dressed up as an answer.</div>
+</section>
+
+<!-- 20 pytest -->
+<section class="slide" data-time="Section 8 · 98–110 min" data-notes="<p><b>Say:</b> A promise that is not tested is only a hope.</p><p>Helpers in conftest.py: settings_for (temporary outputs, live mode, fake key) and data_dir (a private copy of the data). tmp_path is a fresh folder for each test.</p><p>Assert every part of the promise: category, line number, raw text, reason. The rerun test counts fake model calls: 3 on the first run, 0 on the second, still one folder, 2 log lines.</p><p>Predict: a check passed first time. How do you know it tests anything? Break the code on purpose (let 07/03/2025 through) and it must go red.</p><p>Fire drill: a fake caller fails on demand, with no key, no internet and no cost.</p>">
+<h2>8 · Eight promises, eight checks</h2>
+<button onclick="greenAll()">▶ python -m pytest -q</button>
+<table id="tests"></table>
+<p id="tsum" class="big"></p>
+</section>
+
+<!-- 21 incident -->
+<section class="slide" data-time="Section 9 · 110–120 min" data-notes="<p><b>Say:</b> Back to the ops lead&rsquo;s question. An update answers with facts. It isn&rsquo;t a story: it says what happened, what it affects, and who must do what next.</p><p><b>Pilot:</b> &ldquo;Delayed 40 minutes for a technical check on the left engine. Stay seated. I&rsquo;ll update you at 10:30.&rdquo;</p><p>Check: &ldquo;the supplier probably changed their export&rdquo; goes under Not yet known, labelled as a guess.</p><p>Before sending: every number comes from a file or a run; IDs match summary.json / attempts.log; no key, no note text, no personal data.</p><p>Close: pytest (46 passed), mypy (27 files), ruff (all passed), then git add / commit / push.</p>">
+<h2>9 · The incident update</h2>
+<div class="grid2"><table><tr><th>Heading</th><th>Halted batch</th></tr>
+<tr><td>Summary / Status</td><td>Batch for 2025-03-10 halted. No report published. <b>Halted</b></td></tr>
+<tr><td>Facts</td><td>cases.csv: 4 of 8 rows (50%) quarantined; the limit is 5%</td></tr>
+<tr><td>Affected counts</td><td>8 input, 4 accepted, 4 quarantined; suggestions 0; published 0</td></tr>
+<tr><td>Operational impact</td><td>No attention report. Teams use the previous one and say so.</td></tr>
+<tr><td>Required action</td><td>Data owner fixes or confirms the 4 rows, then a new batch runs</td></tr>
+<tr><td>Not yet known</td><td>Is RETURNED a new status? (a question, not a guess)</td></tr>
+<tr><td>Next update</td><td>When the data owner replies</td></tr></table>
+<div><pre>python -m pytest -q
+46 passed
+python -m mypy
+Success: no issues found in 27 source files
+python -m ruff check .
+All checks passed!
+
+git add -A
+git commit -m "Add intake gates, batch identity,
+  safe reruns and failure checks"
+git push</pre></div></div>
+</section>
+
+<!-- 22 close -->
+<section class="slide" data-time="Close" data-notes="<p><b>Say:</b> Monday&rsquo;s question was &ldquo;did every case get checked?&rdquo; Today the program can answer it with a count, a quarantine file and a log. That is the difference between a run that finished and a run you can trust.</p>">
+<h2>What we built today</h2>
+<ul><li>Every source row is accepted, or quarantined with a category, a reason and its raw text</li>
+<li>Four kinds of failure, each with its own outcome, and a halt before any model call when the batch isn&rsquo;t good enough</li>
+<li>A stable batch ID, an attempt ID per run, and a rerun that returns the finished result</li>
+<li>Bounded retries with a cap and jitter, for temporary errors only</li>
+<li>Four model statuses, checked quotes, a cache of good answers only, and 12 golden cases</li>
+<li>Eight named checks, and an update the ops lead can act on</li></ul>
+<p class="big center" style="margin-top:6vh;color:#ffd866">A run that finished ≠ a run you can trust.</p>
+</section>
+
+<div id="notes"><h3 id="ntime"></h3><div id="nbody"></div><p><small>P closes this panel</small></p></div>
+<div id="bar"></div><div id="count"></div>
+<script>
+(function(){
+var S=[].slice.call(document.querySelectorAll('.slide')),i=0;
+var h=parseInt((location.hash||'').slice(1),10);if(h>0&&h<=S.length)i=h-1;
+function show(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(s,k){s.classList.toggle('on',k===i)});
+document.getElementById('bar').style.width=((i+1)/S.length*100)+'%';
+document.getElementById('count').textContent=(i+1)+' / '+S.length+'  ·  '+(S[i].dataset.time||'');
+document.getElementById('ntime').textContent=S[i].dataset.time||'';document.getElementById('nbody').innerHTML=S[i].dataset.notes||'';
+history.replaceState(null,'','#'+(i+1));}
+document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT')return;
+if(['ArrowRight','PageDown',' '].indexOf(e.key)>=0){e.preventDefault();show(i+1)}
+else if(['ArrowLeft','PageUp'].indexOf(e.key)>=0){e.preventDefault();show(i-1)}
+else if(e.key==='Home')show(0);else if(e.key==='End')show(S.length-1);
+else if(e.key==='p'||e.key==='P'){var n=document.getElementById('notes');n.style.display=n.style.display==='block'?'none':'block'}
+else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();else if(document.exitFullscreen)document.exitFullscreen()}});
+show(i);
+// quizzes
+document.querySelectorAll('.quiz').forEach(function(q){var a=q.dataset.ans;q.querySelectorAll('.opt').forEach(function(b){b.onclick=function(){
+q.querySelectorAll('.opt').forEach(function(x){x.classList.remove('right','wrong');if(x.dataset.k===a)x.classList.add('right')});
+if(b.dataset.k!==a)b.classList.add('wrong');q.querySelector('.why').style.display='block';}})});
+// slide 2 toggle
+window.t1=function(k){document.getElementById('t1a').style.display=k?'none':'block';document.getElementById('t1b').style.display=k?'block':'none';document.getElementById('t1c').style.display=k?'none':'block'};
+// try stepper
+window.tryRun=function(ok){var ids=['b-try','b-exc','b-else','b-fin'],log=document.getElementById('trylog');
+ids.forEach(function(x){document.getElementById(x).className='blk'});
+var seq=ok?[['b-try','run'],['b-exc','skip'],['b-else','run'],['b-fin','run']]:[['b-try','run'],['b-exc','run'],['b-else','skip'],['b-fin','run']];
+var cid=ok?'C-3001':'C-3003',k=0;
+(function nx(){if(k>=seq.length){log.textContent+=(ok?'accepted, due 2025-03-07':'quarantined: promised_date is not a date')+'\n';return}
+document.getElementById(seq[k][0]).classList.add(seq[k][1]);if(seq[k][0]==='b-fin')log.textContent+='checked '+cid+'\n';k++;setTimeout(nx,550)})();};
+// parsers (real outputs)
+var P=[['parse_date','2025-03-07',1,"date(2025, 3, 7)"],['parse_date','07/03/2025',0,"promised_date '07/03/2025' is not YYYY-MM-DD"],['parse_date','20250307',0,"promised_date '20250307' is not YYYY-MM-DD"],['parse_date','2025-02-30',0,"promised_date '2025-02-30' is not a real calendar date"],
+['parse_units','12',1,'12'],['parse_units','-3',0,"units_on_hand '-3' is not a whole number of zero or more"],['parse_units','1.5',0,"units_on_hand '1.5' is not a whole number of zero or more"],['parse_units','1,000',0,"units_on_hand '1,000' is not a whole number of zero or more"],
+['parse_amount','19.90',1,"Decimal('19.90')"],['parse_amount','19.9',0,"unit_value '19.9' must look like 19.99 (two decimal places, no commas)"],['parse_amount','1,250.00',0,"unit_value '1,250.00' must look like 19.99 (two decimal places, no commas)"],['parse_amount','1.250',0,"unit_value '1.250' must look like 19.99 (two decimal places, no commas)"],['parse_amount','NaN',0,"unit_value 'NaN' must look like 19.99 (two decimal places, no commas)"],
+['parse_status',' SHIPPED ',1,'OrderStatus.SHIPPED'],['parse_status','shipped',0,"order_status 'shipped' is not one of PROCESSING, SHIPPED, DELIVERED, CANCELLED"],['parse_status','RETURNED',0,"order_status 'RETURNED' is not one of PROCESSING, SHIPPED, DELIVERED, CANCELLED"],
+['require_text','',0,'order_id is empty']];
+var pt=document.getElementById('ptest'),last='';P.forEach(function(p){if(p[0]!==last){var d=document.createElement('div');d.innerHTML='<code>'+p[0]+'</code> ';pt.appendChild(d);last=p[0]}
+var b=document.createElement('button');b.className='alt';b.textContent=JSON.stringify(p[1]);b.onclick=function(){var l=document.getElementById('plog');
+l.innerHTML=p[0]+'('+JSON.stringify(p[1])+') → '+(p[2]?'<span class="tag ok">accepted</span> '+p[3]:'<span class="tag bad">MalformedRecord</span> '+p[3])};pt.lastChild.appendChild(b)});
+// row flow (real fixture + real outcomes)
+var R=[['C-3001,O-7001,SHIPPED,2025-03-07','ok','accepted'],['C-3002,O-7002,RETURNED,2025-03-08','no',"row 3 MALFORMED: order_status 'RETURNED' is not one of PROCESSING, SHIPPED, DELIVERED, CANCELLED"],
+['C-3003,O-7003,SHIPPED,07/03/2025','no',"row 4 MALFORMED: promised_date '07/03/2025' is not YYYY-MM-DD"],['C-3004,O-7004,PROCESSING,2025-03-09','ok','accepted'],
+['C-3004,O-7005,SHIPPED,2025-03-06','dup','row 6 DUPLICATE: case_id C-3004 already appears on row 5; first_wins keeps that row'],['C-3005,O-7006,SHIPPED,2025-02-30','no',"row 7 MALFORMED: promised_date '2025-02-30' is not a real calendar date"],
+['C-3006,O-7007,CANCELLED,2025-03-05','ok','accepted'],['C-3007,O-7008,SHIPPED,2025-03-04','ok','accepted']],fi=0,cnt;
+window.flowReset=function(){fi=0;cnt={i:0,a:0,q:0};var s=document.getElementById('src');s.innerHTML='';document.getElementById('acc').innerHTML='';document.getElementById('qua').innerHTML='';
+R.forEach(function(r,k){var d=document.createElement('div');d.className='row';d.id='r'+k;d.textContent=(k+2)+': '+r[0];s.appendChild(d)});document.getElementById('gmsg').textContent='…';led()};
+function led(){var t='input '+cnt.i+' · accepted '+cnt.a+' · quarantined '+cnt.q;if(fi>=R.length){var sh=Math.round(cnt.q/cnt.i*100);t+=' · '+(cnt.a+cnt.q===cnt.i?'reconciled ✔':'✘')+' · '+sh+'% > 5% → <span class="tag bad">HALTED, exit 2</span>'}document.getElementById('ledger').innerHTML=t}
+window.flowStep=function(){if(fi>=R.length)return;var r=R[fi],el=document.getElementById('r'+fi);el.classList.add('cur');cnt.i++;document.getElementById('gmsg').textContent=r[2];
+setTimeout(function(){el.classList.remove('cur');el.classList.add(r[1]==='ok'?'go':r[1]);(r[1]==='ok'?document.getElementById('acc'):document.getElementById('qua')).appendChild(el);if(r[1]==='ok')cnt.a++;else cnt.q++;fi++;led()},600)};
+window.flowAll=function(){(function nx(){if(fi<R.length){flowStep();setTimeout(nx,750)}})()};flowReset();
+// gate
+function gate(){var n=+document.getElementById('gin').value||0,q=document.getElementById('gq');q.max=n;var v=Math.min(+q.value,n);document.getElementById('gqv').textContent=v;
+var sh=n?v/n:0;document.getElementById('gbar').style.width=Math.min(100,sh*100)+'%';document.getElementById('gbar').style.background=sh>0.05||!n?'#f85149':'#2ea043';
+document.getElementById('gres').innerHTML=!n?'<span class="tag bad">HALTED</span> empty file: a problem, not a quiet success':'books: '+(n-v)+' accepted + '+v+' quarantined = '+n+' ✔ · '+Math.round(sh*100)+'% → '+(sh>0.05?'<span class="tag bad">HALTED: '+v+' of '+n+' rows ('+Math.round(sh*100)+'%) were quarantined; the limit is 5%</span>':'<span class="tag ok">gate passes</span>')}
+document.getElementById('gin').oninput=gate;document.getElementById('gq').oninput=gate;gate();
+// batch
+var mode='recorded',done={},order=['cases.csv','inventory.csv','notes.json','shipments.csv'];
+function bidv(){return mode==='recorded'?'B-39eedeb6ed2c':'B-acfb33f827c8'}
+function rb(){document.getElementById('bid').textContent='files (sorted by name): '+order.slice().sort().join(', ')+'\nlisted as: '+order.join(', ')+'\nrules: ai_mode='+mode+', duplicate_policy=first_wins, max_quarantine_share=0.05\n→ '+bidv();document.getElementById('bidn').textContent=bidv();
+document.getElementById('alog').textContent=(done[bidv()]||[]).join('\n')}
+window.toggleMode=function(){mode=mode==='recorded'?'live':'recorded';document.getElementById('modeBtn').textContent=mode;rb()};
+window.reorder=function(){order.sort(function(){return Math.random()-.5});rb()};
+function uuid(){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16)})}
+window.runBatch=function(){var b=bidv(),L=done[b]=done[b]||[];var t=new Date().toISOString().slice(0,19)+'+00:00';
+if(L.length){L.push(t+'  '+uuid()+'  reused finished batch; no work repeated');document.getElementById('calls').innerHTML='<span class="tag ok">summary.json found → 0 model calls</span>'}
+else{L.push(t+'  '+uuid()+'  completed');document.getElementById('calls').innerHTML='<span class="tag info">new batch → rows parsed, 3 model calls, summary.json written last</span>'}rb()};
+window.resetBatch=function(){done={};document.getElementById('calls').textContent='';rb()};rb();
+// retry bars
+var bars=document.getElementById('bars'),C=[0.5,1,2,4,8,8];C.forEach(function(c,k){var d=document.createElement('div');d.style.height=(c/8*100)+'%';d.innerHTML='<span style="height:0"></span><em>#'+(k+1)+' ≤'+c+'s</em>';bars.appendChild(d)});
+window.simRetry=function(){[].forEach.call(bars.children,function(d,k){var s=d.querySelector('span');s.style.height='0';setTimeout(function(){var w=Math.random()*C[k];s.style.height=(w/C[k]*100)+'%';d.querySelector('em').textContent='#'+(k+1)+' '+w.toFixed(2)+'s'},300+k*350)})};
+// replies
+var RP=[['{"issue_family": "ADDRESS_CONFIRMATION", "summary": "Held at depot.", "evidence_span": "awaiting address confirmation", "review_required": false}','ok','OK | ADDRESS_CONFIRMATION'],
+['{"issue_family": null, "abstain_reason": "Note says nothing about the problem."}','info','ABSTAINED | Note says nothing about the problem.'],
+['Sorry, I think this is an address problem.','warn','INVALID_REPLY | the reply was not valid JSON'],
+['{"family": "ADDRESS_CONFIRMATION", "summary": "Held."}','warn','INVALID_REPLY | the reply has no issue_family field'],
+['G-09 note "Customer asking about parcel" · quote "parcel delayed"','ok','OK | CARRIER_DELAY · review_required: True · warnings: evidence_span does not appear in the note'],
+['(no key) MissingApiKeyError','bad','UNAVAILABLE - MERIDIAN_LLM_API_KEY is not set'],
+['(fake caller) LlmTimeout × 3 attempts','bad','UNAVAILABLE - model timed out after 3 attempts']];
+var rr=document.getElementById('replies');RP.forEach(function(r){var b=document.createElement('button');b.className='alt';b.style.display='block';b.style.textAlign='left';b.style.fontFamily='ui-monospace,monospace';b.style.fontSize='1.05vw';b.textContent=r[0];
+b.onclick=function(){var l=document.getElementById('rlog');l.innerHTML='interpret_reply → …';setTimeout(function(){l.innerHTML='<span class="tag '+r[1]+'">'+r[2].split(' ')[0]+'</span> '+r[2]},450)};rr.appendChild(b)});
+// tests
+var T=[['test_malformed_date_is_quarantined','07/03/2025 is never guessed; quarantined with its raw text'],['test_impossible_date_is_quarantined','2025-02-30 refused as “not a real calendar date”'],['test_duplicate_case_id_first_wins','A repeated case ID keeps the first row; the repeat is a DUPLICATE'],['test_missing_required_source_stops_run','A missing file stops the run before any file is read'],['test_reconciliation_balances','The books balance, and a mismatch raises an error'],['test_timeout_is_unavailable_and_keeps_facts','A timeout gives UNAVAILABLE and the facts stay'],['test_rate_limit_is_retried_then_unavailable','A 429 is retried up to the limit, then UNAVAILABLE'],['test_rerun_same_batch_does_not_duplicate','A rerun makes no new model calls']];
+var tb=document.getElementById('tests');tb.innerHTML='<tr><th>Check</th><th>Promise</th><th></th></tr>'+T.map(function(t,k){return '<tr><td><code>'+t[0]+'</code></td><td>'+t[1]+'</td><td id="tt'+k+'"><span class="tag bad">FAIL (TODO)</span></td></tr>'}).join('');
+document.getElementById('tsum').textContent='starter pack: 8 failed, 26 passed';
+window.greenAll=function(){T.forEach(function(t,k){setTimeout(function(){document.getElementById('tt'+k).innerHTML='<span class="tag ok">PASS</span>';if(k===T.length-1)document.getElementById('tsum').textContent='final repository: 46 passed ✔'},350*(k+1))})};
+window.ba=function(k){document.getElementById('ba0').style.opacity=k?.25:1;document.getElementById('ba1').style.opacity=k?1:.25};
+})();
+</script></body></html>

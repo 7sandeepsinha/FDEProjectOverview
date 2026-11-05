@@ -1,0 +1,13 @@
+# Settings change between runs or machines. Business rules do not live here.
+ 
+[paths]
+data_dir = "data"
+output_dir = "outputs"
+fixtures_dir = "fixtures"
+ 
+[rules]
+batch_date = "2025-03-10"
+ 
+[ai]
+# "recorded" reads saved responses from fixtures/. Live calls arrive in Class 3.
+mode = "recorded"

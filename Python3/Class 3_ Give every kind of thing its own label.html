@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Class 3: Give every kind of thing its own label</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#E9ECEA; --paper:#FFFFFF; --ink:#1B2836; --ink-2:#4F5D6B; --rule:#1B2836; --hair:#CBD2D6;
+  --kraft:#B4875A; --kraft-2:#8E6640; --kraft-soft:#EFE2D1;
+  --tape:#F2C230; --tape-ink:#2E2600;
+  --ok:#2A7653; --ok-soft:#DDEFE5; --bad:#B9412C; --bad-soft:#F6E0DA;
+  --term:#16212C; --term-ink:#D8E3EA; --term-dim:#8EA0AE; --term-ok:#7FD3A6; --term-bad:#FF8E78; --term-hi:#F2C230;
+  --focus:#2D6FD6;
+  --display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",Verdana,"Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131B22; --paper:#1B2630; --ink:#E5EBEF; --ink-2:#A5B2BC; --rule:#8C9BA7; --hair:#2F3D49;
+    --kraft:#C99B6B; --kraft-2:#E0B98E; --kraft-soft:#352B21;
+    --tape:#F2C230; --tape-ink:#2E2600;
+    --ok:#5DBE90; --ok-soft:#163126; --bad:#EE7C66; --bad-soft:#3A1F1A;
+    --term:#0E151B; --focus:#7FAEFF;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131B22; --paper:#1B2630; --ink:#E5EBEF; --ink-2:#A5B2BC; --rule:#8C9BA7; --hair:#2F3D49;
+  --kraft:#C99B6B; --kraft-2:#E0B98E; --kraft-soft:#352B21;
+  --tape:#F2C230; --tape-ink:#2E2600;
+  --ok:#5DBE90; --ok-soft:#163126; --bad:#EE7C66; --bad-soft:#3A1F1A;
+  --term:#0E151B; --focus:#7FAEFF;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+img,svg{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+code,pre,.mono{font-family:var(--mono);font-size:.88em}
+p{margin:0 0 .8em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* ---------- hero ---------- */
+.hero{padding:40px 0 28px}
+.hero-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:36px;align-items:center}
+.kicker{font-family:var(--display);font-weight:600;font-stretch:100%;color:var(--ink-2);margin:0 0 10px;font-size:1rem}
+h1{font-family:var(--display);font-weight:850;font-stretch:108%;font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.02;letter-spacing:-.01em;margin:0 0 18px}
+.lede{font-size:1.15rem;max-width:34em;color:var(--ink-2)}
+.label-slip{display:inline-grid;grid-template-columns:auto 1fr;gap:2px 14px;border:2px solid var(--rule);background:var(--paper);padding:12px 16px;border-radius:6px;margin-top:8px;font-size:.95rem}
+.label-slip dt{font-weight:700}
+.label-slip dd{margin:0}
+
+.stage{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:18px 18px 16px;position:relative}
+.stage-row{display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;gap:6px}
+.laptop{display:flex;flex-direction:column;align-items:center}
+.screen{width:100%;aspect-ratio:16/10;background:var(--term);border-radius:8px 8px 2px 2px;border:3px solid #2A3744;padding:8px 9px;overflow:hidden;font-family:var(--mono);font-size:.66rem;line-height:1.45;color:var(--term-ink)}
+.base{width:112%;height:9px;background:#56636F;border-radius:0 0 8px 8px}
+.laptop-name{margin-top:8px;font-weight:700;font-size:.92rem}
+.screen .ok{color:var(--term-ok)} .screen .bad{color:var(--term-bad)} .screen .dim{color:var(--term-dim)}
+.lane{position:relative;height:60px}
+.lane::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--hair)}
+.mover{position:absolute;z-index:5;top:50%;left:-150%;transform:translate(0,-50%);opacity:0;pointer-events:none}
+.mover.go{animation:fly 1.1s cubic-bezier(.55,.05,.35,1) forwards}
+@keyframes fly{0%{left:-150%;opacity:1}85%{opacity:1}100%{left:170%;opacity:0}}
+.file-ico{width:30px;height:38px;background:var(--paper);border:2px solid var(--rule);border-radius:3px 10px 3px 3px;display:grid;place-items:center;font-family:var(--mono);font-size:.55rem;font-weight:600}
+.parcel{width:54px;height:42px;background:var(--kraft);border:2px solid var(--kraft-2);border-radius:4px;position:relative}
+.parcel::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:12px;transform:translateX(-50%);background:var(--tape);opacity:.9}
+.parcel::after{content:"";position:absolute;left:6px;top:7px;width:18px;height:11px;background:#fff;border-radius:2px}
+.stage-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.stage-note{margin:12px 0 0;font-size:.95rem;min-height:3.2em}
+
+/* ---------- buttons ---------- */
+.btn{appearance:none;border:2px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:8px;padding:9px 15px;font-weight:700;cursor:pointer;line-height:1.2;transition:transform .12s ease, background .15s ease}
+.btn:hover{background:var(--kraft-soft)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.primary:hover{background:var(--ink-2);border-color:var(--ink-2)}
+.btn.tape{background:var(--tape);color:var(--tape-ink);border-color:var(--tape)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.small{padding:6px 11px;font-size:.92rem}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.link-btn{appearance:none;background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-weight:700}
+
+/* ---------- OS switch ---------- */
+.os-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:8px 0 0;font-size:.95rem}
+.seg{display:inline-flex;border:2px solid var(--rule);border-radius:999px;overflow:hidden;background:var(--paper)}
+.seg button{appearance:none;border:0;background:none;padding:6px 14px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+body[data-os="mac"] .win-only{display:none !important}
+body[data-os="win"] .mac-only{display:none !important}
+
+/* ---------- tracking strip ---------- */
+.track{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:2px solid var(--rule)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.track-inner{display:flex;align-items:center;gap:16px;padding:10px 20px;max-width:1080px;margin:0 auto}
+.stops{display:flex;gap:0;flex:1;overflow-x:auto;scrollbar-width:none;padding:4px 2px}
+.stops::-webkit-scrollbar{display:none}
+.stop-dot{appearance:none;flex:1 0 34px;min-width:34px;background:none;border:0;padding:0;cursor:pointer;position:relative;display:flex;justify-content:center}
+.stop-dot::before{content:"";position:absolute;top:50%;left:0;right:0;border-top:2px solid var(--hair);z-index:0}
+.stop-dot:first-child::before{left:50%} .stop-dot:last-child::before{right:50%}
+.stop-dot span{position:relative;z-index:1;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--paper);border:2px solid var(--hair);font-family:var(--display);font-weight:800;font-size:.82rem;color:var(--ink-2);transition:all .2s ease}
+.stop-dot.packed span{background:var(--ok);border-color:var(--ok);color:#fff}
+.stop-dot.current span{background:var(--ink);border-color:var(--ink);color:var(--paper);transform:scale(1.12)}
+.stop-dot.packed.current span{box-shadow:0 0 0 3px var(--ok)}
+.track-meta{flex:0 0 auto;font-size:.9rem;color:var(--ink-2);white-space:nowrap}
+.track-meta strong{color:var(--ink)}
+
+/* ---------- stop panel ---------- */
+main.wrap{padding-top:26px;padding-bottom:60px}
+.stop{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:28px 30px 24px;animation:arrive .35s ease both}
+.stop[hidden]{display:none}
+@keyframes arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stop-no{font-family:var(--display);font-weight:700;color:var(--ink-2);margin:0 0 4px;font-size:.98rem}
+.stop h2{font-family:var(--display);font-weight:850;font-stretch:112%;font-size:clamp(1.8rem,3.6vw,2.6rem);line-height:1.05;margin:0 0 10px}
+.idea{font-size:1.2rem;max-width:36em;margin-bottom:22px}
+.stop h3{font-family:var(--display);font-weight:750;font-stretch:105%;font-size:1.2rem;margin:26px 0 10px}
+.widget{border:2px dashed var(--hair);border-radius:12px;padding:18px;margin:6px 0 20px;background:color-mix(in srgb,var(--bg) 45%,var(--paper))}
+.widget-title{font-weight:700;margin:0 0 4px}
+.widget-hint{color:var(--ink-2);font-size:.95rem;margin:0 0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.points{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start;margin-top:4px}
+.points ul{margin:0;padding-left:1.15em}
+.points li{margin:0 0 .55em}
+.analogy{border-left:6px solid var(--kraft);background:var(--kraft-soft);border-radius:0 10px 10px 0;padding:12px 16px;font-size:.98rem}
+.analogy b{display:block;margin-bottom:2px}
+details.slips{margin-top:18px;border-top:2px solid var(--hair);padding-top:12px}
+details.slips summary{cursor:pointer;font-weight:700}
+details.slips ul{margin:10px 0 0;padding-left:1.15em}
+details.slips li{margin-bottom:.4em}
+.stop-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-top:24px;padding-top:18px;border-top:2px solid var(--rule)}
+.stop-foot .mid{display:flex;gap:10px;align-items:center}
+.stamp{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:800;color:var(--ok);border:2px solid var(--ok);border-radius:6px;padding:4px 10px;transform:rotate(-3deg)}
+.stamp[hidden]{display:none}
+
+/* ---------- terminal & code ---------- */
+.term{background:var(--term);color:var(--term-ink);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:.84rem;line-height:1.55;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.term .p{color:var(--term-dim)} .term .ok{color:var(--term-ok)} .term .bad{color:var(--term-bad)} .term .hi{color:var(--term-hi)}
+.term-title{font-size:.85rem;font-weight:700;margin:0 0 6px;color:var(--ink-2)}
+.cmd{background:var(--term);color:var(--term-ink);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:.84rem;overflow-x:auto;white-space:pre;margin:6px 0 12px}
+.cmd .c{color:var(--term-dim)}
+.cmds-label{font-weight:700;font-size:.95rem;margin:10px 0 2px}
+
+/* ---------- flip cards ---------- */
+.flips{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.flip{appearance:none;text-align:left;border:2px solid var(--rule);border-radius:10px;background:var(--paper);padding:14px;cursor:pointer;min-height:118px;position:relative}
+.flip .front{font-family:var(--display);font-weight:800;font-size:1.15rem}
+.flip .front small{display:block;font-family:var(--body);font-weight:400;font-size:.85rem;color:var(--ink-2);margin-top:6px}
+.flip .back{display:none;font-size:.95rem}
+.flip[aria-pressed="true"]{background:var(--kraft-soft)}
+.flip[aria-pressed="true"] .front{display:none}
+.flip[aria-pressed="true"] .back{display:block;animation:arrive .25s ease}
+
+/* ---------- traceback reader ---------- */
+.tb{display:flex;flex-direction:column;background:var(--term);border-radius:10px;padding:8px;font-family:var(--mono);font-size:.8rem}
+.tb button{appearance:none;background:none;border:0;color:var(--term-ink);text-align:left;padding:3px 8px;border-radius:5px;cursor:pointer;white-space:pre;overflow-x:auto;font-family:inherit;font-size:inherit}
+.tb button:hover{background:rgba(255,255,255,.07)}
+.tb button.wrong{background:rgba(242,194,48,.14)}
+.tb button.right{background:rgba(127,211,166,.18);color:var(--term-ok)}
+.feedback{margin:10px 0 0;min-height:1.6em;font-weight:700}
+.feedback.good{color:var(--ok)} .feedback.meh{color:var(--ink)}
+
+/* ---------- sorter ---------- */
+.pile{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:42px}
+.chip{appearance:none;border:2px solid var(--rule);background:var(--paper);border-radius:999px;padding:6px 13px;font-family:var(--mono);font-size:.84rem;cursor:pointer;transition:transform .15s ease}
+.chip[aria-pressed="true"]{background:var(--tape);color:var(--tape-ink);border-color:var(--tape);transform:translateY(-2px)}
+.chip.gone{display:none}
+.bins{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bin{appearance:none;text-align:left;border:2px solid var(--rule);background:var(--paper);border-radius:10px;padding:10px 12px;cursor:pointer;min-height:92px;display:flex;flex-direction:column;gap:2px}
+.bin:hover{background:var(--kraft-soft)}
+.bin-name{font-family:var(--mono);font-weight:600;font-size:.86rem}
+.bin-job{font-size:.85rem;color:var(--ink-2)}
+.bin-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.bin-items span{font-family:var(--mono);font-size:.72rem;background:var(--ok-soft);color:var(--ink);border:1px solid var(--ok);border-radius:4px;padding:1px 6px;animation:pop .3s ease}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.bin.shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.bins.three .bin{min-height:120px}
+.bin.rules{border-color:#3B6FB6} .bin.settings{border-color:var(--ok)} .bin.secrets{border-color:var(--bad)}
+.bin-big{font-family:var(--display);font-weight:800;font-size:1.1rem}
+.msg{margin:12px 0 0;min-height:1.6em;font-weight:700}
+
+/* ---------- PATH sim ---------- */
+.pathrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.pathrow .lbl{font-weight:700;font-size:.9rem;margin-right:4px}
+.pathbox{font-family:var(--mono);font-size:.78rem;border:2px solid var(--hair);border-radius:6px;padding:4px 8px;background:var(--paper);transition:all .35s ease}
+.pathbox.first{border-color:var(--ink);font-weight:600}
+.pathbox.venv{border-color:var(--ok);background:var(--ok-soft);animation:slidein .45s ease}
+@keyframes slidein{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+.pathbox .tag{font-family:var(--body);font-size:.72rem;margin-left:6px;color:var(--ok);font-weight:700}
+
+/* ---------- pins ---------- */
+.range-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+input[type=range]{accent-color:var(--ink);width:min(320px,100%)}
+.basket{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper)}
+.basket h4{margin:0 0 6px;font-family:var(--display);font-weight:800;font-size:1.05rem}
+.basket .line{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:.82rem;padding:4px 0;border-bottom:1px dashed var(--hair)}
+.basket .verdict{margin-top:8px;font-weight:700;font-size:.95rem}
+.v-ok{color:var(--ok)} .v-warn{color:var(--bad)}
+
+/* ---------- toml explorer ---------- */
+.toml{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;align-items:start}
+.toml-code{background:var(--term);border-radius:10px;padding:6px}
+.toml-code button{display:block;width:100%;appearance:none;border:0;background:none;color:var(--term-ink);text-align:left;font-family:var(--mono);font-size:.78rem;line-height:1.5;white-space:pre;padding:6px 8px;border-radius:6px;cursor:pointer;overflow-x:auto}
+.toml-code button:hover{background:rgba(255,255,255,.06)}
+.toml-code button[aria-pressed="true"]{background:rgba(242,194,48,.16);box-shadow:inset 3px 0 0 var(--term-hi)}
+.toml-code .k{color:var(--term-hi)}
+.explain{border:2px solid var(--rule);border-radius:10px;padding:14px;background:var(--paper);position:sticky;top:110px}
+.explain h4{margin:0 0 6px;font-family:var(--mono);font-size:.9rem}
+.decoder{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:1.25rem;margin:6px 0 10px}
+.decoder button{appearance:none;border:2px solid var(--rule);background:var(--paper);border-radius:6px;padding:4px 10px;font-family:var(--mono);font-size:1.1rem;cursor:pointer}
+.decoder button[aria-pressed="true"]{background:var(--tape);border-color:var(--tape);color:var(--tape-ink)}
+
+/* ---------- module map ---------- */
+.map-stack{display:grid;gap:16px}
+.map{max-width:640px;width:100%;margin:0 auto}
+.map svg{width:100%;height:auto;display:block}
+.map-side{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}
+.map .node rect{fill:var(--paper);stroke:var(--rule);stroke-width:2;rx:10}
+.map .node text{fill:var(--ink);font-family:var(--mono);font-size:15px;font-weight:600}
+.map .node{cursor:pointer}
+.map .node:hover rect{fill:var(--kraft-soft)}
+.map .node.on rect{fill:var(--tape);stroke:var(--tape)}
+.map .node.on text{fill:var(--tape-ink)}
+.map .node:focus{outline:none}
+.map .node:focus-visible rect{stroke:var(--focus);stroke-width:4}
+.map .edge{stroke:var(--ink-2);stroke-width:2.5;fill:none}
+.map .edge-bad{stroke:var(--bad);stroke-width:3;fill:none;stroke-dasharray:7 6;opacity:0;transition:opacity .3s}
+.map.cycle .edge-bad{opacity:1;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-26}}
+.map .arrowhead{fill:var(--ink-2)} .map .arrowhead-bad{fill:var(--bad)}
+.node-info{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper);min-height:94px}
+.node-info h4{margin:0 0 4px;font-family:var(--mono)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.same-badge{display:inline-block;margin-top:10px;font-weight:700;color:var(--ok)}
+
+/* ---------- editor mock ---------- */
+.editor{border:2px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--paper)}
+.editor-bar{display:flex;justify-content:space-between;gap:10px;background:var(--ink);color:var(--paper);font-size:.82rem;padding:5px 10px;font-family:var(--mono)}
+.editor-code{font-family:var(--mono);font-size:.82rem;line-height:1.6;padding:10px 12px;white-space:pre;overflow-x:auto}
+.squig{text-decoration:underline wavy var(--bad);text-underline-offset:4px}
+.editor-tip{font-size:.82rem;color:var(--bad);font-family:var(--mono);padding:0 12px 10px}
+.interp-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.interp-list button{appearance:none;text-align:left;border:2px solid var(--hair);border-radius:8px;background:var(--paper);padding:8px 12px;cursor:pointer}
+.interp-list button[aria-pressed="true"]{border-color:var(--ink);background:var(--kraft-soft)}
+.interp-list small{display:block;font-family:var(--mono);font-size:.74rem;color:var(--ink-2)}
+.code-lines div{transition:all .35s ease;max-height:1.7em;overflow:hidden}
+.code-lines .flag{background:var(--bad-soft);box-shadow:inset 3px 0 0 var(--bad)}
+.code-lines .removed{max-height:0;opacity:0}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+
+/* ---------- layers (precedence) ---------- */
+.layers{display:flex;flex-direction:column;gap:8px}
+.layer{border:2px solid var(--hair);border-radius:10px;padding:10px 14px;background:var(--paper);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;transition:all .25s ease;opacity:.6}
+.layer.active{opacity:1;border-color:var(--rule)}
+.layer.wins{border-color:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.layer .lname{font-weight:700;min-width:9.5em}
+.layer code{background:var(--bg);padding:2px 6px;border-radius:4px}
+.layer .won{margin-left:auto;font-weight:700;color:var(--ok);display:none}
+.layer.wins .won{display:inline}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:700}
+.toggle input{width:20px;height:20px;accent-color:var(--ink)}
+select{border:2px solid var(--rule);border-radius:6px;padding:3px 6px;background:var(--paper)}
+
+/* ---------- switch ---------- */
+.switch{appearance:none;display:inline-flex;align-items:center;gap:12px;background:none;border:0;cursor:pointer;font-weight:700;padding:4px 0;text-align:left}
+.switch .track-s{width:50px;height:28px;border-radius:999px;background:var(--ok);position:relative;flex:0 0 auto;transition:background .2s}
+.switch .track-s::after{content:"";position:absolute;top:3px;left:25px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+.switch[aria-checked="false"] .track-s{background:var(--bad)}
+.switch[aria-checked="false"] .track-s::after{left:3px}
+.switch.risky[aria-checked="false"] .track-s{background:var(--rule)}
+.switch.risky[aria-checked="true"] .track-s{background:var(--bad)}
+
+/* ---------- git sim ---------- */
+.git-lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:relative}
+.git-lane{border:2px solid var(--rule);border-radius:10px;background:var(--paper);padding:10px;min-height:150px;display:flex;flex-direction:column;gap:6px}
+.git-lane h4{margin:0;font-family:var(--display);font-weight:800;font-size:.98rem}
+.git-lane .sub{font-size:.78rem;color:var(--ink-2);margin-top:-4px}
+.gcard{font-family:var(--mono);font-size:.74rem;border:2px solid var(--rule);border-radius:6px;padding:4px 6px;background:var(--tape);color:var(--tape-ink);animation:pop .3s ease}
+.gcard.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
+.commit{font-family:var(--mono);font-size:.72rem;display:flex;gap:6px;align-items:flex-start}
+.commit::before{content:"";flex:0 0 10px;height:10px;margin-top:3px;border-radius:50%;background:var(--ink)}
+.commit.new{animation:pop .3s ease}
+.commit.leak::before{background:var(--bad)}
+.git-cmds{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 10px}
+.git-cmds .btn{font-family:var(--mono);font-size:.86rem;font-weight:600}
+.partner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;border:2px dashed var(--hair);border-radius:10px;padding:8px 12px;margin-top:10px;font-size:.92rem}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--bad-soft);color:var(--bad)}
+
+/* ---------- readme ---------- */
+.readme-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:16px;align-items:start}
+.rm-list{display:flex;flex-direction:column;gap:6px}
+.rm-list label{display:flex;gap:10px;align-items:center;border:2px solid var(--hair);border-radius:8px;padding:7px 10px;background:var(--paper);cursor:pointer}
+.rm-list input{width:18px;height:18px;accent-color:var(--ink)}
+.walk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.walk li{display:flex;gap:10px;align-items:center;border:2px solid var(--hair);border-radius:8px;padding:7px 10px;background:var(--paper);transition:all .25s}
+.walk li .ico{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.8rem;border:2px solid var(--hair);flex:0 0 auto}
+.walk li.done{border-color:var(--ok)} .walk li.done .ico{background:var(--ok);border-color:var(--ok);color:#fff}
+.walk li.here{border-color:var(--ink);box-shadow:0 0 0 3px var(--kraft-soft)}
+.walk li.stuck{border-color:var(--bad);background:var(--bad-soft)} .walk li.stuck .ico{background:var(--bad);border-color:var(--bad);color:#fff}
+.bubble{font-style:italic;color:var(--bad);font-size:.9rem;margin-left:auto}
+.result{margin-top:10px;font-weight:700;min-height:1.6em}
+
+/* ---------- AI boundary ---------- */
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.note-card{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper)}
+.note-text{font-family:var(--mono);font-size:.95rem;background:var(--bg);border-radius:6px;padding:8px 10px;margin:6px 0 0}
+mark{background:var(--tape);color:var(--tape-ink);padding:0 2px;border-radius:2px}
+.sug{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper);min-height:180px}
+.sug dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.95rem}
+.sug dt{font-weight:700}
+.sug dd{margin:0}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-weight:700;font-size:.85rem}
+.badge.ok{background:var(--ok-soft);color:var(--ok)} .badge.warn{background:var(--tape);color:var(--tape-ink)} .badge.no{background:var(--bad-soft);color:var(--bad)}
+.boundary{display:grid;grid-template-columns:1fr 26px 1fr 1fr;gap:10px;align-items:center;margin-top:8px}
+.bbox{border:2px solid var(--rule);border-radius:10px;padding:10px;text-align:center;background:var(--paper);font-family:var(--mono);font-size:.86rem;font-weight:600}
+.bbox small{display:block;font-family:var(--body);font-weight:400;color:var(--ink-2);font-size:.8rem}
+.bwall{height:100%;min-height:80px;border-left:4px dashed var(--ink-2);margin:0 auto;width:0;position:relative}
+.bwall.breached{border-left-color:var(--bad)}
+.bbox.model{border-style:dashed}
+
+/* ---------- before/after ---------- */
+.ba{width:100%;border-collapse:collapse;font-size:.96rem}
+.ba th,.ba td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--hair);vertical-align:top}
+.ba th{font-family:var(--display);font-weight:800}
+.ba td.ans{transition:opacity .2s}
+.ba .now{color:var(--ok);font-weight:700}
+.ba .then{color:var(--ink-2)}
+.three textarea{width:100%;min-height:62px;border:2px solid var(--hair);border-radius:8px;padding:8px 10px;background:var(--paper);resize:vertical}
+.three label{display:block;font-weight:700;margin:10px 0 4px}
+
+/* ---------- quiz ---------- */
+.quiz{border:2px solid var(--rule);border-radius:12px;padding:16px 18px;margin-top:22px;background:var(--paper)}
+.quiz .q{font-weight:700;margin:0 0 10px}
+.quiz .q code{font-weight:400}
+.quiz .opts{display:flex;flex-direction:column;gap:8px}
+.quiz .opt{appearance:none;text-align:left;border:2px solid var(--hair);border-radius:8px;background:var(--paper);padding:9px 12px;cursor:pointer;display:flex;gap:10px}
+.quiz .opt b{flex:0 0 1.4em}
+.quiz .opt:hover{border-color:var(--rule)}
+.quiz .opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.quiz .opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.quiz .why{margin:10px 0 0;min-height:1.4em}
+.quiz-title{font-family:var(--display);font-weight:800;margin:0 0 6px;font-size:1.05rem}
+
+/* ---------- footer ---------- */
+.allcmds{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:16px 22px;margin-top:22px}
+.allcmds summary{cursor:pointer;font-family:var(--display);font-weight:800;font-size:1.15rem}
+footer.site{padding:10px 0 40px;color:var(--ink-2);font-size:.9rem}
+
+#stopFoot{border-top:0;padding-top:0;margin-top:16px}
+.lane{z-index:2}
+/* ---------- responsive ---------- */
+@media (max-width: 860px){
+  .hero-grid{grid-template-columns:1fr}
+  .points,.two,.toml,.readme-grid,.ai-grid,.compare,.map-side{grid-template-columns:1fr}
+  .explain{position:static}
+  .bins{grid-template-columns:repeat(2,1fr)}
+  .flips{grid-template-columns:1fr}
+  .git-lanes{grid-template-columns:repeat(2,1fr)}
+  .stop{padding:22px 18px 20px}
+  .track-meta .long{display:none}
+}
+@media (max-width: 520px){
+  .bins,.bins.three{grid-template-columns:1fr}
+  .stage-row{grid-template-columns:1fr 44px 1fr}
+  .screen{font-size:.55rem}
+  .boundary{grid-template-columns:1fr 18px 1fr;}
+  .boundary .model{grid-column:1 / -1}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+
+/* ---------- Class 3 additions ---------- */
+.hero-stage{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bag,.shelf{border:2px solid var(--rule);border-radius:12px;padding:12px;background:var(--paper);display:flex;flex-direction:column;gap:8px;min-width:0}
+.bag h4,.shelf h4{margin:0;font-family:var(--display);font-weight:800;font-size:1rem}
+.bag .sub,.shelf .sub{font-size:.82rem;color:var(--ink-2);margin-top:-4px}
+.slips{display:flex;flex-wrap:wrap;gap:6px;min-height:58px;background:var(--kraft-soft);border-radius:10px;padding:8px}
+.slip-k{font-family:var(--mono);font-size:.72rem;background:var(--paper);border:1px solid var(--kraft-2);border-radius:4px;padding:2px 6px;transform:rotate(-1.5deg)}
+.slip-k:nth-child(2n){transform:rotate(1.2deg)}
+.slip-k.hot{background:var(--bad-soft);border-color:var(--bad);animation:pop .3s ease}
+.sealed{border:2px solid var(--kraft-2);background:var(--kraft);border-radius:8px;padding:8px 10px;position:relative;color:#1B1208}
+.sealed::after{content:"";position:absolute;top:0;bottom:0;right:22px;width:12px;background:var(--tape);opacity:.9}
+.sealed .ln{font-family:var(--mono);font-size:.72rem;position:relative;z-index:1;background:rgba(255,255,255,.82);border-radius:3px;padding:0 4px;margin:2px 0;width:max-content;max-width:100%}
+.tag{font-family:var(--mono);font-size:.72rem;border:2px dashed var(--tape-ink);background:var(--tape);color:var(--tape-ink);border-radius:6px;padding:4px 8px;align-self:flex-start;opacity:0;transform:translateY(-6px)}
+.tag.on{opacity:1;transform:none;transition:all .35s ease}
+.mini{background:var(--term);color:var(--term-ink);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:.74rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;min-height:12.5em}
+.mini .bad{color:var(--term-bad)} .mini .ok{color:var(--term-ok)} .mini .dim{color:var(--term-dim)} .mini .hi{color:var(--term-hi)}
+.gate{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gate .col{border:2px solid var(--rule);border-radius:10px;padding:12px;background:var(--paper);min-width:0}
+.gate .col h4{margin:0 0 6px;font-family:var(--display);font-weight:800;font-size:1rem}
+.inrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.inrow input{border:2px solid var(--rule);border-radius:8px;padding:7px 10px;background:var(--paper);font-family:var(--mono);font-size:.95rem;min-width:0;flex:1 1 12em}
+.rowpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.code{background:var(--term);color:var(--term-ink);border-radius:10px;padding:8px 0;font-family:var(--mono);font-size:.78rem;line-height:1.6;overflow-x:auto}
+.code div{white-space:pre;padding:0 12px}
+.code .n{color:var(--term-dim);display:inline-block;width:2.2em}
+.code .err{background:rgba(255,142,120,.16);box-shadow:inset 3px 0 0 var(--term-bad)}
+.code .fixed{background:rgba(127,211,166,.14);box-shadow:inset 3px 0 0 var(--term-ok)}
+.csv{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.8rem;background:var(--paper);border:2px solid var(--rule);border-radius:8px;overflow:hidden}
+.csv th,.csv td{padding:5px 8px;border-bottom:1px solid var(--hair);text-align:left}
+.csv th{background:var(--ink);color:var(--paper);font-weight:600}
+.csv tr.broken td{background:var(--bad-soft)}
+.csv select{font-family:var(--mono);font-size:.8rem}
+.tablewrap{overflow-x:auto;margin-bottom:12px}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.callflow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.callflow .bbox{font-size:.78rem;transition:all .25s ease}
+.callflow .bbox.dead{opacity:.4;text-decoration:line-through}
+.callflow .bbox.lit{border-color:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.callflow .bbox.cut{border-color:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+.gpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.gpick .chip.done{background:var(--ok-soft);border-color:var(--ok)}
+.gcase{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gcase .card{border:2px solid var(--rule);border-radius:10px;padding:12px;background:var(--paper);min-width:0}
+.gcase .card h4{margin:0 0 6px;font-family:var(--display);font-weight:800;font-size:1rem}
+.gcase dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:.9rem}
+.gcase dt{font-weight:700} .gcase dd{margin:0;overflow-wrap:anywhere}
+.marks{display:grid;gap:8px;margin-top:12px}
+.mark{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mark .mname{font-family:var(--mono);font-size:.8rem;font-weight:600;min-width:12.5em}
+.mark .btn{padding:4px 10px;font-size:.86rem}
+.mark .res{font-size:.85rem;font-weight:700}
+.mark .res.good{color:var(--ok)} .mark .res.bad{color:var(--bad)}
+.summary{font-family:var(--mono);font-size:.84rem;background:var(--term);color:var(--term-ink);border-radius:8px;padding:10px 12px;white-space:pre-wrap;margin-top:12px}
+.ops{display:grid;gap:10px}
+.opcard{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper)}
+.opcard p{margin:0 0 8px}
+.opcard .who{font-weight:700;font-size:.85rem;color:var(--ink-2);margin-bottom:4px}
+.verdict-line{margin:8px 0 0;font-weight:700;min-height:1.4em}
+@media (max-width: 860px){
+  .hero-stage,.gate,.gcase{grid-template-columns:1fr}
+  .callflow{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width: 520px){ .csv .oid{display:none} .csv{font-size:.7rem;table-layout:fixed} .csv th,.csv td{padding:5px 5px;overflow-wrap:anywhere} .csv select{font-size:.7rem;width:100%;max-width:100%} }
+@media (prefers-reduced-motion: reduce){ .tag.on{transition:none} }
+</style>
+</head>
+<body data-os="mac">
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="kicker">FDE Module 2, Class 3: Modeling the Real World in Code</p>
+      <h1>Give every kind of thing its own label.</h1>
+      <p class="lede">Today a case stops being a loose dictionary. Facts get sealed, evidence gets quoted, and a model’s answer gets a bright tag that can never be sealed inside a fact.</p>
+      <dl class="label-slip" aria-label="What goes where">
+        <dt>Facts</dt><dd>sealed in a frozen record</dd>
+        <dt>Evidence</dt><dd>a note, quoted word for word</dd>
+        <dt>Suggestions</dt><dd>tagged outside, never sealed in</dd>
+      </dl>
+    </div>
+
+    <div class="stage" aria-label="A model answer arrives">
+      <div class="hero-stage">
+        <div class="bag">
+          <h4>Loose dictionary</h4>
+          <span class="sub">case C-1002, before today</span>
+          <div class="slips" id="bagSlips" aria-live="polite"></div>
+        </div>
+        <div class="shelf">
+          <h4>Typed records</h4>
+          <span class="sub">case C-1002, after today</span>
+          <div class="sealed" aria-label="Sealed SupportCase">
+            <div class="ln">SupportCase C-1002</div>
+            <div class="ln">order_status=SHIPPED</div>
+            <div class="ln">promised 2025-03-07</div>
+          </div>
+          <div class="tag" id="shelfTag">CaseSuggestion: ADDRESS_CONFIRMATION</div>
+        </div>
+      </div>
+      <p class="term-title" id="heroTitle" style="margin-top:12px">python -m meridian_workbench</p>
+      <div class="mini" id="heroOut" aria-live="polite"><span class="dim">Press a button to run the report.</span></div>
+      <div class="stage-actions">
+        <button class="btn" id="heroBag">Drop the answer into the dictionary</button>
+        <button class="btn tape" id="heroShelf">Hand it to a typed record</button>
+      </div>
+      <p class="stage-note" id="heroNote">Suppose a model reads the note on C-1002 and replies with a guess, including <code>"order_status": "DELIVERED"</code>. Try both.</p>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="os-bar">
+      <span>Show commands for</span>
+      <div class="seg" role="group" aria-label="Operating system">
+        <button type="button" data-os-pick="mac" aria-pressed="true">macOS or Linux</button>
+        <button type="button" data-os-pick="win" aria-pressed="false">Windows</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="track" aria-label="Class stops">
+  <div class="track-inner">
+    <div class="stops" id="stops"></div>
+    <div class="track-meta"><strong id="packedCount">0</strong> of 9 <span class="long">stops packed</span></div>
+  </div>
+</nav>
+
+<main class="wrap" id="main">
+
+<!-- ================= STOP 1 ================= -->
+<section class="stop" id="s1" data-title="Why loose dictionaries are risky" data-min="5">
+  <p class="stop-no">Stop 1 of 9, about 5 minutes</p>
+  <h2>Why loose dictionaries are risky</h2>
+  <p class="idea">A dictionary accepts anything and says nothing, so mistakes hide until much later.</p>
+
+  <div class="widget">
+    <p class="widget-title">Predict, then run each line</p>
+    <p class="widget-hint">Guess first: does the line crash, or keep quiet? Then press it to see what Python really prints.</p>
+    <div class="code" id="dictCode">
+      <div><span class="n">1</span>case = {"case_id": "C-1002", "order_status": "SHIPPED", …}</div>
+    </div>
+    <div class="btnrow" id="dictBtns">
+      <button class="btn small" data-line="2"><span class="mono">case.get("order_staus")</span></button>
+      <button class="btn small" data-line="4"><span class="mono">"Delivered" in closed set?</span></button>
+      <button class="btn small" data-line="5"><span class="mono">case["order_staus"]</span></button>
+    </div>
+    <pre class="term" id="dictOut" aria-live="polite"><span class="p">press a line to run it</span></pre>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd">python scratch_dict.py</pre>
+
+  <div class="points">
+    <ul>
+      <li><b><code>.get</code> with a typo gives <code>None</code>.</b> No error, so the mistake surfaces far from where it happened.</li>
+      <li><b>Any value fits.</b> <code>"Delivered"</code> is not <code>"DELIVERED"</code>, so the rule never sees the case as closed.</li>
+      <li><b>Only square brackets complained.</b> The loud failure was the only useful one.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A cloth bag of loose paper slips. You can push anything in, and nothing tells you a slip is misspelt until someone needs it.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Expecting line 2 to crash. It prints <code>None</code> quietly.</li>
+    <li>Copying from the PDF splits line 1 in two. It still runs, but the traceback says line 6.</li>
+    <li>On Python 3.11+ the traceback shows a <code>~~~~^^^^</code> line pointing at the key. That is normal.</li>
+  </ul></details>
+</section>
+
+<!-- ================= STOP 2 ================= -->
+<section class="stop" id="s2" data-title="Classes and objects" data-min="14" hidden>
+  <p class="stop-no">Stop 2 of 9, about 14 minutes</p>
+  <h2>Classes and objects</h2>
+  <p class="idea">A class is a blank form; each object is one filled-in copy holding one case’s values.</p>
+
+  <div class="widget">
+    <p class="widget-title">Fill in a form from cases.csv</p>
+    <p class="widget-hint">Pick a row to build an object from it. Then add <code>__repr__</code> and compare two copies.</p>
+    <div class="rowpick" id="rowPick"></div>
+    <div class="btnrow">
+      <button class="switch" role="switch" aria-checked="false" id="reprSwitch"><span class="track-s"></span>Add __repr__</button>
+      <button class="btn small" id="cmpBtn">Make a second copy and compare</button>
+    </div>
+    <pre class="term" id="formOut" aria-live="polite"></pre>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd">python scratch_case.py</pre>
+
+  <div class="points">
+    <ul>
+      <li><b><code>__init__</code> fills the form.</b> Python calls it when you write <code>Case(...)</code>.</li>
+      <li><b><code>self</code> is the copy being filled right now.</b> <code>self.case_id = case_id</code> writes on that copy.</li>
+      <li><b>Equal values are not equal objects.</b> By default <code>==</code> asks “is it the very same copy?”</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>The form says there is a box called order_status. One copy says SHIPPED. Two copies with the same writing are still two pieces of paper.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Forgetting <code>self</code>: <code>Case.__init__() takes 4 positional arguments but 5 were given</code>.</li>
+    <li>Writing <code>case_id = case_id</code>: the value vanishes, then <code>'Case' object has no attribute 'case_id'</code>.</li>
+    <li><code>print</code> inside <code>__repr__</code> instead of <code>return</code>: <code>__str__ returned non-string</code>.</li>
+    <li>A missing comma joins two strings: <code>missing 1 required positional argument</code>.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="c">
+    <p class="quiz-title">Quick check 1 of 6</p>
+    <p class="q">A plain class has only <code>__init__</code>. <code>a</code> and <code>b</code> are both <code>Case("C-1002", "O-5002", "SHIPPED", "2025-03-07")</code>. What does <code>print(a == b)</code> print?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="The natural guess, and exactly what a dataclass gives you next stop. A plain class compares identity, not contents."><b>A</b><span>True, because both objects hold exactly the same four values</span></button>
+      <button class="opt" data-o="b" data-why="Every class inherits a default ==, so nothing crashes."><b>B</b><span>An error, because the class has no __eq__ method written in it</span></button>
+      <button class="opt" data-o="c" data-why="Right. a and b were made separately, so they are two different objects."><b>C</b><span>False, because Python compares identity unless equality is defined</span></button>
+      <button class="opt" data-o="d" data-why="That describes print(a) and print(b), not a == b."><b>D</b><span>It prints both objects, one after the other, on separate lines</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 3 ================= -->
+<section class="stop" id="s3" data-title="Dataclasses, frozen records, enums" data-min="18" hidden>
+  <p class="stop-no">Stop 3 of 9, about 18 minutes</p>
+  <h2>Dataclasses, frozen records, enums</h2>
+  <p class="idea">List the fields once; seal the facts; let a status be one of four allowed words and nothing else.</p>
+
+  <div class="widget">
+    <p class="widget-title">The status gate</p>
+    <p class="widget-hint">Type a status, or tap one. See what a dictionary does with it, and what <code>OrderStatus(...)</code> does.</p>
+    <div class="inrow">
+      <input id="gateIn" value="Delivered" aria-label="Status to try" spellcheck="false" autocomplete="off">
+      <button class="btn primary small" id="gateGo">Try it</button>
+    </div>
+    <div class="rowpick" id="gateChips"></div>
+    <div class="gate">
+      <div class="col"><h4>In a dictionary</h4><pre class="term" id="gateDict" aria-live="polite"></pre></div>
+      <div class="col"><h4>Through the enum</h4><pre class="term" id="gateEnum" aria-live="polite"></pre></div>
+    </div>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd">python scratch_dataclass.py</pre>
+
+  <div class="points">
+    <ul>
+      <li><b><code>@dataclass</code> writes the boring parts.</b> <code>__init__</code>, <code>__repr__</code> and <code>==</code> come from the field list.</li>
+      <li><b><code>frozen=True</code> seals a fact.</b> Changing a field raises <code>FrozenInstanceError</code>. A list field needs <code>field(default_factory=list)</code>, so every batch gets its own list.</li>
+      <li><b>Hints are not checks.</b> <code>Case("C-1002", "O-5002", 5, None)</code> still runs. The enum catches bad text when the loader converts it.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A laminated ID card. You can read it and copy it. If it is wrong, you don’t scribble on it; you issue a new card.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>A list default without <code>default_factory</code>: <code>ValueError: mutable default &lt;class 'list'&gt; … use default_factory</code>.</li>
+    <li>Forgetting <code>frozen=True</code> on a fact type.</li>
+    <li><code>cannot import name 'StrEnum'</code>: your Python is older than 3.11.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="a">
+    <p class="quiz-title">Quick check 2 of 6</p>
+    <p class="q">Which one of these statements is true?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="Right. An enum only accepts its listed values, so an unknown status fails loudly at load time."><b>A</b><span>OrderStatus("RETURNED") raises ValueError, so a bad status fails at load</span></button>
+      <button class="opt" data-o="b" data-why="That is the opposite of frozen. Frozen means read-only after it is built."><b>B</b><span>A frozen dataclass lets you change a field after the object is built</span></button>
+      <button class="opt" data-o="c" data-why="That describes a free-text string. Try RETURNED in the gate above."><b>C</b><span>An enum accepts any string, so it never rejects a misspelt value</span></button>
+      <button class="opt" data-o="d" data-why="One list would be shared by every object, so Python refuses and asks for field(default_factory=list)."><b>D</b><span>A list default needs no special handling, as each object copies it</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 4 ================= -->
+<section class="stop" id="s4" data-title="Type hints and mypy" data-min="10" hidden>
+  <p class="stop-no">Stop 4 of 9, about 10 minutes</p>
+  <h2>Type hints and mypy</h2>
+  <p class="idea">mypy reads every promise in the code without running it, and lists each place two parts disagree.</p>
+
+  <div class="widget">
+    <p class="widget-title">Fix the red tags</p>
+    <p class="widget-hint">Run mypy on the old rules file. Then fix each error, and decide which side is wrong.</p>
+    <div class="code" id="mypyCode"></div>
+    <div class="btnrow">
+      <button class="btn primary small" id="mypyRun">Run mypy</button>
+      <button class="btn small" id="fix18">Line 18: use case.order_status</button>
+      <button class="btn small" id="fix20a">Line 20: convert the date to text</button>
+      <button class="btn small" id="fix20b">Line 10: make the function take a date</button>
+      <button class="link-btn" id="mypyReset">Start again</button>
+    </div>
+    <pre class="term" id="mypyOut" aria-live="polite"><span class="p">$ mypy src/meridian_workbench/rules.py src/meridian_workbench/domain.py</span></pre>
+    <p class="feedback" id="mypyMsg" aria-live="polite"></p>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd">python -m pip install -r requirements.txt
+mypy src/meridian_workbench/rules.py src/meridian_workbench/domain.py</pre>
+
+  <div class="points">
+    <ul>
+      <li><b>mypy never runs the program.</b> It compares what a function promises with what each caller gives.</li>
+      <li><b>First ask which side is wrong.</b> We load real dates now, so the function is out of date, not the caller.</li>
+      <li><b>A tuple of (bool, str) becomes <code>AttentionDecision</code>.</b> Flag, reason and days travel together, by name.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A proofreader for the joins. A <code>date</code> plug and a <code>str</code> socket get a red tag before anyone switches the power on.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Paste the script’s <code>rules.py</code>. Adding hints to your own copy gives two <code>[index]</code> errors instead.</li>
+    <li>Don’t run the program until stop 5. Right now it raises <code>'dict' object has no attribute 'promised_date'</code>.</li>
+    <li>Silencing an error with <code>Any</code> or <code># type: ignore</code>. Fix the side that is wrong instead.</li>
+    <li>Running bare <code>mypy</code> now gives a long list from untyped Class 2 files. Name the two files.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="d">
+    <p class="quiz-title">Quick check 3 of 6</p>
+    <p class="q">mypy reports <code>rules.py:20: error: Argument 1 to "days_overdue" has incompatible type "date"; expected "str"</code>. What is the best reading and response?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="This hides the disagreement, so the bug waits for a user to find it."><b>A</b><span>mypy is mistaken here, so add # type: ignore and move on quickly</span></button>
+      <button class="opt" data-o="b" data-why="mypy reads the code. It never runs it, so nothing crashed."><b>B</b><span>mypy ran the program, and the crash happened on line 20 of it</span></button>
+      <button class="opt" data-o="c" data-why="That removes the safety net instead of fixing the join."><b>C</b><span>Delete the type hints, so that mypy has nothing left to check</span></button>
+      <button class="opt" data-o="d" data-why="Right. It lists where two parts disagree. Here we hold real dates, so the function changes."><b>D</b><span>The two sides disagree; decide which one is right, then fix it</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 5 ================= -->
+<section class="stop" id="s5" data-title="The domain model" data-min="17" hidden>
+  <p class="stop-no">Stop 5 of 9, about 17 minutes</p>
+  <h2>The domain model</h2>
+  <p class="idea">Facts, evidence, decisions and suggestions each get their own type, so nothing can pass as something it isn’t.</p>
+
+  <div class="widget" data-sorter>
+    <p class="widget-title">Sort every field into its box</p>
+    <p class="widget-hint">Tap a field, then tap the kind of thing it is.</p>
+    <div class="pile">
+      <button class="chip" data-item data-bin="fact" data-why="order_status comes from cases.csv. Only a new source file can change it.">order_status</button>
+      <button class="chip" data-item data-bin="evidence" data-why="A note is exactly what a person wrote. It backs a statement; it is not a conclusion.">note text</button>
+      <button class="chip" data-item data-bin="suggestion" data-why="issue_family is what a model proposes. It lives in CaseSuggestion, never in a fact.">issue_family</button>
+      <button class="chip" data-item data-bin="decision" data-why="needs_attention is computed by the Python rules from facts. Never by a model.">needs_attention</button>
+      <button class="chip" data-item data-bin="fact" data-why="units_on_hand comes from inventory.csv: InventoryInfo, a frozen fact.">units_on_hand</button>
+      <button class="chip" data-item data-bin="how" data-why="prompt_version says how the suggestion was made. It sits in CallMetadata, inside the suggestion.">prompt_version</button>
+      <button class="chip" data-item data-bin="suggestion" data-why="evidence_span is the model’s quote. The program checks it really appears in the note.">evidence_span</button>
+      <button class="chip" data-item data-bin="decision" data-why="days_overdue is part of AttentionDecision, worked out by the rules.">days_overdue</button>
+      <button class="chip" data-item data-bin="fact" data-why="carrier comes from shipments.csv: ShipmentInfo, a frozen fact.">carrier</button>
+      <button class="chip" data-item data-bin="how" data-why="Token counts are kept in CallMetadata, so every call can be audited.">input_tokens</button>
+    </div>
+    <div class="bins">
+      <button class="bin" data-bin="fact"><span class="bin-big">Fact</span><span class="bin-job">SupportCase, ShipmentInfo, InventoryInfo</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="evidence"><span class="bin-big">Evidence</span><span class="bin-job">SourceEvidence</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="decision"><span class="bin-big">Decision</span><span class="bin-job">AttentionDecision</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="suggestion"><span class="bin-big">Suggestion</span><span class="bin-job">CaseSuggestion</span><span class="bin-items"></span></button>
+      <button class="bin" data-bin="how"><span class="bin-big">How it was made</span><span class="bin-job">CallMetadata</span><span class="bin-items"></span></button>
+    </div>
+    <p class="msg" aria-live="polite"></p>
+    <button class="link-btn" data-sort-all>Sort them all for me</button>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd">mypy src/meridian_workbench/pipeline.py
+python -m meridian_workbench
+python -c "from meridian_workbench.config import load_settings; from meridian_workbench.loaders import load_cases; b = load_cases(load_settings().fixtures_dir / 'cases_bad_rows.csv'); print(len(b.cases), 'loaded'); [print(r) for r in b.rejected]"</pre>
+
+  <div class="points">
+    <ul>
+      <li><b>Ask “has a” or “is a”.</b> A context <em>has</em> a case, a shipment, stock and notes, so they are fields. That is composition.</li>
+      <li><b>A suggestion has no fact fields.</b> <code>CaseSuggestion</code> has no <code>order_status</code>, and <code>__post_init__</code> refuses one without a <code>case_id</code> and <code>source_note_id</code>.</li>
+      <li><b>Bad rows are kept, with a reason.</b> <code>cases_bad_rows.csv</code> loads 2 cases and 2 <code>RejectedRecord</code>s, rows 3 and 4.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A patient file is not a kind of patient. It has details, scans and notes in separate pockets, and one pocket can be replaced without touching the rest.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>The bad-rows command split over two lines gives <code>SyntaxError</code>. Copy it from here, where it is one line.</li>
+    <li><code>tuple[SourceEvidence]</code> means exactly one note. Write <code>tuple[SourceEvidence, ...]</code>.</li>
+    <li>Using <code>shipment</code> without checking for <code>None</code>. Processing and cancelled orders have no shipment row.</li>
+    <li>Editing the pasted files “just a little”. Paste first, change later.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="b">
+    <p class="quiz-title">Quick check 4 of 6</p>
+    <p class="q"><code>CaseContext</code> holds a <code>SupportCase</code>, a shipment, inventory and notes as fields. Why is that better than <code>class CaseContext(SupportCase)</code>?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="Speed is not the reason, and it isn’t true here."><b>A</b><span>Inheritance runs slower, so fields are the faster choice in Python</span></button>
+      <button class="opt" data-o="b" data-why="Right. Fields keep each part as its own type and the case stays unchanged. Inheriting needs a subclass per combination."><b>B</b><span>A context has a case rather than being one, so fields fit better</span></button>
+      <button class="opt" data-o="c" data-why="False. The ShippedCase demo subclasses a dataclass and works."><b>C</b><span>Python forbids a class from inheriting from any dataclass at all</span></button>
+      <button class="opt" data-o="d" data-why="Not generally true, and length isn’t the point. Meaning is."><b>D</b><span>Composition always gives shorter code than inheritance does</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 6 ================= -->
+<section class="stop" id="s6" data-title="The first pytest checks" data-min="12" hidden>
+  <p class="stop-no">Stop 6 of 9, about 12 minutes</p>
+  <h2>The first pytest checks</h2>
+  <p class="idea">A test is a short, named promise; a test you have never seen fail is one you can’t trust.</p>
+
+  <div class="widget">
+    <p class="widget-title">Break it on purpose</p>
+    <p class="widget-hint">Change the C-1002 row in <code>data/cases.csv</code>. Watch the program and the one test react.</p>
+    <div class="tablewrap">
+      <table class="csv" id="breakCsv"><thead><tr><th>case_id</th><th class="oid">order_id</th><th>order_status</th><th>promised_date</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="two">
+      <div><p class="term-title">python -m meridian_workbench</p><pre class="term" id="breakProg" aria-live="polite"></pre></div>
+      <div><p class="term-title">pytest tests/test_loading.py -k one_row</p><pre class="term" id="breakTest" aria-live="polite"></pre></div>
+    </div>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd mac-only">rm tests/check_rules.py tests/check_ai_boundary.py
+rm scratch_dict.py scratch_case.py scratch_dataclass.py
+pytest -v
+pytest tests/test_loading.py -k one_row
+git status
+git add .
+git commit -m "Add typed domain model and first pytest checks"</pre>
+  <pre class="cmd win-only">Remove-Item tests\check_rules.py, tests\check_ai_boundary.py
+Remove-Item scratch_dict.py, scratch_case.py, scratch_dataclass.py
+pytest -v
+pytest tests/test_loading.py -k one_row
+git status
+git add .
+git commit -m "Add typed domain model and first pytest checks"</pre>
+
+  <div class="points">
+    <ul>
+      <li><b>pytest collects <code>test_*</code>.</b> Files and functions must start with <code>test_</code>; there are 12 checks now.</li>
+      <li><b>The failure tells the story.</b> 6 cases instead of 7, and the list shows C-1002 is the missing one.</li>
+      <li><b>Read <code>git status</code> before every commit.</b> No <code>.venv</code>, <code>.env</code>, <code>outputs</code>, caches or scratch files.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A smoke alarm you have never tested with smoke is a plastic disc on the ceiling.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Forgetting to change <code>SHIPED</code> back. The whole suite then fails 3 checks.</li>
+    <li>Naming a file <code>check_rules.py</code>. pytest silently skips it.</li>
+    <li><code>ImportError while importing test module</code>: the editable install is missing. Re-run the pip install.</li>
+    <li>Scratch files left in the folder get committed, and <code>ruff check .</code> fails at the end of class.</li>
+  </ul></details>
+</section>
+
+<!-- ================= STOP 7 ================= -->
+<section class="stop" id="s7" data-title="The first bounded model call" data-min="17" hidden>
+  <p class="stop-no">Stop 7 of 9, about 17 minutes</p>
+  <h2>The first bounded model call</h2>
+  <p class="idea">One thin door to the model, a hard limit on each call, and a recorded answer whenever the door is shut.</p>
+
+  <div class="widget">
+    <p class="widget-title">Pull the plug</p>
+    <p class="widget-hint">Pick a situation. The rules always run first; the model is only asked about flagged cases that have a note.</p>
+    <div class="modes" role="group" aria-label="Situation" id="modeBtns">
+      <button class="btn small" data-mode="recorded" aria-pressed="true">Recorded mode</button>
+      <button class="btn small" data-mode="nokey" aria-pressed="false">Live, no key</button>
+      <button class="btn small" data-mode="badkey" aria-pressed="false">Live, wrong key</button>
+      <button class="btn small" data-mode="nonet" aria-pressed="false">Live, no network</button>
+      <button class="btn small" data-mode="live" aria-pressed="false">Live, working key</button>
+    </div>
+    <div class="callflow" aria-hidden="true">
+      <div class="bbox" id="cfAi">ai_client.py<small>checks the answer</small></div>
+      <div class="bbox" id="cfLlm">llm_client.py<small>one bounded call</small></div>
+      <div class="bbox model" id="cfModel">model<small>max_tokens 300, 20 s, 1 retry</small></div>
+      <div class="bbox" id="cfRec">recorded file<small>fixtures/</small></div>
+    </div>
+    <div class="two">
+      <div><p class="term-title">python -m meridian_workbench</p><pre class="term" id="modeOut" aria-live="polite"></pre></div>
+      <div><p class="term-title">first suggestion’s <code>meta</code> in attention_report.json</p><pre class="term" id="modeMeta" aria-live="polite"></pre></div>
+    </div>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd mac-only">MERIDIAN_LLM_API_KEY=abc123-not-real python -c "from meridian_workbench.config import load_settings; print(load_settings())"
+python -m meridian_workbench
+MERIDIAN_AI_MODE=live python -m meridian_workbench
+pytest</pre>
+  <pre class="cmd win-only">$env:MERIDIAN_LLM_API_KEY = "abc123-not-real"
+python -c "from meridian_workbench.config import load_settings; print(load_settings())"
+Remove-Item Env:MERIDIAN_LLM_API_KEY
+python -m meridian_workbench
+$env:MERIDIAN_AI_MODE = "live"
+python -m meridian_workbench
+Remove-Item Env:MERIDIAN_AI_MODE
+pytest</pre>
+
+  <div class="points">
+    <ul>
+      <li><b>The key lives in <code>.env</code> only.</b> <code>repr=False</code> keeps it out of <code>print(settings)</code>. Never log or save the settings object.</li>
+      <li><b>Bounded means three caps.</b> Length (<code>max_tokens</code>), wait (<code>timeout</code>) and retries (<code>max_retries=1</code>), one call per flagged note.</li>
+      <li><b>Every answer is checked.</b> An unknown family or a quote that isn’t in the note forces review. Text that isn’t JSON becomes an abstention.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A shop counter with one hatch. Orders go out through it, and if the hatch is shut, you hand over yesterday’s labelled answer and say so.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Pasting a key into a chat, a slide or code. Treat it as leaked and replace it.</li>
+    <li>Leaving <code>MERIDIAN_AI_MODE=live</code> set in the terminal. A typo like <code>recroded</code> also goes live.</li>
+    <li>Removing the fallback “to see the real error”. Read <code>meta.fallback_reason</code> instead.</li>
+    <li>Committing <code>.env</code>. Read <code>git status</code> first.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="c">
+    <p class="quiz-title">Quick check 5 of 6</p>
+    <p class="q">A suggestion will be reviewed next week by someone who didn’t see it being made. What must the record keep?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="Never. A key stays in the environment, never in a record, log or report."><b>A</b><span>The API key and the reply text, in case a reviewer needs them</span></button>
+      <button class="opt" data-o="b" data-why="Without the model and prompt version there is no way to repeat or audit the call."><b>B</b><span>Only the reply text, since everything else can be worked out later</span></button>
+      <button class="opt" data-o="c" data-why="Right. Model and prompt version say how it was made; case_id and source_note_id tie it to the evidence."><b>C</b><span>The model, prompt version, case_id and source_note_id of the call</span></button>
+      <button class="opt" data-o="d" data-why="A new reply may differ from the original one."><b>D</b><span>Only the prompt text, since the reply can be generated again</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 8 ================= -->
+<section class="stop" id="s8" data-title="The golden set, scored by hand" data-min="15" hidden>
+  <p class="stop-no">Stop 8 of 9, about 15 minutes</p>
+  <h2>The golden set, scored by hand</h2>
+  <p class="idea">Write down what a good answer looks like before the model answers, then score ten answers with your own eyes.</p>
+
+  <div class="widget">
+    <p class="widget-title">Score the baseline</p>
+    <p class="widget-hint">Pick a case, read the note and the answer, and mark the four columns. Start with G-07.</p>
+    <div class="gpick" id="gPick"></div>
+    <div class="gcase">
+      <div class="card"><h4 id="gTitle"></h4><dl id="gNote"></dl></div>
+      <div class="card"><h4>The recorded answer</h4><dl id="gAns"></dl></div>
+    </div>
+    <div class="marks" id="gMarks"></div>
+    <div class="btnrow"><button class="btn small" id="gCheck">Check this case against the key</button></div>
+    <p class="feedback" id="gWhy" aria-live="polite"></p>
+    <p class="term-title">python -m meridian_workbench.golden score (your marks so far)</p>
+    <pre class="summary" id="gSum" aria-live="polite"></pre>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd">python -m meridian_workbench.golden run
+python -m meridian_workbench.golden blank-sheet
+python -m meridian_workbench.golden score</pre>
+
+  <div class="points">
+    <ul>
+      <li><b>Five hard cases on purpose.</b> Two need no model (the rules close them); two should abstain; one should ask for review.</li>
+      <li><b>Grounded means word for word.</b> “Means the same” is not grounded. A cause the note never states is an unsupported claim.</li>
+      <li><b>Say “6 of 6”, not “100%”.</b> Ten cases are too few for percentages, and these answers were written by the course team.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>An exam key written before the exam. You can’t check an automatic marker until you know how to mark it yourself.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Running <code>blank-sheet</code> again after scoring. It wipes your marks: <code>0 of 0</code>.</li>
+    <li>Marking G-04 or G-05 as errors. The rules closing them is the right answer.</li>
+    <li>Counting a correct restatement as an unsupported claim.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="d">
+    <p class="quiz-title">Quick check 6 of 6</p>
+    <p class="q">Note: “Carrier reports delay at sorting hub”. The model says <code>CARRIER_DELAY</code>, quotes “delay at sorting hub”, and writes “The carrier delayed the parcel at the sorting hub because of bad weather.” How do you score it?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="The family is right. The weather belongs in the unsupported-claims column."><b>A</b><span>Issue family is wrong, because the summary talks about the weather</span></button>
+      <button class="opt" data-o="b" data-why="The note does say what the problem is, so answering was right."><b>B</b><span>Abstention is wrong, because the model should have refused to answer</span></button>
+      <button class="opt" data-o="c" data-why="This hides a real error: a plausible extra detail is the commonest way a suggestion misleads."><b>C</b><span>Everything is correct, because the family and the quote both match</span></button>
+      <button class="opt" data-o="d" data-why="Right. The quote is in the note; the weather is not, so that is one unsupported claim."><b>D</b><span>Evidence grounded is yes, unsupported claims is 1 (no weather in note)</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 9 ================= -->
+<section class="stop" id="s9" data-title="Terminology and close" data-min="12" hidden>
+  <p class="stop-no">Stop 9 of 9, about 12 minutes</p>
+  <h2>Terminology and close</h2>
+  <p class="idea">Code can be correct and still misunderstood, so we write down what our words mean.</p>
+
+  <div class="widget">
+    <p class="widget-title">The ops lead says…</p>
+    <p class="widget-hint">Does each sentence match <code>docs/terminology.md</code>? If not, the page wins, or you agree to change the page.</p>
+    <div class="ops" id="opsCards"></div>
+  </div>
+
+  <h3>Run it</h3>
+  <pre class="cmd">ruff format .
+ruff check .
+mypy
+pytest
+python -m meridian_workbench
+git status
+git add .
+git commit -m "Add model client, golden set, hand-scored baseline and terminology"
+git push</pre>
+
+  <div class="points">
+    <ul>
+      <li><b>Green looks like this.</b> <code>All checks passed!</code>, <code>Success: no issues found in 17 source files</code>, <code>26 passed</code>, <code>4 of 7 cases need attention</code>.</li>
+      <li><b>The baseline is the yardstick.</b> 6 of 6 families, 6 of 7 grounded, 1 of 3 abstentions, 2 unsupported claims. Next class, a change helps only if these move.</li>
+      <li><b>Three sentences.</b> Every kind of thing has its own type. The model is behind one bounded door and only suggests. We measured it by hand.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A handshake on a glossary. Five minutes now saves a month of “but I meant…”.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Skipping the agreement because “we all know what a case is”.</li>
+    <li>Forgetting to commit <code>golden/scoring_baseline.csv</code>. It is the baseline.</li>
+    <li>Leaving a demo key in <code>.env</code> and sharing the folder. Rotate it after class.</li>
+  </ul></details>
+</section>
+
+<nav class="stop-foot" aria-label="Stop navigation" id="stopFoot">
+  <button class="btn" id="prevBtn">Previous stop</button>
+  <div class="mid">
+    <span class="stamp" id="stamp" hidden>Packed</span>
+    <button class="btn tape" id="packBtn">Mark this stop as packed</button>
+  </div>
+  <button class="btn primary" id="nextBtn">Next stop</button>
+</nav>
+
+<details class="allcmds">
+  <summary>Every command from today, in order</summary>
+  <pre class="cmd mac-only"><span class="c"># stop 1 to 3: scratch files, from the project root</span>
+python scratch_dict.py
+python scratch_case.py
+python scratch_dataclass.py
+<span class="c"># stop 4: new tools, then the first mypy run</span>
+python -m pip install -r requirements.txt
+mypy src/meridian_workbench/rules.py src/meridian_workbench/domain.py
+mypy src/meridian_workbench/demo_optional.py
+<span class="c"># stop 5: the program on the new types</span>
+mypy src/meridian_workbench/pipeline.py
+python -m meridian_workbench
+python -c "from meridian_workbench.config import load_settings; from meridian_workbench.loaders import load_cases; b = load_cases(load_settings().fixtures_dir / 'cases_bad_rows.csv'); print(len(b.cases), 'loaded'); [print(r) for r in b.rejected]"
+<span class="c"># stop 6: pytest, break it, commit</span>
+rm tests/check_rules.py tests/check_ai_boundary.py
+pytest tests/test_domain.py
+pytest -v
+python -m meridian_workbench
+pytest tests/test_loading.py -k one_row
+rm scratch_dict.py scratch_case.py scratch_dataclass.py
+git status
+git add .
+git status
+git commit -m "Add typed domain model and first pytest checks"
+<span class="c"># stop 7: the model door</span>
+MERIDIAN_LLM_API_KEY=abc123-not-real python -c "from meridian_workbench.config import load_settings; print(load_settings())"
+python -m meridian_workbench
+MERIDIAN_AI_MODE=live python -m meridian_workbench
+cp .env.example .env
+pytest
+<span class="c"># stop 8: the golden set</span>
+python -m meridian_workbench.golden run
+python -m meridian_workbench.golden blank-sheet
+python -m meridian_workbench.golden score
+<span class="c"># stop 9: green run, save and share</span>
+ruff format .
+ruff check .
+mypy
+pytest
+python -m meridian_workbench
+git status
+git add .
+git status
+git commit -m "Add model client, golden set, hand-scored baseline and terminology"
+git push</pre>
+  <pre class="cmd win-only"><span class="c"># stop 1 to 3: scratch files, from the project root</span>
+python scratch_dict.py
+python scratch_case.py
+python scratch_dataclass.py
+<span class="c"># stop 4: new tools, then the first mypy run</span>
+python -m pip install -r requirements.txt
+mypy src/meridian_workbench/rules.py src/meridian_workbench/domain.py
+mypy src/meridian_workbench/demo_optional.py
+<span class="c"># stop 5: the program on the new types</span>
+mypy src/meridian_workbench/pipeline.py
+python -m meridian_workbench
+python -c "from meridian_workbench.config import load_settings; from meridian_workbench.loaders import load_cases; b = load_cases(load_settings().fixtures_dir / 'cases_bad_rows.csv'); print(len(b.cases), 'loaded'); [print(r) for r in b.rejected]"
+<span class="c"># stop 6: pytest, break it, commit</span>
+Remove-Item tests\check_rules.py, tests\check_ai_boundary.py
+pytest tests/test_domain.py
+pytest -v
+python -m meridian_workbench
+pytest tests/test_loading.py -k one_row
+Remove-Item scratch_dict.py, scratch_case.py, scratch_dataclass.py
+git status
+git add .
+git status
+git commit -m "Add typed domain model and first pytest checks"
+<span class="c"># stop 7: the model door</span>
+$env:MERIDIAN_LLM_API_KEY = "abc123-not-real"
+python -c "from meridian_workbench.config import load_settings; print(load_settings())"
+Remove-Item Env:MERIDIAN_LLM_API_KEY
+python -m meridian_workbench
+$env:MERIDIAN_AI_MODE = "live"
+python -m meridian_workbench
+Remove-Item Env:MERIDIAN_AI_MODE
+Copy-Item .env.example .env
+pytest
+<span class="c"># stop 8: the golden set</span>
+python -m meridian_workbench.golden run
+python -m meridian_workbench.golden blank-sheet
+python -m meridian_workbench.golden score
+<span class="c"># stop 9: green run, save and share</span>
+ruff format .
+ruff check .
+mypy
+pytest
+python -m meridian_workbench
+git status
+git add .
+git status
+git commit -m "Add model client, golden set, hand-scored baseline and terminology"
+git push</pre>
+</details>
+
+</main>
+
+<footer class="site"><div class="wrap">Meridian Case Intake Workbench, Class 3. Every report, error and score on this page is computed from the real class data (7 cases, 3 notes, 10 golden cases, 8 recorded answers) with the same logic as the Python code.</div></footer>
+
+<script>
+(function(){
+'use strict';
+var $ = function(s, r){ return (r || document).querySelector(s); };
+var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var store = {
+  get: function(k, d){ try { var v = localStorage.getItem('mw3:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: function(k, v){ try { localStorage.setItem('mw3:' + k, JSON.stringify(v)); } catch (e) {} }
+};
+var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function later(fn, ms){ return setTimeout(fn, reduce ? 0 : ms); }
+function pyRepr(s){
+  if (s === null || s === undefined) return 'None';
+  s = String(s);
+  if (s.indexOf("'") !== -1 && s.indexOf('"') === -1) return '"' + s.replace(/\\/g, '\\\\') + '"';
+  return "'" + s.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+}
+function pyBool(b){ return b ? 'True' : 'False'; }
+
+/* ---------- the real class data ---------- */
+var BATCH = '2025-03-10';
+var STATUSES = ['PROCESSING','SHIPPED','DELIVERED','CANCELLED'];
+var FAMILIES = ['ADDRESS_CONFIRMATION','FAILED_DELIVERY_ATTEMPT','STOCK_SHORTAGE','CARRIER_DELAY','DAMAGED_IN_TRANSIT'];
+var CASES = [
+  ['C-1001','O-5001','DELIVERED','2025-03-06'],
+  ['C-1002','O-5002','SHIPPED','2025-03-07'],
+  ['C-1003','O-5003','SHIPPED','2025-03-12'],
+  ['C-1004','O-5004','PROCESSING','2025-03-08'],
+  ['C-1005','O-5005','SHIPPED','2025-03-06'],
+  ['C-1006','O-5006','SHIPPED','2025-03-08'],
+  ['C-1007','O-5007','CANCELLED','2025-03-05']
+];
+var NOTES = [
+  {id:'N-01', caseId:'C-1002', text:'Held at depot awaiting address confirmation'},
+  {id:'N-02', caseId:'C-1005', text:'see previous'},
+  {id:'N-03', caseId:'C-1006', text:'cust n/a x2, rtn to dpt'}
+];
+var RECORDED = {
+  'N-01': {issue_family:'ADDRESS_CONFIRMATION', summary:'Parcel is held at the depot until the delivery address is confirmed.', evidence_span:'awaiting address confirmation', review_required:false},
+  'N-02': {issue_family:null, summary:null, evidence_span:null, review_required:true, abstained:true, abstain_reason:'The note refers to an earlier message and says nothing about the issue.'},
+  'N-03': {issue_family:'FAILED_DELIVERY_ATTEMPT', summary:'The note suggests the customer was unavailable twice and the parcel was returned to the depot.', evidence_span:'cust n/a x2, rtn to dpt', review_required:true},
+  'GN-06': {issue_family:'STOCK_SHORTAGE', summary:'The item is out of stock and the order waits for a backorder due next week.', evidence_span:'out of stock', review_required:false},
+  'GN-07': {issue_family:'CARRIER_DELAY', summary:'The carrier delayed the parcel at the sorting hub because of bad weather.', evidence_span:'delay at sorting hub', review_required:false},
+  'GN-08': {issue_family:'FAILED_DELIVERY_ATTEMPT', summary:'The customer could not be reached and the parcel is at the depot.', evidence_span:'cust unreachable', review_required:false},
+  'GN-09': {issue_family:'CARRIER_DELAY', summary:'The parcel is delayed.', evidence_span:'parcel delayed', review_required:false},
+  'GN-10': {issue_family:'DAMAGED_IN_TRANSIT', summary:'The parcel arrived damaged with a crushed box.', evidence_span:'box crushed', review_required:true}
+};
+var GOLDEN = [
+  {g:'G-01', kind:'CLEAR', caseId:'C-1002', noteId:'N-01', status:'SHIPPED', promised:'2025-03-07', text:'Held at depot awaiting address confirmation', ok:['ADDRESS_CONFIRMATION']},
+  {g:'G-02', kind:'CLEAR', caseId:'C-1006', noteId:'N-03', status:'SHIPPED', promised:'2025-03-08', text:'cust n/a x2, rtn to dpt', ok:['FAILED_DELIVERY_ATTEMPT']},
+  {g:'G-03', kind:'ABSTAIN', caseId:'C-1005', noteId:'N-02', status:'SHIPPED', promised:'2025-03-06', text:'see previous', ok:[]},
+  {g:'G-04', kind:'RULE_ONLY', caseId:'GC-04', noteId:'GN-04', status:'DELIVERED', promised:'2025-03-06', text:'Delivered to front desk, signed', ok:[]},
+  {g:'G-05', kind:'RULE_ONLY', caseId:'GC-05', noteId:'GN-05', status:'CANCELLED', promised:'2025-03-05', text:'Cancelled by customer before dispatch', ok:[]},
+  {g:'G-06', kind:'CLEAR', caseId:'GC-06', noteId:'GN-06', status:'PROCESSING', promised:'2025-03-08', text:'Item out of stock, backorder due next week', ok:['STOCK_SHORTAGE']},
+  {g:'G-07', kind:'CLEAR', caseId:'GC-07', noteId:'GN-07', status:'SHIPPED', promised:'2025-03-07', text:'Carrier reports delay at sorting hub', ok:['CARRIER_DELAY']},
+  {g:'G-08', kind:'AMBIGUOUS', caseId:'GC-08', noteId:'GN-08', status:'SHIPPED', promised:'2025-03-06', text:'Parcel at depot, cust unreachable, address may be wrong', ok:['ADDRESS_CONFIRMATION','FAILED_DELIVERY_ATTEMPT']},
+  {g:'G-09', kind:'INSUFFICIENT', caseId:'GC-09', noteId:'GN-09', status:'SHIPPED', promised:'2025-03-07', text:'Customer asking about parcel', ok:[]},
+  {g:'G-10', kind:'CLEAR', caseId:'GC-10', noteId:'GN-10', status:'SHIPPED', promised:'2025-03-06', text:'dmg on arrival, box crushed', ok:['DAMAGED_IN_TRANSIT']}
+];
+var KEY = {
+  'G-01':['Y','Y','0','NA','Good answer.'], 'G-02':['Y','Y','0','NA','Good answer.'],
+  'G-03':['NA','NA','0','Y','Abstained correctly.'], 'G-04':['NA','NA','NA','NA','No model call: the rules close it.'],
+  'G-05':['NA','NA','NA','NA','No model call: the rules close it.'], 'G-06':['Y','Y','0','NA','Good answer.'],
+  'G-07':['Y','Y','1','NA','Invented cause: bad weather is not in the note.'], 'G-08':['Y','Y','0','N','The family fits, but two fit, so it should have asked for review.'],
+  'G-09':['NA','N','1','N','Should have abstained; "parcel delayed" is not in the note, and the summary claims a delay.'], 'G-10':['Y','Y','0','NA','Good answer.']
+};
+
+/* ---------- the same logic as the Python code ---------- */
+function dayNum(iso){ var p = iso.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) / 86400000; }
+function isoOk(s){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  var p = s.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+  return d.getUTCMonth() === p[1] - 1 && d.getUTCDate() === p[2];
+}
+/* loaders.load_cases: every row becomes a case or a rejected record; row 1 is the header */
+function loadCases(rows){
+  var out = { cases: [], rejected: [] };
+  rows.forEach(function(r, i){
+    var reason = null;
+    if (STATUSES.indexOf(r[2]) === -1) reason = pyRepr(r[2]) + ' is not a valid OrderStatus';
+    else if (!isoOk(r[3])) reason = 'Invalid isoformat string: ' + pyRepr(r[3]);
+    if (reason) out.rejected.push({ row: i + 2, caseId: r[0], reason: reason });
+    else out.cases.push({ id: r[0], order: r[1], status: r[2], promised: r[3] });
+  });
+  return out;
+}
+/* rules.needs_attention */
+function needsAttention(c, asOf){
+  if (c.status === 'DELIVERED' || c.status === 'CANCELLED') return { flag: false, reason: 'CLOSED', days: 0 };
+  var days = dayNum(asOf) - dayNum(c.promised);
+  if (days > 0) return { flag: true, reason: 'OVERDUE_NOT_CLOSED', days: days };
+  return { flag: false, reason: 'ON_TIME', days: 0 };
+}
+/* ai_client.suggestion_from_data */
+function suggestionFromData(data, caseId, note, meta){
+  var warnings = [], family = null, raw = data.issue_family;
+  if (raw !== undefined && raw !== null) {
+    if (FAMILIES.indexOf(raw) !== -1) family = raw; else warnings.push("unknown issue_family '" + raw + "'");
+  }
+  var span = (data.evidence_span === undefined) ? null : data.evidence_span;
+  if (span !== null && note.text.indexOf(span) === -1) warnings.push('evidence_span does not appear in the note');
+  var abstained = !!data.abstained || family === null;
+  var rr = ('review_required' in data) ? !!data.review_required : true;
+  return {
+    case_id: caseId, source_note_id: note.id, issue_family: family,
+    summary: data.summary === undefined ? null : data.summary, evidence_span: span,
+    review_required: rr || abstained || warnings.length > 0, abstained: abstained,
+    abstain_reason: data.abstain_reason || (abstained ? 'no issue family' : null),
+    warnings: warnings, meta: meta
+  };
+}
+var FALLBACK = { nokey: 'MERIDIAN_LLM_API_KEY is not set', badkey: 'AuthenticationError', nonet: 'APIConnectionError' };
+/* ai_client.get_suggestion with read_recorded (the live answer itself is never faked here) */
+function getSuggestion(caseId, note, mode){
+  var m = mode === 'recorded' ? 'recorded' : 'recorded_fallback';
+  var meta = { mode: m, model: 'recorded', prompt_version: 'v1', input_tokens: 0, output_tokens: 0, finish_reason: 'recorded', fallback_reason: mode === 'recorded' ? null : FALLBACK[mode] };
+  var data = RECORDED[note.id];
+  if (!data) return { case_id: caseId, source_note_id: note.id, issue_family: null, review_required: true, abstained: true, abstain_reason: 'no recorded response for ' + note.id, warnings: [], meta: meta };
+  return suggestionFromData(data, caseId, note, meta);
+}
+/* pipeline.run + main: mode null = stage 1, no model step */
+function reportLines(rows, asOf, mode){
+  var b = loadCases(rows), lines = [], flagged = 0, lastNote = {};
+  b.rejected.forEach(function(r){ lines.push({ t: 'REJECTED row ' + r.row + ' of cases.csv: ' + r.reason, cls: 'bad' }); });
+  NOTES.forEach(function(n){ lastNote[n.caseId] = n; });
+  b.cases.forEach(function(c){
+    var d = needsAttention(c, asOf);
+    if (!d.flag) return;
+    flagged++;
+    lines.push({ t: c.id + ': ' + d.reason + ' (' + d.days + ' days)', id: c.id });
+    var n = lastNote[c.id];
+    if (n && mode) {
+      var s = getSuggestion(c.id, n, mode);
+      lines.push({ t: '    suggestion (' + s.meta.mode + '): ' + (s.issue_family || 'ABSTAINED') + ', review_required=' + pyBool(s.review_required), cls: 'hi', sug: s });
+    }
+  });
+  lines.push({ t: flagged + ' of ' + b.cases.length + ' cases need attention', cls: 'ok' });
+  return lines;
+}
+function linesText(lines){ return lines.map(function(l){ return l.t; }).join('\n'); }
+function linesHtml(lines){ return lines.map(function(l){ return l.cls ? '<span class="' + l.cls + '">' + esc(l.t) + '</span>' : esc(l.t); }).join('\n'); }
+/* golden.run_golden + describe */
+function goldenRow(item, mode){
+  var d = needsAttention({ status: item.status, promised: item.promised }, BATCH);
+  if (!d.flag) return { item: item, s: null };
+  return { item: item, s: getSuggestion(item.caseId, { id: item.noteId, text: item.text }, mode || 'recorded') };
+}
+function describe(row){
+  var head = row.item.g + ' ' + (row.item.kind + '            ').slice(0, 12);
+  if (!row.s) return head + ' (rule closes this case, no model call)';
+  return head + ' ' + (row.s.issue_family || 'ABSTAINED') + ' | evidence: ' + pyRepr(row.s.evidence_span) + ' | review_required=' + pyBool(row.s.review_required) + ' | ' + row.s.meta.mode;
+}
+function goldenLines(mode){ return GOLDEN.map(function(it){ return describe(goldenRow(it, mode)); }); }
+/* golden.summarise: count Y out of Y+N; add up the claim numbers */
+var COLS = ['issue_family_correct','evidence_grounded','unsupported_claims','abstention_correct'];
+function summarise(sheet){
+  var out = [];
+  ['issue_family_correct','evidence_grounded','abstention_correct'].forEach(function(col){
+    var answered = sheet.map(function(r){ return (r[col] || '').trim().toUpperCase(); }).filter(function(m){ return m === 'Y' || m === 'N'; });
+    out.push(col + ': ' + answered.filter(function(m){ return m === 'Y'; }).length + ' of ' + answered.length);
+  });
+  var total = 0;
+  sheet.forEach(function(r){ var c = (r.unsupported_claims || '').trim(); if (/^\d+$/.test(c)) total += parseInt(c, 10); });
+  out.push('unsupported_claims: ' + total);
+  var blank = sheet.filter(function(r){ return !(r.issue_family_correct || '').trim(); }).map(function(r){ return r.golden_id; });
+  if (blank.length) out.push('not scored yet: ' + blank.join(', '));
+  return out;
+}
+window.MW3 = { reportLines: function(rows, asOf, mode){ return linesText(reportLines(rows || CASES, asOf || BATCH, mode === undefined ? 'recorded' : mode)); },
+  goldenLines: goldenLines, summarise: summarise, loadCases: loadCases, CASES: CASES, KEY: KEY, GOLDEN: GOLDEN };
+
+/* ---------- operating system switch ---------- */
+var guess = /Win/i.test(navigator.platform || navigator.userAgent || '') ? 'win' : 'mac';
+var OS = store.get('os', guess);
+function setOS(os){
+  OS = os;
+  document.body.setAttribute('data-os', os);
+  $$('[data-os-pick]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-os-pick') === os)); });
+  store.set('os', os);
+}
+$$('[data-os-pick]').forEach(function(b){ b.addEventListener('click', function(){ setOS(b.getAttribute('data-os-pick')); }); });
+
+/* ---------- hero: before vs after ---------- */
+(function(){
+  var bag = $('#bagSlips'), tag = $('#shelfTag');
+  var base = ['case_id: C-1002', 'order_id: O-5002', 'order_status: SHIPPED', 'promised_date: 2025-03-07'];
+  function paintBag(hot){
+    bag.innerHTML = base.map(function(t, i){
+      var shown = (hot && i === 2) ? 'order_status: DELIVERED' : t;
+      return '<span class="slip-k' + ((hot && i === 2) ? ' hot' : '') + '">' + esc(shown) + '</span>';
+    }).join('') + (hot ? '<span class="slip-k hot">issue: ADDRESS_CONFIRMATION</span>' : '');
+  }
+  paintBag(false);
+  $('#heroBag').addEventListener('click', function(){
+    paintBag(true);
+    var rows = CASES.map(function(r){ return r[0] === 'C-1002' ? [r[0], r[1], 'DELIVERED', r[3]] : r; });
+    $('#heroTitle').textContent = 'python -m meridian_workbench, with the guess inside the dictionary';
+    $('#heroOut').innerHTML = linesHtml(reportLines(rows, BATCH, null)).replace('<span class="ok">3 of 7', '<span class="bad">3 of 7');
+    $('#heroNote').textContent = 'The guess overwrote a source fact. C-1002 now looks delivered, and it vanished from the report with no error at all.';
+  });
+  $('#heroShelf').addEventListener('click', function(){
+    tag.classList.remove('on'); void tag.offsetWidth; tag.classList.add('on');
+    $('#heroTitle').textContent = 'python -m meridian_workbench, with typed records';
+    $('#heroOut').innerHTML = linesHtml(reportLines(CASES, BATCH, 'recorded'));
+    $('#heroNote').textContent = 'The fact stayed sealed. The model’s answer hangs beside it as a labelled suggestion, and C-1002 is still flagged.';
+  });
+})();
+
+/* ---------- stop 1: quiet failures ---------- */
+(function(){
+  var out = $('#dictOut');
+  var res = {
+    '2': '<span class="p">&gt;&gt;&gt; print(case.get("order_staus"))</span>\nNone\n<span class="hi">No error. A typo just became a missing value.</span>',
+    '4': '<span class="p">&gt;&gt;&gt; case["order_status"] = "Delivered"\n&gt;&gt;&gt; print(case["order_status"] in {"DELIVERED", "CANCELLED"})</span>\nFalse\n<span class="hi">Accepted without a word, and the rule still says “not closed”.</span>',
+    '5': '<span class="p">&gt;&gt;&gt; print(case["order_staus"])</span>\nTraceback (most recent call last):\n  File "scratch_dict.py", line 5, in &lt;module&gt;\n    print(case["order_staus"])\n          ~~~~^^^^^^^^^^^^^^^\n<span class="bad">KeyError: \'order_staus\'</span>\n<span class="hi">The only loud one, and the only one that told us anything.</span>'
+  };
+  $$('#dictBtns button').forEach(function(b){
+    b.addEventListener('click', function(){
+      $$('#dictBtns button').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+      out.innerHTML = res[b.getAttribute('data-line')];
+    });
+  });
+})();
+
+/* ---------- stop 2: forms ---------- */
+(function(){
+  var pick = $('#rowPick'), out = $('#formOut'), sw = $('#reprSwitch'), row = 1, compared = false;
+  CASES.forEach(function(r, i){
+    var b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.textContent = r[0];
+    b.setAttribute('aria-pressed', String(i === row));
+    b.addEventListener('click', function(){ row = i; compared = false; $$('.chip', pick).forEach(function(x, j){ x.setAttribute('aria-pressed', String(j === i)); }); paint(); });
+    pick.appendChild(b);
+  });
+  function paint(){
+    var r = CASES[row], on = sw.getAttribute('aria-checked') === 'true';
+    var call = 'Case(' + [r[0], r[1], r[2], r[3]].map(function(v){ return '"' + v + '"'; }).join(', ') + ')';
+    var shown = on ? 'Case(' + pyRepr(r[0]) + ', ' + pyRepr(r[2]) + ')' : '&lt;__main__.Case object at 0x7f3a1c2b9d10&gt;  <span class="p"># address varies</span>';
+    var t = '<span class="p">&gt;&gt;&gt; c = ' + esc(call) + '\n&gt;&gt;&gt; print(c)</span>\n' + shown + '\n<span class="p">&gt;&gt;&gt; print(c.order_status)</span>\n' + esc(r[2]);
+    if (compared) t += '\n<span class="p">&gt;&gt;&gt; b = ' + esc(call) + '\n&gt;&gt;&gt; print(c == b)</span>\n<span class="bad">False</span>\n<span class="hi">Same values, two separate copies. Hold that thought until stop 3.</span>';
+    out.innerHTML = t;
+  }
+  sw.addEventListener('click', function(){ sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true'); paint(); });
+  $('#cmpBtn').addEventListener('click', function(){ compared = true; paint(); });
+  paint();
+})();
+
+/* ---------- stop 3: status gate ---------- */
+(function(){
+  var inp = $('#gateIn'), chips = $('#gateChips');
+  ['SHIPPED','Delivered','SHIPED','RETURNED','CANCELLED'].forEach(function(v){
+    var b = document.createElement('button'); b.className = 'chip'; b.type = 'button'; b.textContent = v;
+    b.addEventListener('click', function(){ inp.value = v; run(); });
+    chips.appendChild(b);
+  });
+  function run(){
+    var v = inp.value;
+    $('#gateDict').innerHTML = '<span class="p">&gt;&gt;&gt; case["order_status"] = ' + esc(pyRepr(v)) + '</span>\n<span class="ok">stored, no questions asked</span>';
+    if (STATUSES.indexOf(v) !== -1) {
+      $('#gateEnum').innerHTML = '<span class="p">&gt;&gt;&gt; OrderStatus(' + esc(pyRepr(v)) + ')</span>\n&lt;OrderStatus.' + esc(v) + ': ' + esc(pyRepr(v)) + '&gt;\n<span class="ok">accepted: one of the four allowed values</span>';
+    } else {
+      $('#gateEnum').innerHTML = '<span class="p">&gt;&gt;&gt; OrderStatus(' + esc(pyRepr(v)) + ')</span>\n<span class="bad">ValueError: ' + esc(pyRepr(v)) + ' is not a valid OrderStatus</span>\n<span class="hi">caught the moment the row is loaded</span>';
+    }
+  }
+  $('#gateGo').addEventListener('click', run);
+  inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') run(); });
+  run();
+})();
+
+/* ---------- stop 4: mypy ---------- */
+(function(){
+  var st = { f18: false, f20: null, ran: false };
+  function lines(){
+    var sig = st.f20 === 'function' ? 'def days_overdue(promised_date: date, as_of: date) -> int:' : 'def days_overdue(promised_date_text: str, as_of: date) -> int:';
+    var body = st.f20 === 'function' ? ['    """Whole days between the promised date and the batch date."""', '    return (as_of - promised_date).days', ''] : ['    """Whole days between the promised date and the batch date."""', '    promised = date.fromisoformat(promised_date_text)', '    return (as_of - promised).days'];
+    var l18 = st.f18 ? '    if case.order_status in CLOSED_STATUSES:' : '    if case["order_status"] in CLOSED_STATUSES:';
+    var l20 = st.f20 === 'caller' ? '    if days_overdue(case.promised_date.isoformat(), as_of) > 0:' : '    if days_overdue(case.promised_date, as_of) > 0:';
+    return [[10, sig, st.f20 === 'function' ? 'fixed' : ''], [11, body[0]], [12, body[1]], [13, body[2]], [16, 'def needs_attention(case: SupportCase, as_of: date) -> tuple[bool, str]:'], [17, '    """Return (flag, reason)."""'],
+      [18, l18, st.f18 ? 'fixed' : (st.ran ? 'err' : '')], [19, '        return False, "CLOSED"'], [20, l20, st.f20 ? 'fixed' : (st.ran ? 'err' : '')], [21, '        return True, "OVERDUE_NOT_CLOSED"'], [22, '    return False, "ON_TIME"']];
+  }
+  function paintCode(){
+    $('#mypyCode').innerHTML = lines().map(function(l){ return '<div class="' + (l[2] || '') + '"><span class="n">' + l[0] + '</span>' + esc(l[1]) + '</div>'; }).join('');
+  }
+  function run(){
+    st.ran = true;
+    var errs = [];
+    if (!st.f18) errs.push('src/meridian_workbench/rules.py:18: error: Value of type "SupportCase" is not indexable  [index]');
+    if (!st.f20) errs.push('src/meridian_workbench/rules.py:20: error: Argument 1 to "days_overdue" has incompatible type "date"; expected "str"  [arg-type]');
+    var t = '<span class="p">$ mypy src/meridian_workbench/rules.py src/meridian_workbench/domain.py</span>\n';
+    if (errs.length) t += '<span class="bad">' + esc(errs.join('\n')) + '</span>\nFound ' + errs.length + ' error' + (errs.length > 1 ? 's' : '') + ' in 1 file (checked 2 source files)';
+    else t += '<span class="ok">Success: no issues found in 2 source files</span>';
+    $('#mypyOut').innerHTML = t;
+    var m = $('#mypyMsg');
+    if (!errs.length && st.f20 === 'caller') { m.className = 'feedback meh'; m.textContent = 'mypy is happy, but now text becomes a date, then text, then a date again. The function is the side that is out of date. Try the other fix.'; }
+    else if (!errs.length) { m.className = 'feedback good'; m.textContent = 'Both sides agree. We loaded real dates once, so the function now takes a date.'; }
+    else { m.className = 'feedback meh'; m.textContent = 'Read each line left to right: the file, the line number, then what disagrees.'; }
+    paintCode();
+  }
+  $('#mypyRun').addEventListener('click', run);
+  $('#fix18').addEventListener('click', function(){ st.f18 = true; run(); });
+  $('#fix20a').addEventListener('click', function(){ st.f20 = 'caller'; run(); });
+  $('#fix20b').addEventListener('click', function(){ st.f20 = 'function'; run(); });
+  $('#mypyReset').addEventListener('click', function(){ st = { f18: false, f20: null, ran: false }; $('#mypyOut').innerHTML = '<span class="p">$ mypy src/meridian_workbench/rules.py src/meridian_workbench/domain.py</span>'; $('#mypyMsg').textContent = ''; paintCode(); });
+  paintCode();
+})();
+
+/* ---------- sorter (stop 5) ---------- */
+$$('[data-sorter]').forEach(function(root){
+  var sel = null, msg = $('.msg', root), items = $$('[data-item]', root), done = 0;
+  function place(it, bin){
+    var s = document.createElement('span'); s.textContent = it.textContent;
+    $('.bin-items', bin).appendChild(s);
+    it.classList.add('gone'); it.setAttribute('aria-pressed', 'false'); done++;
+  }
+  items.forEach(function(it){
+    it.setAttribute('aria-pressed', 'false');
+    it.addEventListener('click', function(){
+      items.forEach(function(x){ x.setAttribute('aria-pressed', 'false'); });
+      if (sel === it) { sel = null; msg.textContent = ''; return; }
+      sel = it; it.setAttribute('aria-pressed', 'true');
+      msg.textContent = 'Which kind of thing is ' + it.textContent + '?';
+    });
+  });
+  $$('.bin', root).forEach(function(bin){
+    bin.addEventListener('click', function(){
+      if (!sel) { msg.textContent = 'Pick a field first, then tap its box.'; return; }
+      if (sel.getAttribute('data-bin') === bin.getAttribute('data-bin')) {
+        var why = sel.getAttribute('data-why'); place(sel, bin); sel = null;
+        msg.textContent = why + (done === items.length ? ' Every field has its box.' : '');
+      } else {
+        bin.classList.remove('shake'); void bin.offsetWidth; if (!reduce) bin.classList.add('shake');
+        msg.textContent = 'Not that box. Ask where ' + sel.textContent + ' comes from: a source file, a person’s note, the rules, or a model?';
+      }
+    });
+  });
+  $('[data-sort-all]', root).addEventListener('click', function(){
+    items.forEach(function(it){ if (!it.classList.contains('gone')) place(it, $('.bin[data-bin="' + it.getAttribute('data-bin') + '"]', root)); });
+    sel = null; msg.textContent = 'All sorted. Facts come from files, evidence from notes, decisions from rules, suggestions from a model.';
+  });
+});
+
+/* ---------- stop 6: break it ---------- */
+(function(){
+  var body = $('#breakCsv tbody'), choice = { status: 'SHIPPED', date: '2025-03-07' };
+  CASES.forEach(function(r){
+    var tr = document.createElement('tr');
+    if (r[0] === 'C-1002') {
+      tr.id = 'brokenRow';
+      tr.innerHTML = '<td>' + r[0] + '</td><td class="oid">' + r[1] + '</td><td><select id="bkStatus" aria-label="order_status for C-1002"><option>SHIPPED</option><option>SHIPED</option><option>Shipped</option><option>RETURNED</option></select></td><td><select id="bkDate" aria-label="promised_date for C-1002"><option>2025-03-07</option><option>07/03/2025</option></select></td>';
+    } else tr.innerHTML = r.map(function(v, k){ return '<td' + (k === 1 ? ' class="oid"' : '') + '>' + v + '</td>'; }).join('');
+    body.appendChild(tr);
+  });
+  function paint(){
+    var rows = CASES.map(function(r){ return r[0] === 'C-1002' ? [r[0], r[1], choice.status, choice.date] : r; });
+    $('#brokenRow').classList.toggle('broken', choice.status !== 'SHIPPED' || choice.date !== '2025-03-07');
+    $('#breakProg').innerHTML = linesHtml(reportLines(rows, BATCH, null));
+    var b = loadCases(rows), ids = b.cases.map(function(c){ return "'" + c.id + "'"; });
+    if (ids.length === 7) $('#breakTest').innerHTML = 'tests/test_loading.py <span class="ok">.</span>\n<span class="ok">1 passed, 3 deselected</span>';
+    else $('#breakTest').innerHTML = '    ids = [case.case_id for case in batch.cases]\n&gt;   assert len(ids) == 7\n<span class="bad">E   AssertionError: assert ' + ids.length + ' == 7\nE    +  where ' + ids.length + ' = len([' + esc(ids.join(', ')) + '])</span>\n\ntests/test_loading.py:17: AssertionError\n<span class="bad">1 failed, 3 deselected</span>';
+  }
+  $('#bkStatus').addEventListener('change', function(e){ choice.status = e.target.value; paint(); });
+  $('#bkDate').addEventListener('change', function(e){ choice.date = e.target.value; paint(); });
+  paint();
+})();
+
+/* ---------- stop 7: pull the plug ---------- */
+(function(){
+  function show(mode){
+    $$('#modeBtns button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-mode') === mode)); });
+    var cls = { cfAi: 'lit', cfLlm: '', cfModel: '', cfRec: '' };
+    if (mode === 'recorded') { cls.cfLlm = 'dead'; cls.cfModel = 'dead'; cls.cfRec = 'lit'; }
+    else if (mode === 'nokey') { cls.cfLlm = 'cut'; cls.cfModel = 'dead'; cls.cfRec = 'lit'; }
+    else if (mode === 'badkey' || mode === 'nonet') { cls.cfLlm = 'lit'; cls.cfModel = 'cut'; cls.cfRec = 'lit'; }
+    else { cls.cfLlm = 'lit'; cls.cfModel = 'lit'; cls.cfRec = 'dead'; }
+    Object.keys(cls).forEach(function(k){ var el = $('#' + k); el.className = 'bbox' + (k === 'cfModel' ? ' model' : '') + (cls[k] ? ' ' + cls[k] : ''); });
+    if (mode === 'live') {
+      $('#modeOut').innerHTML = 'C-1002: OVERDUE_NOT_CLOSED (3 days)\n<span class="hi">    suggestion (live): …, review_required=…</span>\nC-1004: OVERDUE_NOT_CLOSED (2 days)\nC-1005: OVERDUE_NOT_CLOSED (4 days)\n<span class="hi">    suggestion (live): …</span>\nC-1006: OVERDUE_NOT_CLOSED (2 days)\n<span class="hi">    suggestion (live): …</span>\n<span class="ok">4 of 7 cases need attention</span>\n<span class="p">Three calls: C-1004 is flagged but has no note. Live answers vary, so this page doesn’t invent them.</span>';
+      $('#modeMeta').innerHTML = '"mode": "live",\n"model": "claude-haiku-5-5",\n"prompt_version": "v1",\n"input_tokens": <span class="p">(real count)</span>,\n"output_tokens": <span class="p">(real count)</span>,\n"finish_reason": <span class="p">"end_turn" or "max_tokens"</span>,\n"fallback_reason": null';
+      return;
+    }
+    $('#modeOut').innerHTML = linesHtml(reportLines(CASES, BATCH, mode));
+    var s = reportLines(CASES, BATCH, mode).filter(function(l){ return l.sug; })[0].sug, m = s.meta;
+    $('#modeMeta').innerHTML = ['"mode": ' + JSON.stringify(m.mode), '"model": ' + JSON.stringify(m.model), '"prompt_version": "v1"', '"input_tokens": 0', '"output_tokens": 0', '"finish_reason": "recorded"', '"fallback_reason": ' + (m.fallback_reason ? '<span class="bad">' + esc(JSON.stringify(m.fallback_reason)) + '</span>' : 'null')].join(',\n');
+  }
+  $$('#modeBtns button').forEach(function(b){ b.addEventListener('click', function(){ show(b.getAttribute('data-mode')); }); });
+  show('recorded');
+})();
+
+/* ---------- stop 8: score the baseline ---------- */
+(function(){
+  var marks = store.get('marks', {}), cur = 'G-07';
+  if (typeof marks !== 'object' || marks === null) marks = {};
+  var OPTS = { issue_family_correct: ['Y','N','NA'], evidence_grounded: ['Y','N','NA'], unsupported_claims: ['0','1','2','NA'], abstention_correct: ['Y','N','NA'] };
+  var pick = $('#gPick');
+  GOLDEN.forEach(function(it){
+    var b = document.createElement('button'); b.className = 'chip'; b.type = 'button'; b.textContent = it.g; b.setAttribute('data-g', it.g);
+    b.addEventListener('click', function(){ cur = it.g; paint(); });
+    pick.appendChild(b);
+  });
+  function rowFor(g){ var it = GOLDEN.filter(function(x){ return x.g === g; })[0]; return goldenRow(it, 'recorded'); }
+  function paint(){
+    var row = rowFor(cur), it = row.item, s = row.s, mk = marks[cur] || {};
+    $$('.chip', pick).forEach(function(b){
+      var g = b.getAttribute('data-g'), m = marks[g] || {};
+      b.setAttribute('aria-pressed', String(g === cur));
+      b.classList.toggle('done', COLS.every(function(c){ return m[c]; }));
+    });
+    $('#gTitle').textContent = it.g + ', ' + it.kind;
+    $('#gNote').innerHTML = '<dt>Note</dt><dd><span class="mono">' + esc(it.text) + '</span></dd><dt>Status</dt><dd>' + it.status + ', promised ' + it.promised + '</dd><dt>Acceptable</dt><dd>' + (it.ok.length ? esc(it.ok.join(' or ')) : 'none: the right answer is not a label') + '</dd>';
+    $('#gAns').innerHTML = s ? '<dt>Family</dt><dd>' + esc(s.issue_family || 'ABSTAINED') + '</dd><dt>Evidence</dt><dd><span class="mono">' + esc(pyRepr(s.evidence_span)) + '</span></dd><dt>Summary</dt><dd>' + esc(s.summary === null ? 'None' : s.summary) + '</dd><dt>Review</dt><dd>review_required=' + pyBool(s.review_required) + (s.warnings.length ? ' <span class="badge warn">' + esc(s.warnings[0]) + '</span>' : '') + '</dd>' : '<dt>Answer</dt><dd>(rule closes this case, no model call)</dd>';
+    $('#gMarks').innerHTML = COLS.map(function(c){
+      return '<div class="mark" role="group" aria-label="' + c + '"><span class="mname">' + c + '</span>' + OPTS[c].map(function(o){
+        return '<button class="btn small" data-c="' + c + '" data-v="' + o + '" aria-pressed="' + String(mk[c] === o) + '">' + o + '</button>';
+      }).join('') + '<span class="res" data-res="' + c + '"></span></div>';
+    }).join('');
+    $$('#gMarks .btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        var m = marks[cur] || {}; m[b.getAttribute('data-c')] = b.getAttribute('data-v'); marks[cur] = m; store.set('marks', marks);
+        $('#gWhy').textContent = ''; paint();
+      });
+    });
+    var sheet = GOLDEN.map(function(x){ var m = marks[x.g] || {}; return { golden_id: x.g, issue_family_correct: m.issue_family_correct || '', evidence_grounded: m.evidence_grounded || '', unsupported_claims: m.unsupported_claims || '', abstention_correct: m.abstention_correct || '' }; });
+    $('#gSum').textContent = summarise(sheet).join('\n');
+  }
+  $('#gCheck').addEventListener('click', function(){
+    var k = KEY[cur], m = marks[cur] || {}, right = 0;
+    COLS.forEach(function(c, i){
+      var el = $('[data-res="' + c + '"]'), ok = m[c] === k[i];
+      if (ok) right++;
+      el.className = 'res ' + (ok ? 'good' : 'bad');
+      el.textContent = ok ? 'matches the key' : 'key: ' + k[i];
+    });
+    var w = $('#gWhy');
+    w.className = 'feedback ' + (right === 4 ? 'good' : 'meh');
+    w.textContent = (right === 4 ? 'All four match. ' : right + ' of 4 match. ') + k[4];
+  });
+  paint();
+})();
+
+/* ---------- stop 9: ops lead ---------- */
+(function(){
+  var cards = [
+    ['A note about a case is a fact about the case.', false, 'Doesn’t match. A note is evidence: exactly what a person wrote, not a conclusion.'],
+    ['The model says ADDRESS_CONFIRMATION, so that is what the case is now.', false, 'Doesn’t match. It stays a suggestion until a person confirms it, and confirming is a new source record, never an edit.'],
+    ['The rules decide which cases need attention.', true, 'Matches. The model is only asked after the rules flag a case.'],
+    ['I think of a case as a customer, not an order.', false, 'Doesn’t match: a case is one problem about one order. Settle it by changing the page, not the code, then say when the code must follow.']
+  ];
+  var root = $('#opsCards');
+  cards.forEach(function(c, i){
+    var d = document.createElement('div'); d.className = 'opcard';
+    d.innerHTML = '<p class="who">Ops lead</p><p>“' + esc(c[0]) + '”</p><div class="btnrow" style="margin:0"><button class="btn small" data-a="1">Matches the agreement</button><button class="btn small" data-a="0">Doesn’t match</button></div><p class="verdict-line" aria-live="polite"></p>';
+    $$('button', d).forEach(function(b){
+      b.addEventListener('click', function(){
+        $$('button', d).forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+        var right = (b.getAttribute('data-a') === '1') === c[1], v = $('.verdict-line', d);
+        v.style.color = right ? 'var(--ok)' : 'var(--bad)';
+        v.textContent = (right ? 'Yes. ' : 'Not quite. ') + c[2];
+      });
+    });
+    root.appendChild(d);
+  });
+})();
+
+/* ---------- quizzes ---------- */
+$$('.quiz').forEach(function(q){
+  var ans = q.getAttribute('data-answer'), why = $('.why', q);
+  $$('.opt', q).forEach(function(o){
+    o.addEventListener('click', function(){
+      $$('.opt', q).forEach(function(x){ x.classList.remove('right', 'wrong'); });
+      var ok = o.getAttribute('data-o') === ans;
+      o.classList.add(ok ? 'right' : 'wrong');
+      why.innerHTML = '<b>' + (ok ? 'Correct.' : 'Not quite.') + '</b> ' + esc(o.getAttribute('data-why'));
+    });
+  });
+});
+
+/* ---------- stops, progress and links ---------- */
+var stops = $$('.stop'), strip = $('#stops'), cur = 0;
+var packed = store.get('packed', []);
+if (!Array.isArray(packed)) packed = [];
+stops.forEach(function(s, i){
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'stop-dot';
+  b.setAttribute('aria-label', 'Stop ' + (i + 1) + ': ' + s.getAttribute('data-title'));
+  b.title = (i + 1) + '. ' + s.getAttribute('data-title');
+  b.innerHTML = '<span>' + (i + 1) + '</span>';
+  b.addEventListener('click', function(){ show(i, true); });
+  strip.appendChild(b);
+});
+var dots = $$('.stop-dot');
+function isPacked(id){ return packed.indexOf(id) !== -1; }
+function paint(){
+  dots.forEach(function(d, j){
+    d.classList.toggle('current', j === cur);
+    d.classList.toggle('packed', isPacked(stops[j].id));
+    if (j === cur) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
+  });
+  var on = isPacked(stops[cur].id);
+  $('#stamp').hidden = !on;
+  $('#packBtn').textContent = on ? 'Unmark this stop' : 'Mark this stop as packed';
+  $('#packedCount').textContent = packed.length;
+}
+function show(i, scroll){
+  i = Math.max(0, Math.min(stops.length - 1, i));
+  cur = i;
+  stops.forEach(function(s, j){ s.hidden = j !== i; });
+  $('#prevBtn').disabled = i === 0;
+  $('#nextBtn').textContent = i === stops.length - 1 ? 'Back to stop 1' : 'Next stop';
+  paint();
+  store.set('last', stops[i].id);
+  var d = dots[i];
+  if (d) strip.scrollLeft = d.offsetLeft - strip.clientWidth / 2 + d.offsetWidth / 2;
+  if (scroll) {
+    var y = $('#main').getBoundingClientRect().top + window.pageYOffset - $('.track').offsetHeight - 6;
+    window.scrollTo({ top: Math.max(0, y), behavior: reduce ? 'auto' : 'smooth' });
+  }
+}
+$('#packBtn').addEventListener('click', function(){
+  var id = stops[cur].id, k = packed.indexOf(id);
+  if (k === -1) packed.push(id); else packed.splice(k, 1);
+  store.set('packed', packed); paint();
+});
+$('#prevBtn').addEventListener('click', function(){ show(cur - 1, true); });
+$('#nextBtn').addEventListener('click', function(){ show(cur === stops.length - 1 ? 0 : cur + 1, true); });
+function fromHash(){ var h = (location.hash || '').slice(1); for (var i = 0; i < stops.length; i++) if (stops[i].id === h) return i; return -1; }
+var start = fromHash();
+if (start < 0) { var last = store.get('last', ''); for (var j = 0; j < stops.length; j++) if (stops[j].id === last) start = j; }
+setOS(OS);
+show(start < 0 ? 0 : start, false);
+window.addEventListener('hashchange', function(){ var k = fromHash(); if (k >= 0) show(k, true); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+#  Settings change between runs or machines. Business rules do not live here.
+ 
+[paths]
+data_dir = "data"
+output_dir = "outputs"
+fixtures_dir = "fixtures"
+golden_dir = "golden"
+ 
+[rules]
+batch_date = "2025-03-10"
+ 
+[ai]
+# "recorded" reads saved responses from fixtures/. "live" makes one bounded model call per note.
+mode = "recorded"
+model = "claude-haiku-5-5"
+prompt_version = "v1"
+max_tokens = 300
+timeout_seconds = 20

@@ -1,0 +1,29 @@
+[
+  {
+    "golden_id": "G-11",
+    "kind": "AMBIGUOUS",
+    "case_id": "GC-11",
+    "note_id": "GN-11",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-06",
+    "note_text": "Parcel still not here. Last scan Monday at depot, customer says they were home all week.",
+    "acceptable_issue_families": [
+      "CARRIER_DELAY",
+      "FAILED_DELIVERY_ATTEMPT"
+    ],
+    "expected_evidence_span": null,
+    "should_abstain": false
+  },
+  {
+    "golden_id": "G-12",
+    "kind": "INSUFFICIENT",
+    "case_id": "GC-12",
+    "note_id": "GN-12",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-07",
+    "note_text": "Call dropped after the greeting. Customer name only.",
+    "acceptable_issue_families": [],
+    "expected_evidence_span": null,
+    "should_abstain": true
+  }
+]

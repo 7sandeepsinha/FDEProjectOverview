@@ -1,0 +1,135 @@
+[
+  {
+    "golden_id": "G-01",
+    "kind": "CLEAR",
+    "case_id": "C-1002",
+    "note_id": "N-01",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-07",
+    "note_text": "Held at depot awaiting address confirmation",
+    "acceptable_issue_families": [
+      "ADDRESS_CONFIRMATION"
+    ],
+    "expected_evidence_span": "awaiting address confirmation",
+    "should_abstain": false
+  },
+  {
+    "golden_id": "G-02",
+    "kind": "CLEAR",
+    "case_id": "C-1006",
+    "note_id": "N-03",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-08",
+    "note_text": "cust n/a x2, rtn to dpt",
+    "acceptable_issue_families": [
+      "FAILED_DELIVERY_ATTEMPT"
+    ],
+    "expected_evidence_span": "cust n/a x2, rtn to dpt",
+    "should_abstain": false
+  },
+  {
+    "golden_id": "G-03",
+    "kind": "ABSTAIN",
+    "case_id": "C-1005",
+    "note_id": "N-02",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-06",
+    "note_text": "see previous",
+    "acceptable_issue_families": [],
+    "expected_evidence_span": null,
+    "should_abstain": true
+  },
+  {
+    "golden_id": "G-04",
+    "kind": "RULE_ONLY",
+    "case_id": "GC-04",
+    "note_id": "GN-04",
+    "order_status": "DELIVERED",
+    "promised_date": "2025-03-06",
+    "note_text": "Delivered to front desk, signed",
+    "acceptable_issue_families": [],
+    "expected_evidence_span": null,
+    "should_abstain": false
+  },
+  {
+    "golden_id": "G-05",
+    "kind": "RULE_ONLY",
+    "case_id": "GC-05",
+    "note_id": "GN-05",
+    "order_status": "CANCELLED",
+    "promised_date": "2025-03-05",
+    "note_text": "Cancelled by customer before dispatch",
+    "acceptable_issue_families": [],
+    "expected_evidence_span": null,
+    "should_abstain": false
+  },
+  {
+    "golden_id": "G-06",
+    "kind": "CLEAR",
+    "case_id": "GC-06",
+    "note_id": "GN-06",
+    "order_status": "PROCESSING",
+    "promised_date": "2025-03-08",
+    "note_text": "Item out of stock, backorder due next week",
+    "acceptable_issue_families": [
+      "STOCK_SHORTAGE"
+    ],
+    "expected_evidence_span": "out of stock",
+    "should_abstain": false
+  },
+  {
+    "golden_id": "G-07",
+    "kind": "CLEAR",
+    "case_id": "GC-07",
+    "note_id": "GN-07",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-07",
+    "note_text": "Carrier reports delay at sorting hub",
+    "acceptable_issue_families": [
+      "CARRIER_DELAY"
+    ],
+    "expected_evidence_span": "delay at sorting hub",
+    "should_abstain": false
+  },
+  {
+    "golden_id": "G-08",
+    "kind": "AMBIGUOUS",
+    "case_id": "GC-08",
+    "note_id": "GN-08",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-06",
+    "note_text": "Parcel at depot, cust unreachable, address may be wrong",
+    "acceptable_issue_families": [
+      "ADDRESS_CONFIRMATION",
+      "FAILED_DELIVERY_ATTEMPT"
+    ],
+    "expected_evidence_span": null,
+    "should_abstain": false
+  },
+  {
+    "golden_id": "G-09",
+    "kind": "INSUFFICIENT",
+    "case_id": "GC-09",
+    "note_id": "GN-09",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-07",
+    "note_text": "Customer asking about parcel",
+    "acceptable_issue_families": [],
+    "expected_evidence_span": null,
+    "should_abstain": true
+  },
+  {
+    "golden_id": "G-10",
+    "kind": "CLEAR",
+    "case_id": "GC-10",
+    "note_id": "GN-10",
+    "order_status": "SHIPPED",
+    "promised_date": "2025-03-06",
+    "note_text": "dmg on arrival, box crushed",
+    "acceptable_issue_families": [
+      "DAMAGED_IN_TRANSIT"
+    ],
+    "expected_evidence_span": "box crushed",
+    "should_abstain": false
+  }
+]

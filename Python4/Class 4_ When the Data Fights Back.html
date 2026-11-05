@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Class 4: When the Data Fights Back</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9ECEA; --paper:#FFFFFF; --ink:#1B2836; --ink-2:#4F5D6B; --rule:#1B2836; --hair:#CBD2D6;
+  --kraft:#B4875A; --kraft-2:#8E6640; --kraft-soft:#EFE2D1;
+  --tape:#F2C230; --tape-ink:#2E2600;
+  --ok:#2A7653; --ok-soft:#DDEFE5; --bad:#B9412C; --bad-soft:#F6E0DA;
+  --term:#16212C; --term-ink:#D8E3EA; --term-dim:#8EA0AE; --term-ok:#7FD3A6; --term-bad:#FF8E78; --term-hi:#F2C230;
+  --focus:#2D6FD6;
+  --display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",Verdana,"Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131B22; --paper:#1B2630; --ink:#E5EBEF; --ink-2:#A5B2BC; --rule:#8C9BA7; --hair:#2F3D49;
+    --kraft:#C99B6B; --kraft-2:#E0B98E; --kraft-soft:#352B21;
+    --tape:#F2C230; --tape-ink:#2E2600;
+    --ok:#5DBE90; --ok-soft:#163126; --bad:#EE7C66; --bad-soft:#3A1F1A;
+    --term:#0E151B; --focus:#7FAEFF;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131B22; --paper:#1B2630; --ink:#E5EBEF; --ink-2:#A5B2BC; --rule:#8C9BA7; --hair:#2F3D49;
+  --kraft:#C99B6B; --kraft-2:#E0B98E; --kraft-soft:#352B21;
+  --tape:#F2C230; --tape-ink:#2E2600;
+  --ok:#5DBE90; --ok-soft:#163126; --bad:#EE7C66; --bad-soft:#3A1F1A;
+  --term:#0E151B; --focus:#7FAEFF;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+img,svg{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+code,pre,.mono{font-family:var(--mono);font-size:.88em}
+p{margin:0 0 .8em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* ---------- hero ---------- */
+.hero{padding:40px 0 28px}
+.hero-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:36px;align-items:center}
+.kicker{font-family:var(--display);font-weight:600;font-stretch:100%;color:var(--ink-2);margin:0 0 10px;font-size:1rem}
+h1{font-family:var(--display);font-weight:850;font-stretch:108%;font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.02;letter-spacing:-.01em;margin:0 0 18px}
+.lede{font-size:1.15rem;max-width:34em;color:var(--ink-2)}
+.label-slip{display:inline-grid;grid-template-columns:auto 1fr;gap:2px 14px;border:2px solid var(--rule);background:var(--paper);padding:12px 16px;border-radius:6px;margin-top:8px;font-size:.95rem}
+.label-slip dt{font-weight:700}
+.label-slip dd{margin:0}
+
+.stage{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:18px 18px 16px;position:relative}
+.stage-row{display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;gap:6px}
+.laptop{display:flex;flex-direction:column;align-items:center}
+.screen{width:100%;aspect-ratio:16/10;background:var(--term);border-radius:8px 8px 2px 2px;border:3px solid #2A3744;padding:8px 9px;overflow:hidden;font-family:var(--mono);font-size:.66rem;line-height:1.45;color:var(--term-ink)}
+.base{width:112%;height:9px;background:#56636F;border-radius:0 0 8px 8px}
+.laptop-name{margin-top:8px;font-weight:700;font-size:.92rem}
+.screen .ok{color:var(--term-ok)} .screen .bad{color:var(--term-bad)} .screen .dim{color:var(--term-dim)}
+.lane{position:relative;height:60px}
+.lane::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--hair)}
+.mover{position:absolute;z-index:5;top:50%;left:-150%;transform:translate(0,-50%);opacity:0;pointer-events:none}
+.mover.go{animation:fly 1.1s cubic-bezier(.55,.05,.35,1) forwards}
+@keyframes fly{0%{left:-150%;opacity:1}85%{opacity:1}100%{left:170%;opacity:0}}
+.file-ico{width:30px;height:38px;background:var(--paper);border:2px solid var(--rule);border-radius:3px 10px 3px 3px;display:grid;place-items:center;font-family:var(--mono);font-size:.55rem;font-weight:600}
+.parcel{width:54px;height:42px;background:var(--kraft);border:2px solid var(--kraft-2);border-radius:4px;position:relative}
+.parcel::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:12px;transform:translateX(-50%);background:var(--tape);opacity:.9}
+.parcel::after{content:"";position:absolute;left:6px;top:7px;width:18px;height:11px;background:#fff;border-radius:2px}
+.stage-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.stage-note{margin:12px 0 0;font-size:.95rem;min-height:3.2em}
+
+/* ---------- buttons ---------- */
+.btn{appearance:none;border:2px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:8px;padding:9px 15px;font-weight:700;cursor:pointer;line-height:1.2;transition:transform .12s ease, background .15s ease}
+.btn:hover{background:var(--kraft-soft)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.primary:hover{background:var(--ink-2);border-color:var(--ink-2)}
+.btn.tape{background:var(--tape);color:var(--tape-ink);border-color:var(--tape)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.small{padding:6px 11px;font-size:.92rem}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.link-btn{appearance:none;background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-weight:700}
+
+/* ---------- OS switch ---------- */
+.os-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:8px 0 0;font-size:.95rem}
+.seg{display:inline-flex;border:2px solid var(--rule);border-radius:999px;overflow:hidden;background:var(--paper)}
+.seg button{appearance:none;border:0;background:none;padding:6px 14px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+body[data-os="mac"] .win-only{display:none !important}
+body[data-os="win"] .mac-only{display:none !important}
+
+/* ---------- tracking strip ---------- */
+.track{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:2px solid var(--rule)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.track-inner{display:flex;align-items:center;gap:16px;padding:10px 20px;max-width:1080px;margin:0 auto}
+.stops{display:flex;gap:0;flex:1;overflow-x:auto;scrollbar-width:none;padding:4px 2px}
+.stops::-webkit-scrollbar{display:none}
+.stop-dot{appearance:none;flex:1 0 34px;min-width:34px;background:none;border:0;padding:0;cursor:pointer;position:relative;display:flex;justify-content:center}
+.stop-dot::before{content:"";position:absolute;top:50%;left:0;right:0;border-top:2px solid var(--hair);z-index:0}
+.stop-dot:first-child::before{left:50%} .stop-dot:last-child::before{right:50%}
+.stop-dot span{position:relative;z-index:1;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--paper);border:2px solid var(--hair);font-family:var(--display);font-weight:800;font-size:.82rem;color:var(--ink-2);transition:all .2s ease}
+.stop-dot.packed span{background:var(--ok);border-color:var(--ok);color:#fff}
+.stop-dot.current span{background:var(--ink);border-color:var(--ink);color:var(--paper);transform:scale(1.12)}
+.stop-dot.packed.current span{box-shadow:0 0 0 3px var(--ok)}
+.track-meta{flex:0 0 auto;font-size:.9rem;color:var(--ink-2);white-space:nowrap}
+.track-meta strong{color:var(--ink)}
+
+/* ---------- stop panel ---------- */
+main.wrap{padding-top:26px;padding-bottom:60px}
+.stop{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:28px 30px 24px;animation:arrive .35s ease both}
+.stop[hidden]{display:none}
+@keyframes arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stop-no{font-family:var(--display);font-weight:700;color:var(--ink-2);margin:0 0 4px;font-size:.98rem}
+.stop h2{font-family:var(--display);font-weight:850;font-stretch:112%;font-size:clamp(1.8rem,3.6vw,2.6rem);line-height:1.05;margin:0 0 10px}
+.idea{font-size:1.2rem;max-width:36em;margin-bottom:22px}
+.stop h3{font-family:var(--display);font-weight:750;font-stretch:105%;font-size:1.2rem;margin:26px 0 10px}
+.widget{border:2px dashed var(--hair);border-radius:12px;padding:18px;margin:6px 0 20px;background:color-mix(in srgb,var(--bg) 45%,var(--paper))}
+.widget-title{font-weight:700;margin:0 0 4px}
+.widget-hint{color:var(--ink-2);font-size:.95rem;margin:0 0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.points{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start;margin-top:4px}
+.points ul{margin:0;padding-left:1.15em}
+.points li{margin:0 0 .55em}
+.analogy{border-left:6px solid var(--kraft);background:var(--kraft-soft);border-radius:0 10px 10px 0;padding:12px 16px;font-size:.98rem}
+.analogy b{display:block;margin-bottom:2px}
+details.slips{margin-top:18px;border-top:2px solid var(--hair);padding-top:12px}
+details.slips summary{cursor:pointer;font-weight:700}
+details.slips ul{margin:10px 0 0;padding-left:1.15em}
+details.slips li{margin-bottom:.4em}
+.stop-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-top:24px;padding-top:18px;border-top:2px solid var(--rule)}
+.stop-foot .mid{display:flex;gap:10px;align-items:center}
+.stamp{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:800;color:var(--ok);border:2px solid var(--ok);border-radius:6px;padding:4px 10px;transform:rotate(-3deg)}
+.stamp[hidden]{display:none}
+
+/* ---------- terminal & code ---------- */
+.term{background:var(--term);color:var(--term-ink);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:.84rem;line-height:1.55;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.term .p{color:var(--term-dim)} .term .ok{color:var(--term-ok)} .term .bad{color:var(--term-bad)} .term .hi{color:var(--term-hi)}
+.term-title{font-size:.85rem;font-weight:700;margin:0 0 6px;color:var(--ink-2)}
+.cmd{background:var(--term);color:var(--term-ink);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:.84rem;overflow-x:auto;white-space:pre;margin:6px 0 12px}
+.cmd .c{color:var(--term-dim)}
+.cmds-label{font-weight:700;font-size:.95rem;margin:10px 0 2px}
+
+/* ---------- flip cards ---------- */
+.flips{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.flip{appearance:none;text-align:left;border:2px solid var(--rule);border-radius:10px;background:var(--paper);padding:14px;cursor:pointer;min-height:118px;position:relative}
+.flip .front{font-family:var(--display);font-weight:800;font-size:1.15rem}
+.flip .front small{display:block;font-family:var(--body);font-weight:400;font-size:.85rem;color:var(--ink-2);margin-top:6px}
+.flip .back{display:none;font-size:.95rem}
+.flip[aria-pressed="true"]{background:var(--kraft-soft)}
+.flip[aria-pressed="true"] .front{display:none}
+.flip[aria-pressed="true"] .back{display:block;animation:arrive .25s ease}
+
+/* ---------- traceback reader ---------- */
+.tb{display:flex;flex-direction:column;background:var(--term);border-radius:10px;padding:8px;font-family:var(--mono);font-size:.8rem}
+.tb button{appearance:none;background:none;border:0;color:var(--term-ink);text-align:left;padding:3px 8px;border-radius:5px;cursor:pointer;white-space:pre;overflow-x:auto;font-family:inherit;font-size:inherit}
+.tb button:hover{background:rgba(255,255,255,.07)}
+.tb button.wrong{background:rgba(242,194,48,.14)}
+.tb button.right{background:rgba(127,211,166,.18);color:var(--term-ok)}
+.feedback{margin:10px 0 0;min-height:1.6em;font-weight:700}
+.feedback.good{color:var(--ok)} .feedback.meh{color:var(--ink)}
+
+/* ---------- sorter ---------- */
+.pile{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:42px}
+.chip{appearance:none;border:2px solid var(--rule);background:var(--paper);border-radius:999px;padding:6px 13px;font-family:var(--mono);font-size:.84rem;cursor:pointer;transition:transform .15s ease}
+.chip[aria-pressed="true"]{background:var(--tape);color:var(--tape-ink);border-color:var(--tape);transform:translateY(-2px)}
+.chip.gone{display:none}
+.bins{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bin{appearance:none;text-align:left;border:2px solid var(--rule);background:var(--paper);border-radius:10px;padding:10px 12px;cursor:pointer;min-height:92px;display:flex;flex-direction:column;gap:2px}
+.bin:hover{background:var(--kraft-soft)}
+.bin-name{font-family:var(--mono);font-weight:600;font-size:.86rem}
+.bin-job{font-size:.85rem;color:var(--ink-2)}
+.bin-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.bin-items span{font-family:var(--mono);font-size:.72rem;background:var(--ok-soft);color:var(--ink);border:1px solid var(--ok);border-radius:4px;padding:1px 6px;animation:pop .3s ease}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.bin.shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.bins.three .bin{min-height:120px}
+.bin.rules{border-color:#3B6FB6} .bin.settings{border-color:var(--ok)} .bin.secrets{border-color:var(--bad)}
+.bin-big{font-family:var(--display);font-weight:800;font-size:1.1rem}
+.msg{margin:12px 0 0;min-height:1.6em;font-weight:700}
+
+/* ---------- PATH sim ---------- */
+.pathrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.pathrow .lbl{font-weight:700;font-size:.9rem;margin-right:4px}
+.pathbox{font-family:var(--mono);font-size:.78rem;border:2px solid var(--hair);border-radius:6px;padding:4px 8px;background:var(--paper);transition:all .35s ease}
+.pathbox.first{border-color:var(--ink);font-weight:600}
+.pathbox.venv{border-color:var(--ok);background:var(--ok-soft);animation:slidein .45s ease}
+@keyframes slidein{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+.pathbox .tag{font-family:var(--body);font-size:.72rem;margin-left:6px;color:var(--ok);font-weight:700}
+
+/* ---------- pins ---------- */
+.range-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+input[type=range]{accent-color:var(--ink);width:min(320px,100%)}
+.basket{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper)}
+.basket h4{margin:0 0 6px;font-family:var(--display);font-weight:800;font-size:1.05rem}
+.basket .line{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:.82rem;padding:4px 0;border-bottom:1px dashed var(--hair)}
+.basket .verdict{margin-top:8px;font-weight:700;font-size:.95rem}
+.v-ok{color:var(--ok)} .v-warn{color:var(--bad)}
+
+/* ---------- toml explorer ---------- */
+.toml{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;align-items:start}
+.toml-code{background:var(--term);border-radius:10px;padding:6px}
+.toml-code button{display:block;width:100%;appearance:none;border:0;background:none;color:var(--term-ink);text-align:left;font-family:var(--mono);font-size:.78rem;line-height:1.5;white-space:pre;padding:6px 8px;border-radius:6px;cursor:pointer;overflow-x:auto}
+.toml-code button:hover{background:rgba(255,255,255,.06)}
+.toml-code button[aria-pressed="true"]{background:rgba(242,194,48,.16);box-shadow:inset 3px 0 0 var(--term-hi)}
+.toml-code .k{color:var(--term-hi)}
+.explain{border:2px solid var(--rule);border-radius:10px;padding:14px;background:var(--paper);position:sticky;top:110px}
+.explain h4{margin:0 0 6px;font-family:var(--mono);font-size:.9rem}
+.decoder{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:1.25rem;margin:6px 0 10px}
+.decoder button{appearance:none;border:2px solid var(--rule);background:var(--paper);border-radius:6px;padding:4px 10px;font-family:var(--mono);font-size:1.1rem;cursor:pointer}
+.decoder button[aria-pressed="true"]{background:var(--tape);border-color:var(--tape);color:var(--tape-ink)}
+
+/* ---------- module map ---------- */
+.map-stack{display:grid;gap:16px}
+.map{max-width:640px;width:100%;margin:0 auto}
+.map svg{width:100%;height:auto;display:block}
+.map-side{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}
+.map .node rect{fill:var(--paper);stroke:var(--rule);stroke-width:2;rx:10}
+.map .node text{fill:var(--ink);font-family:var(--mono);font-size:15px;font-weight:600}
+.map .node{cursor:pointer}
+.map .node:hover rect{fill:var(--kraft-soft)}
+.map .node.on rect{fill:var(--tape);stroke:var(--tape)}
+.map .node.on text{fill:var(--tape-ink)}
+.map .node:focus{outline:none}
+.map .node:focus-visible rect{stroke:var(--focus);stroke-width:4}
+.map .edge{stroke:var(--ink-2);stroke-width:2.5;fill:none}
+.map .edge-bad{stroke:var(--bad);stroke-width:3;fill:none;stroke-dasharray:7 6;opacity:0;transition:opacity .3s}
+.map.cycle .edge-bad{opacity:1;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-26}}
+.map .arrowhead{fill:var(--ink-2)} .map .arrowhead-bad{fill:var(--bad)}
+.node-info{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper);min-height:94px}
+.node-info h4{margin:0 0 4px;font-family:var(--mono)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.same-badge{display:inline-block;margin-top:10px;font-weight:700;color:var(--ok)}
+
+/* ---------- editor mock ---------- */
+.editor{border:2px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--paper)}
+.editor-bar{display:flex;justify-content:space-between;gap:10px;background:var(--ink);color:var(--paper);font-size:.82rem;padding:5px 10px;font-family:var(--mono)}
+.editor-code{font-family:var(--mono);font-size:.82rem;line-height:1.6;padding:10px 12px;white-space:pre;overflow-x:auto}
+.squig{text-decoration:underline wavy var(--bad);text-underline-offset:4px}
+.editor-tip{font-size:.82rem;color:var(--bad);font-family:var(--mono);padding:0 12px 10px}
+.interp-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.interp-list button{appearance:none;text-align:left;border:2px solid var(--hair);border-radius:8px;background:var(--paper);padding:8px 12px;cursor:pointer}
+.interp-list button[aria-pressed="true"]{border-color:var(--ink);background:var(--kraft-soft)}
+.interp-list small{display:block;font-family:var(--mono);font-size:.74rem;color:var(--ink-2)}
+.code-lines div{transition:all .35s ease;max-height:1.7em;overflow:hidden}
+.code-lines .flag{background:var(--bad-soft);box-shadow:inset 3px 0 0 var(--bad)}
+.code-lines .removed{max-height:0;opacity:0}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+
+/* ---------- layers (precedence) ---------- */
+.layers{display:flex;flex-direction:column;gap:8px}
+.layer{border:2px solid var(--hair);border-radius:10px;padding:10px 14px;background:var(--paper);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;transition:all .25s ease;opacity:.6}
+.layer.active{opacity:1;border-color:var(--rule)}
+.layer.wins{border-color:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.layer .lname{font-weight:700;min-width:9.5em}
+.layer code{background:var(--bg);padding:2px 6px;border-radius:4px}
+.layer .won{margin-left:auto;font-weight:700;color:var(--ok);display:none}
+.layer.wins .won{display:inline}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:700}
+.toggle input{width:20px;height:20px;accent-color:var(--ink)}
+select{border:2px solid var(--rule);border-radius:6px;padding:3px 6px;background:var(--paper)}
+
+/* ---------- switch ---------- */
+.switch{appearance:none;display:inline-flex;align-items:center;gap:12px;background:none;border:0;cursor:pointer;font-weight:700;padding:4px 0;text-align:left}
+.switch .track-s{width:50px;height:28px;border-radius:999px;background:var(--ok);position:relative;flex:0 0 auto;transition:background .2s}
+.switch .track-s::after{content:"";position:absolute;top:3px;left:25px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+.switch[aria-checked="false"] .track-s{background:var(--bad)}
+.switch[aria-checked="false"] .track-s::after{left:3px}
+.switch.risky[aria-checked="false"] .track-s{background:var(--rule)}
+.switch.risky[aria-checked="true"] .track-s{background:var(--bad)}
+
+/* ---------- git sim ---------- */
+.git-lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:relative}
+.git-lane{border:2px solid var(--rule);border-radius:10px;background:var(--paper);padding:10px;min-height:150px;display:flex;flex-direction:column;gap:6px}
+.git-lane h4{margin:0;font-family:var(--display);font-weight:800;font-size:.98rem}
+.git-lane .sub{font-size:.78rem;color:var(--ink-2);margin-top:-4px}
+.gcard{font-family:var(--mono);font-size:.74rem;border:2px solid var(--rule);border-radius:6px;padding:4px 6px;background:var(--tape);color:var(--tape-ink);animation:pop .3s ease}
+.gcard.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
+.commit{font-family:var(--mono);font-size:.72rem;display:flex;gap:6px;align-items:flex-start}
+.commit::before{content:"";flex:0 0 10px;height:10px;margin-top:3px;border-radius:50%;background:var(--ink)}
+.commit.new{animation:pop .3s ease}
+.commit.leak::before{background:var(--bad)}
+.git-cmds{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 10px}
+.git-cmds .btn{font-family:var(--mono);font-size:.86rem;font-weight:600}
+.partner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;border:2px dashed var(--hair);border-radius:10px;padding:8px 12px;margin-top:10px;font-size:.92rem}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--bad-soft);color:var(--bad)}
+
+/* ---------- readme ---------- */
+.readme-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:16px;align-items:start}
+.rm-list{display:flex;flex-direction:column;gap:6px}
+.rm-list label{display:flex;gap:10px;align-items:center;border:2px solid var(--hair);border-radius:8px;padding:7px 10px;background:var(--paper);cursor:pointer}
+.rm-list input{width:18px;height:18px;accent-color:var(--ink)}
+.walk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.walk li{display:flex;gap:10px;align-items:center;border:2px solid var(--hair);border-radius:8px;padding:7px 10px;background:var(--paper);transition:all .25s}
+.walk li .ico{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.8rem;border:2px solid var(--hair);flex:0 0 auto}
+.walk li.done{border-color:var(--ok)} .walk li.done .ico{background:var(--ok);border-color:var(--ok);color:#fff}
+.walk li.here{border-color:var(--ink);box-shadow:0 0 0 3px var(--kraft-soft)}
+.walk li.stuck{border-color:var(--bad);background:var(--bad-soft)} .walk li.stuck .ico{background:var(--bad);border-color:var(--bad);color:#fff}
+.bubble{font-style:italic;color:var(--bad);font-size:.9rem;margin-left:auto}
+.result{margin-top:10px;font-weight:700;min-height:1.6em}
+
+/* ---------- AI boundary ---------- */
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.note-card{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper)}
+.note-text{font-family:var(--mono);font-size:.95rem;background:var(--bg);border-radius:6px;padding:8px 10px;margin:6px 0 0}
+mark{background:var(--tape);color:var(--tape-ink);padding:0 2px;border-radius:2px}
+.sug{border:2px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper);min-height:180px}
+.sug dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.95rem}
+.sug dt{font-weight:700}
+.sug dd{margin:0}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-weight:700;font-size:.85rem}
+.badge.ok{background:var(--ok-soft);color:var(--ok)} .badge.warn{background:var(--tape);color:var(--tape-ink)} .badge.no{background:var(--bad-soft);color:var(--bad)}
+.boundary{display:grid;grid-template-columns:1fr 26px 1fr 1fr;gap:10px;align-items:center;margin-top:8px}
+.bbox{border:2px solid var(--rule);border-radius:10px;padding:10px;text-align:center;background:var(--paper);font-family:var(--mono);font-size:.86rem;font-weight:600}
+.bbox small{display:block;font-family:var(--body);font-weight:400;color:var(--ink-2);font-size:.8rem}
+.bwall{height:100%;min-height:80px;border-left:4px dashed var(--ink-2);margin:0 auto;width:0;position:relative}
+.bwall.breached{border-left-color:var(--bad)}
+.bbox.model{border-style:dashed}
+
+/* ---------- before/after ---------- */
+.ba{width:100%;border-collapse:collapse;font-size:.96rem}
+.ba th,.ba td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--hair);vertical-align:top}
+.ba th{font-family:var(--display);font-weight:800}
+.ba td.ans{transition:opacity .2s}
+.ba .now{color:var(--ok);font-weight:700}
+.ba .then{color:var(--ink-2)}
+.three textarea{width:100%;min-height:62px;border:2px solid var(--hair);border-radius:8px;padding:8px 10px;background:var(--paper);resize:vertical}
+.three label{display:block;font-weight:700;margin:10px 0 4px}
+
+/* ---------- quiz ---------- */
+.quiz{border:2px solid var(--rule);border-radius:12px;padding:16px 18px;margin-top:22px;background:var(--paper)}
+.quiz .q{font-weight:700;margin:0 0 10px}
+.quiz .q code{font-weight:400}
+.quiz .opts{display:flex;flex-direction:column;gap:8px}
+.quiz .opt{appearance:none;text-align:left;border:2px solid var(--hair);border-radius:8px;background:var(--paper);padding:9px 12px;cursor:pointer;display:flex;gap:10px}
+.quiz .opt b{flex:0 0 1.4em}
+.quiz .opt:hover{border-color:var(--rule)}
+.quiz .opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.quiz .opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.quiz .why{margin:10px 0 0;min-height:1.4em}
+.quiz-title{font-family:var(--display);font-weight:800;margin:0 0 6px;font-size:1.05rem}
+
+/* ---------- footer ---------- */
+.allcmds{background:var(--paper);border:2px solid var(--rule);border-radius:14px;padding:16px 22px;margin-top:22px}
+.allcmds summary{cursor:pointer;font-family:var(--display);font-weight:800;font-size:1.15rem}
+footer.site{padding:10px 0 40px;color:var(--ink-2);font-size:.9rem}
+
+#stopFoot{border-top:0;padding-top:0;margin-top:16px}
+.lane{z-index:2}
+/* ---------- responsive ---------- */
+@media (max-width: 860px){
+  .hero-grid{grid-template-columns:1fr}
+  .points,.two,.toml,.readme-grid,.ai-grid,.compare,.map-side{grid-template-columns:1fr}
+  .explain{position:static}
+  .bins{grid-template-columns:repeat(2,1fr)}
+  .flips{grid-template-columns:1fr}
+  .git-lanes{grid-template-columns:repeat(2,1fr)}
+  .stop{padding:22px 18px 20px}
+  .track-meta .long{display:none}
+}
+@media (max-width: 520px){
+  .bins,.bins.three{grid-template-columns:1fr}
+  .stage-row{grid-template-columns:1fr 44px 1fr}
+  .screen{font-size:.55rem}
+  .boundary{grid-template-columns:1fr 18px 1fr;}
+  .boundary .model{grid-column:1 / -1}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+
+/* ---------- class 4 additions ---------- */
+.hero-rows{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.rowchip{font-family:var(--mono);font-size:.72rem;border:2px solid var(--rule);border-radius:6px;background:var(--paper);padding:4px 6px;line-height:1.35;transition:transform .45s ease,opacity .45s ease,background .3s,border-color .3s}
+.rowchip small{display:block;color:var(--ink-2);font-size:.66rem;white-space:nowrap}
+.rowchip.bad{background:var(--bad-soft);border-color:var(--bad)}
+.rowchip.gone{opacity:.15;transform:translateY(8px) scale(.94)}
+.rowchip.ok{background:var(--ok-soft);border-color:var(--ok)}
+.rowchip.dup{background:var(--tape);border-color:var(--tape);color:var(--tape-ink)}
+.rowchip.dup small{color:var(--tape-ink)}
+.bins2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.bin2{border:2px solid var(--rule);border-radius:10px;padding:8px 10px;min-height:66px;background:var(--paper)}
+.bin2 h4{margin:0 0 4px;font-family:var(--display);font-weight:800;font-size:.92rem}
+.bin2.q{border-color:var(--kraft-2);background:var(--kraft-soft)}
+.bin2 .tags{display:flex;flex-wrap:wrap;gap:4px}
+.bin2 .tags span{font-family:var(--mono);font-size:.68rem;border:1px solid var(--hair);border-radius:4px;padding:1px 5px;background:var(--paper);animation:pop .3s ease}
+.tally{font-weight:700;font-size:.95rem;margin:4px 0 0}
+.hero-term{min-height:7.6em;font-size:.74rem}
+.codebox{background:var(--term);color:var(--term-ink);border-radius:10px;padding:8px;font-family:var(--mono);font-size:.8rem;line-height:1.55;overflow-x:auto}
+.codebox div{white-space:pre;padding:0 8px;border-radius:5px;transition:background .25s,color .25s}
+.codebox .run{background:rgba(127,211,166,.18);color:var(--term-ok)}
+.codebox .skip{opacity:.45}
+.codebox .k{color:var(--term-hi)}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.pick .btn{font-family:var(--mono);font-weight:600;font-size:.86rem}
+.door{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.door div{border:2px solid var(--hair);border-radius:10px;padding:10px 12px;opacity:.5;transition:all .25s}
+.door div.on{opacity:1}
+.door .acc.on{border-color:var(--ok);background:var(--ok-soft)}
+.door .qua.on{border-color:var(--bad);background:var(--bad-soft)}
+.door b{display:block;font-family:var(--display)}
+.door code{word-break:break-word}
+.bench-in{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.bench-in input{flex:1 1 180px;min-width:0;border:2px solid var(--rule);border-radius:8px;padding:8px 10px;background:var(--paper);font-family:var(--mono)}
+.gate-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.grow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;border:2px solid var(--hair);border-radius:8px;padding:6px 10px;background:var(--paper);font-family:var(--mono);font-size:.8rem}
+.grow .ln{color:var(--ink-2);white-space:nowrap}
+.grow.isbad{border-color:var(--bad)}
+.grow.isdup{border-color:var(--kraft-2)}
+.grow .txt{overflow-wrap:break-word;min-width:0}
+.grow .fixbtn{font-family:var(--body);font-size:.82rem}
+.meter{position:relative;height:22px;border:2px solid var(--rule);border-radius:6px;background:var(--paper);overflow:hidden;margin:6px 0 4px}
+.meter .fill{position:absolute;inset:0 auto 0 0;background:var(--bad);transition:width .4s ease}
+.meter .fill.pass{background:var(--ok)}
+.meter .limit{position:absolute;top:0;bottom:0;width:0;border-left:3px dashed var(--ink)}
+.books{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--display);font-weight:800;font-size:1.1rem;margin:8px 0}
+.books span{border:2px solid var(--rule);border-radius:8px;padding:2px 10px;background:var(--paper)}
+.lab-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px}
+.lab-controls .ctl{border:2px solid var(--hair);border-radius:10px;padding:8px 10px;background:var(--paper)}
+.lab-controls .ctl b{display:block;font-size:.9rem;margin-bottom:6px}
+.idbadge{display:inline-block;font-family:var(--mono);font-weight:600;font-size:1.15rem;border:2px solid var(--rule);background:var(--tape);color:var(--tape-ink);border-radius:8px;padding:4px 12px;transition:transform .2s}
+.idbadge.changed{animation:pop .35s ease}
+.folders{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.folder{border:2px solid var(--rule);border-radius:10px;padding:8px 10px;background:var(--paper)}
+.folder h4{margin:0 0 4px;font-family:var(--mono);font-size:.85rem}
+.folder .files{font-family:var(--mono);font-size:.75rem;color:var(--ink-2)}
+.attempts{list-style:none;margin:6px 0 0;padding:0;font-family:var(--mono);font-size:.74rem}
+.attempts li{border-top:1px dashed var(--hair);padding:3px 0;overflow-wrap:anywhere;animation:pop .3s ease}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.plan label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:.88rem}
+.plan select{width:100%}
+.chart svg{width:100%;height:auto;display:block;max-width:560px}
+.chart .bar{fill:var(--hair)} .chart .wait{fill:var(--tape)} .chart text{fill:var(--ink);font-family:var(--mono);font-size:11px}
+.chart .capline{stroke:var(--kraft-2);stroke-dasharray:5 4;stroke-width:2}
+.judge textarea{width:100%;min-height:84px;border:2px solid var(--rule);border-radius:8px;padding:8px 10px;background:var(--paper);font-family:var(--mono);font-size:.82rem;resize:vertical}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0;font-size:.95rem}
+.verdict dt{font-weight:700}
+.verdict dd{margin:0;overflow-wrap:anywhere}
+.badge.big{font-size:1rem;padding:3px 10px}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.checks li{display:flex;gap:10px;align-items:center;border:2px solid var(--hair);border-radius:8px;padding:6px 10px;background:var(--paper);font-family:var(--mono);font-size:.78rem;overflow-wrap:anywhere;transition:all .25s}
+.checks li::before{content:"";flex:0 0 14px;height:14px;border-radius:50%;background:var(--ok)}
+.checks li.red{border-color:var(--bad);background:var(--bad-soft)}
+.checks li.red::before{background:var(--bad)}
+.sab{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sab .btn{font-size:.88rem}
+.sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.sections .bin{min-height:84px}
+.update-out{white-space:pre-wrap}
+@media (max-width:520px){
+  .hero-rows{grid-template-columns:repeat(2,1fr)}
+  .grow{grid-template-columns:auto 1fr}
+  .grow .fixbtn{grid-column:1 / -1;justify-self:start}
+  .door,.bins2{grid-template-columns:1fr}
+}
+
+.visually{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+
+<body data-os="mac">
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="kicker">FDE Module 2, Class 4: When the Data Fights Back</p>
+      <h1>Make every row count.</h1>
+      <p class="lede">Last night’s batch finished with no error. The ops lead asks: did every case get checked, and can I trust the number? Today the Workbench learns to prove it.</p>
+      <dl class="label-slip" aria-label="Batch label">
+        <dt>Batch date</dt><dd>2025-03-10</dd>
+        <dt>File</dt><dd>cases_failures.csv, 8 rows, 4 planted faults</dd>
+        <dt>Promise</dt><dd>every row accepted or set aside with a reason</dd>
+      </dl>
+    </div>
+
+    <div class="stage" aria-label="Before and after demo">
+      <div class="hero-rows" id="heroRows"></div>
+      <div class="bins2">
+        <div class="bin2"><h4 id="binAName">Report</h4><div class="tags" id="binA"></div></div>
+        <div class="bin2 q"><h4 id="binBName">Set aside</h4><div class="tags" id="binB"></div></div>
+      </div>
+      <pre class="term hero-term" id="heroTerm" aria-live="polite"><span class="p">press a button to run the batch</span></pre>
+      <div class="stage-actions">
+        <button class="btn" id="runOld">Run the Class 3 batch</button>
+        <button class="btn tape" id="runNew">Run the Class 4 batch</button>
+      </div>
+      <p class="stage-note" id="heroNote">Same eight rows. Watch where each one goes.</p>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="os-bar">
+      <span>Show commands for</span>
+      <div class="seg" role="group" aria-label="Operating system">
+        <button type="button" data-os-pick="mac" aria-pressed="true">macOS or Linux</button>
+        <button type="button" data-os-pick="win" aria-pressed="false">Windows</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="track" aria-label="Class stops">
+  <div class="track-inner">
+    <div class="stops" id="stops"></div>
+    <div class="track-meta"><strong id="packedCount">0</strong> of 9 <span class="long">stops packed</span></div>
+  </div>
+</nav>
+
+<main class="wrap" id="main">
+
+<!-- ================= STOP 1 ================= -->
+<section class="stop" id="s1" data-title="The run that lied">
+  <p class="stop-no">Stop 1 of 9, about 5 minutes</p>
+  <h2>The run that lied</h2>
+  <p class="idea">A crash is loud, so someone fixes it. A quiet mistake gets believed.</p>
+
+  <div class="widget">
+    <p class="widget-title">Find the silent row</p>
+    <p class="widget-hint">This is what the Class 3 program printed for the eight rows (from the instructor script). Tap the row that had a problem nobody mentioned.</p>
+    <pre class="term" aria-label="Class 3 output"><span class="bad">REJECTED row 3 of cases.csv: 'RETURNED' is not a valid OrderStatus</span>
+<span class="bad">REJECTED row 4 of cases.csv: Invalid isoformat string: '07/03/2025'</span>
+<span class="bad">REJECTED row 7 of cases.csv: day is out of range for month</span>
+Traceback (most recent call last):
+  …
+<span class="bad">AssertionError</span></pre>
+    <div class="gate-rows" id="silentRows" style="margin-top:12px"></div>
+    <p class="feedback" id="silentMsg" aria-live="polite"></p>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Three rows got raw Python messages.</b> A support agent cannot act on “day is out of range for month”.</li>
+      <li><b>One row was never mentioned.</b> C-3004 appears twice, and the loader kept both.</li>
+      <li><b>Today’s three promises:</b> every row is counted, every failure has a planned outcome, and a rerun repeats no work.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A teacher reads out 40 names. One card slipped under the desk, so the register says 39 present. It looks complete, and nothing in it says a card was not read.</aside>
+  </div>
+
+  <h3>Try it</h3>
+  <pre class="cmd mac-only"><span class="c"># from the folder that holds your repository</span>
+cp -r starter scratch
+cp starter/fixtures/cases_failures.csv scratch/data/cases.csv
+cd scratch
+PYTHONPATH=src python -m meridian_workbench</pre>
+  <pre class="cmd win-only"><span class="c"># from the folder that holds your repository</span>
+Copy-Item -Recurse starter scratch
+Copy-Item starter\fixtures\cases_failures.csv scratch\data\cases.csv
+cd scratch
+$env:PYTHONPATH = "src"; python -m meridian_workbench; Remove-Item Env:PYTHONPATH</pre>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>A clean “4 of 7 cases need attention” means Python ran your original folder, not the copy. Add <code>PYTHONPATH=src</code> as shown.</li>
+    <li>“No such file: starter” means your repository folder has another name. Use that name.</li>
+  </ul></details>
+</section>
+
+<!-- ================= STOP 2 ================= -->
+<section class="stop" id="s2" data-title="Four kinds of failure" hidden>
+  <p class="stop-no">Stop 2 of 9, about 15 minutes</p>
+  <h2>Four kinds of failure</h2>
+  <p class="idea">Each kind of problem gets a name, and the name decides the outcome.</p>
+
+  <div class="widget">
+    <p class="widget-title">Watch the four words run</p>
+    <p class="widget-hint">Pick a promised date for row C-3003. Green lines run; faded lines are skipped. The terminal shows what Python prints, in order.</p>
+    <div class="pick" id="drillPick">
+      <button class="btn" data-d="07/03/2025">07/03/2025</button>
+      <button class="btn" data-d="2025-03-07">2025-03-07</button>
+      <button class="btn" data-d="2025-02-30">2025-02-30</button>
+      <button class="btn" data-d="20250307">20250307</button>
+    </div>
+    <div class="two">
+      <div class="codebox" id="drillCode" aria-label="check_row code">
+        <div data-b="def">def check_row(row):</div>
+        <div data-b="try">    <span class="k">try</span>:</div>
+        <div data-b="try">        promised = read_promised(row["promised_date"])</div>
+        <div data-b="except">    <span class="k">except</span> ValueError:</div>
+        <div data-b="except">        return "quarantined: promised_date is not a date"</div>
+        <div data-b="else">    <span class="k">else</span>:</div>
+        <div data-b="else">        return f"accepted, due {promised.isoformat()}"</div>
+        <div data-b="finally">    <span class="k">finally</span>:</div>
+        <div data-b="finally">        print(f"checked {row['case_id']}")</div>
+      </div>
+      <div>
+        <p class="term-title">What Python prints</p>
+        <pre class="term" id="drillOut" aria-live="polite"><span class="p">pick a date</span></pre>
+        <p class="feedback" id="drillMsg"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Four kinds, four outcomes.</b> A bad row is set aside. A broken rule follows the policy. A missing file stops the run. A failing service is retried, then marked UNAVAILABLE.</li>
+      <li><b>Our own names.</b> <code>class MalformedRecord(IntakeError)</code> needs no body: the name is the point, and <code>except IntakeError</code> catches the whole family.</li>
+      <li><b><code>raise … from error</code></b> keeps Python’s original error as the “direct cause”, so the traceback reads as one story.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>Making tea. Try: boil the water. Except: the gas ran out, use the kettle. Else: nothing went wrong, add the leaves. Finally: switch off the stove, every single time.</aside>
+  </div>
+
+  <h3>Try it</h3>
+  <pre class="cmd">python scratch_keywords.py
+python -c "from meridian_workbench.parsing import parse_date; parse_date('2025-02-30')"</pre>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li><code>except Exception:</code> also hides real bugs: a typo like <code>row["promised_dte"]</code> still prints “quarantined”.</li>
+    <li>Success code inside <code>try</code> gets its own errors caught by mistake. Put it in <code>else</code>.</li>
+    <li>A <code>return</code> inside <code>finally</code> silently throws the error away.</li>
+    <li>Copying code from the PDF gives <code>SyntaxError: invalid non-printable character U+200B</code>. Copy from this page instead.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="c">
+    <p class="quiz-title">Quick check 1 of 6</p>
+    <p class="q">In <code>check_row</code>, the date is valid. Which blocks run?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="except needs an error to happen, and finally is missing: it runs every time."><b>A</b><span>try, except and else</span></button>
+      <button class="opt" data-o="b" data-why="except runs only when try raised an error. This date was fine."><b>B</b><span>try, except and finally</span></button>
+      <button class="opt" data-o="c" data-why="Right. No error, so except is skipped; else runs because try succeeded; finally always runs. “checked C-3001” prints first."><b>C</b><span>try, else and finally</span></button>
+      <button class="opt" data-o="d" data-why="This forgets else, which is exactly where the success code lives."><b>D</b><span>try and finally only</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 3 ================= -->
+<section class="stop" id="s3" data-title="Defensive parsing" hidden>
+  <p class="stop-no">Stop 3 of 9, about 18 minutes</p>
+  <h2>Read it, or refuse it</h2>
+  <p class="idea">A parser accepts a value only when it can read it without guessing. Otherwise it refuses and says why.</p>
+
+  <div class="widget">
+    <p class="widget-title">The parser bench</p>
+    <p class="widget-hint">Pick a field, then type a value or tap a sample. Every message below is the real one from <code>parsing.py</code>.</p>
+    <div class="seg" role="group" aria-label="Field" id="benchField" style="margin-bottom:10px">
+      <button type="button" data-f="date" aria-pressed="true">date</button>
+      <button type="button" data-f="units" aria-pressed="false">units</button>
+      <button type="button" data-f="amount" aria-pressed="false">amount</button>
+      <button type="button" data-f="status" aria-pressed="false">status</button>
+    </div>
+    <div class="bench-in">
+      <label for="benchText" class="visually">Value</label>
+      <input id="benchText" type="text" value="07/03/2025" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="pick" id="benchSamples"></div>
+    <div class="door" aria-live="polite">
+      <div class="acc" id="doorAcc"><b>Accepted</b><span id="doorAccText">–</span></div>
+      <div class="qua" id="doorQua"><b>Quarantined, with this reason</b><span id="doorQuaText">–</span></div>
+    </div>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Shape first, then meaning.</b> 2025-02-30 has the right shape, but February has no 30th, so it is “not a real calendar date”.</li>
+      <li><b>A guess looks like a fact.</b> 07/03/2025 is 7 March or 3 July. 1.250 is one and a quarter or one thousand two hundred and fifty. Refuse both.</li>
+      <li><b>Every row leaves through one door.</b> The loader counts a row first, then accepts it or quarantines it with its line number and raw text.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A barcode will not scan. A good cashier does not type a price that “looks about right”. She sets the item aside, rings up the rest, and calls a supervisor.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>“Helping” with <code>.upper()</code>: the data contract says statuses are exact, so <code>shipped</code> is refused on purpose.</li>
+    <li>Cleaning the raw text before saving it. The quarantine keeps the row as it was read.</li>
+    <li>Pasting the loader into <code>python</code> and seeing <code>...</code>: press Enter once more to finish the loop.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="a">
+    <p class="quiz-title">Quick check 2 of 6</p>
+    <p class="q"><code>parse_date</code> receives the text <code>07/03/2025</code>. What should happen?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="Right. It has two possible meanings and the parser cannot know which. It refuses, keeps the raw text, and a person decides from the quarantine file."><b>A</b><span>Raise MalformedRecord, so the row is quarantined</span></button>
+      <button class="opt" data-o="b" data-why="That is the usual reading in India and Europe, but it is still a guess, and a guess looks like a fact in the report."><b>B</b><span>Read it as 7 March, the most common meaning</span></button>
+      <button class="opt" data-o="c" data-why="Also a guess, just a different one. Nobody could tell later which rows were guessed."><b>C</b><span>Read it as 3 July, the meaning used in the US</span></button>
+      <button class="opt" data-o="d" data-why="A row with no trace breaks the first promise: every row is counted."><b>D</b><span>Skip the row without leaving any record of it</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 4 ================= -->
+<section class="stop" id="s4" data-title="The gate and the books" hidden>
+  <p class="stop-no">Stop 4 of 9, about 12 minutes</p>
+  <h2>Check the batch, not just the row</h2>
+  <p class="idea">Before any model call: are all the files here, is the batch good enough, and do the books balance?</p>
+
+  <div class="widget">
+    <p class="widget-title">Fix the batch</p>
+    <p class="widget-hint">This is <code>fixtures/cases_failures.csv</code>. Fix rows one at a time and watch the gate. The terminal is what the real program prints for exactly these rows.</p>
+    <div class="seg" role="group" aria-label="Duplicate policy" id="gatePolicy" style="margin-bottom:10px">
+      <button type="button" data-p="first_wins" aria-pressed="true">first_wins</button>
+      <button type="button" data-p="reject_batch" aria-pressed="false">reject_batch</button>
+    </div>
+    <div class="gate-rows" id="gateRows"></div>
+    <div class="books" id="gateBooks" aria-live="polite"></div>
+    <div class="meter" aria-hidden="true"><div class="fill" id="gateFill"></div><div class="limit" id="gateLimit"></div></div>
+    <p class="widget-hint" id="gateMeterNote"></p>
+    <p class="term-title">Terminal</p>
+    <pre class="term" id="gateTerm" aria-live="polite"></pre>
+    <p class="term-title" style="margin-top:10px">outputs/batches/<span id="gateBatch"></span>/quarantine.csv</p>
+    <pre class="term" id="gateQ"></pre>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Gates in a fixed order.</b> Every file present, then the duplicate rule, then the quality gate, then the books. Only then the rules and the model.</li>
+      <li><b>More than 5% bad, the run halts</b> with exit code 2. With only 8 rows, even one bad row is 12%.</li>
+      <li><b>The books:</b> accepted + quarantined = input. Bad data cannot break that sum. If it fails, our code forgot to count.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A few stones in a sack of rice are normal; you pick them out. If half the sack is stones, you do not cook the good half and call dinner a success.</aside>
+  </div>
+
+  <h3>Try it</h3>
+  <pre class="cmd mac-only">mkdir -p scratch/data
+cp data/notes.json data/shipments.csv data/inventory.csv scratch/data/
+cp fixtures/cases_failures.csv scratch/data/cases.csv
+MERIDIAN_DATA_DIR=scratch/data python -m meridian_workbench
+echo $?</pre>
+  <pre class="cmd win-only">New-Item -ItemType Directory -Force scratch\data | Out-Null
+Copy-Item data\notes.json, data\shipments.csv, data\inventory.csv scratch\data\
+Copy-Item fixtures\cases_failures.csv scratch\data\cases.csv
+$env:MERIDIAN_DATA_DIR = "scratch\data"
+python -m meridian_workbench
+$LASTEXITCODE
+Remove-Item Env:MERIDIAN_DATA_DIR</pre>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>In PowerShell, <code>echo $?</code> prints True or False. The exit code is <code>$LASTEXITCODE</code>.</li>
+    <li>Forgetting <code>Remove-Item Env:MERIDIAN_DATA_DIR</code>: every later run halts too.</li>
+    <li>Raising the limit to 100% to make the halt go away. The halt is the system working.</li>
+    <li>With <code>reject_batch</code>, the run stops before the quarantine file is written. Toggle it above and see.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="d">
+    <p class="quiz-title">Quick check 3 of 6</p>
+    <p class="q">cases.csv has 8 rows and 4 are quarantined. The limit is 5%. What happens?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="That publishes a report built on half a file, trusted by people who cannot see the missing half."><b>A</b><span>The 4 good rows are reported and the run passes</span></button>
+      <button class="opt" data-o="b" data-why="Reading bad data again gives the same bad data."><b>B</b><span>The file is read again three times to be sure</span></button>
+      <button class="opt" data-o="c" data-why="That is guessing. The program never fixes data on its own."><b>C</b><span>The 4 bad rows are corrected automatically</span></button>
+      <button class="opt" data-o="d" data-why="Right. 50% is far above 5%, so the batch halts before any model call. The quarantine file is still written so a person can fix it."><b>D</b><span>The run halts with HALTED and exits with code 2</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 5 ================= -->
+<section class="stop" id="s5" data-title="Batch ID and reruns" hidden>
+  <p class="stop-no">Stop 5 of 9, about 17 minutes</p>
+  <h2>One batch, many attempts</h2>
+  <p class="idea">The batch ID is a fingerprint of what the batch is. A finished batch is never done twice.</p>
+
+  <div class="widget">
+    <p class="widget-title">The batch lab</p>
+    <p class="widget-hint">Change something, then run. The ID below is computed here with the same SHA-256 recipe as <code>batch_id_for</code>, on the real data bytes.</p>
+    <div class="lab-controls">
+      <div class="ctl"><b>ai.mode</b><div class="seg" role="group" aria-label="AI mode" id="labMode"><button type="button" data-v="recorded" aria-pressed="true">recorded</button><button type="button" data-v="live" aria-pressed="false">live</button></div></div>
+      <div class="ctl"><b>Line endings after checkout</b><div class="seg" role="group" aria-label="Line endings" id="labEol"><button type="button" data-v="lf" aria-pressed="true">LF</button><button type="button" data-v="crlf" aria-pressed="false">CRLF (Windows)</button></div></div>
+      <div class="ctl"><b>Edit cases.csv line 3</b><label class="toggle"><input type="checkbox" id="labEdit"> C-1002 promised 2025-03-08</label></div>
+      <div class="ctl"><b>Things that should not matter</b><label class="toggle"><input type="checkbox" id="labOrder"> list files in reverse</label><label class="toggle"><input type="checkbox" id="labCopy"> copy data/ to another folder</label></div>
+    </div>
+    <p>Batch ID: <span class="idbadge" id="labId" aria-live="polite"></span></p>
+    <div class="btnrow"><button class="btn primary" id="labRun">Run python -m meridian_workbench</button><button class="btn small" id="labReset">Clear outputs</button></div>
+    <p class="feedback" id="labMsg" aria-live="polite"></p>
+    <div class="folders" id="labFolders"></div>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Same files, date and rules, same ID</b> on any machine. The AI mode and duplicate policy are part of the rules.</li>
+      <li><b>The attempt ID changes every run</b>, and each run adds one line to <code>attempts.log</code>.</li>
+      <li><b><code>summary.json</code> is written last</b>, so if it exists the batch finished, and a rerun returns it with no work repeated.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A train booking reference. Check the status ten times: same reference, one seat. Each check is an attempt; the booking is one.</aside>
+  </div>
+
+  <h3>Try it</h3>
+  <pre class="cmd mac-only">python -m meridian_workbench
+python -m meridian_workbench
+cat outputs/batches/B-39eedeb6ed2c/attempts.log</pre>
+  <pre class="cmd win-only">python -m meridian_workbench
+python -m meridian_workbench
+Get-Content outputs\batches\B-39eedeb6ed2c\attempts.log</pre>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>“No such file” on the last line: your batch ID is different. Copy it from the last line the program printed.</li>
+    <li>Using the time or a random number as the batch ID makes every run look like a new batch.</li>
+    <li>Deleting <code>outputs/</code> to “fix” a rerun throws away the record of what already happened.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="b">
+    <p class="quiz-title">Quick check 4 of 6</p>
+    <p class="q">Which change gives a different batch ID?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="Same names, same bytes, same date and rules give the same ID. One catch: if Git on Windows converted the line endings to CRLF, the bytes changed, and so does the ID. Try it in the lab."><b>A</b><span>Running the same files on another laptop</span></button>
+      <button class="opt" data-o="b" data-why="Right. The AI mode is part of the rules text inside the fingerprint, so a live run gets its own batch and never reuses recorded answers."><b>B</b><span>Changing ai.mode from recorded to live</span></button>
+      <button class="opt" data-o="c" data-why="The files are sorted by name before hashing, so the listing order cannot matter."><b>C</b><span>Listing the four files in a different order</span></button>
+      <button class="opt" data-o="d" data-why="Only file names and bytes go into the fingerprint, not the folder they sit in."><b>D</b><span>Copying the data folder to a new location</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 6 ================= -->
+<section class="stop" id="s6" data-title="Bounded retry" hidden>
+  <p class="stop-no">Stop 6 of 9, about 14 minutes</p>
+  <h2>Try again, but not forever</h2>
+  <p class="idea">Retry only what a later try can fix, with a limit and a wait that grows.</p>
+
+  <div class="widget">
+    <p class="widget-title">The retry desk</p>
+    <p class="widget-hint">Choose what the service does on each attempt. The waits come from <code>random.Random(seed)</code>, exactly as in the drill, so seed 4 gives 0.12s and 0.10s.</p>
+    <div class="plan" id="retryPlan"></div>
+    <div class="range-row">
+      <label for="retryMax"><b>max_attempts</b></label>
+      <input type="range" id="retryMax" min="1" max="5" value="3"><span id="retryMaxV">3</span>
+      <label for="retrySeed"><b>seed</b></label>
+      <input type="number" id="retrySeed" value="4" min="0" max="99999" style="width:6em;border:2px solid var(--rule);border-radius:6px;padding:3px 6px;background:var(--paper)">
+    </div>
+    <div class="two">
+      <div>
+        <p class="term-title">What the program prints, then the suggestion</p>
+        <pre class="term" id="retryOut" aria-live="polite"></pre>
+      </div>
+      <div class="chart" id="retryChart" aria-label="Backoff ceilings and the random waits"></div>
+    </div>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Retry three things only:</b> a timeout, a 429 and a 5xx server error. A missing key or a bad key never gets better by waiting.</li>
+      <li><b>The ceiling doubles</b> (0.5, 1, 2, 4, 8 seconds) up to the cap, and the real wait is random below it: full jitter.</li>
+      <li><b>One retry layer only.</b> The SDK’s own retries are off (<code>max_retries=0</code>), or three attempts inside three attempts makes nine calls.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>When one bell rings, 800 students reach the gate at once and it jams. If classes leave a minute or two apart, the same students pass easily.</aside>
+  </div>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>A retry test that really sleeps: pass <code>sleep=lambda s: None</code>.</li>
+    <li>Retrying a missing key, which only makes a broken setup slower to report.</li>
+    <li>Known issue in this code: a 529 “overloaded” is not retried. Pick it above and see a single call.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="d">
+    <p class="quiz-title">Quick check 5 of 6</p>
+    <p class="q">Which error does <code>call_with_retry</code> never retry?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="A timeout is temporary: the next try may get through. It is in the retry list."><b>A</b><span>LlmTimeout, when the call takes too long</span></button>
+      <button class="opt" data-o="b" data-why="The service asked us to slow down, so waiting is exactly what it wants. It is retried."><b>B</b><span>LlmRateLimited, when there are too many calls</span></button>
+      <button class="opt" data-o="c" data-why="“Server error” sounds permanent, but a 5xx is usually brief, so it is retried."><b>C</b><span>LlmServerError, when the service has a fault</span></button>
+      <button class="opt" data-o="d" data-why="Right. A missing key is still missing after any wait, so retrying cannot succeed."><b>D</b><span>MissingApiKeyError, when no key is set</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 7 ================= -->
+<section class="stop" id="s7" data-title="Model statuses" hidden>
+  <p class="stop-no">Stop 7 of 9, about 17 minutes</p>
+  <h2>Never invent an answer</h2>
+  <p class="idea">Every model outcome becomes one status a person can read. The facts from the rules come through whatever the model does.</p>
+
+  <div class="widget judge">
+    <p class="widget-title">The reply judge</p>
+    <p class="widget-hint">Pick a note and a reply, or edit the reply yourself. This runs the same checks as <code>interpret_reply</code>.</p>
+    <div class="seg" role="group" aria-label="Note" id="judgeNote" style="margin-bottom:10px">
+      <button type="button" data-n="0" aria-pressed="true">N-01</button>
+      <button type="button" data-n="1" aria-pressed="false">G-09</button>
+    </div>
+    <p class="note-text" id="judgeNoteText"></p>
+    <div class="pick" id="judgePresets" style="margin-top:10px"></div>
+    <label for="judgeText" class="term-title">Reply text</label>
+    <textarea id="judgeText" spellcheck="false"></textarea>
+    <dl class="verdict" id="judgeOut" aria-live="polite"></dl>
+    <p class="term-title">The report line</p>
+    <pre class="term" id="judgeLine"></pre>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Four statuses:</b> OK, ABSTAINED, INVALID_REPLY and UNAVAILABLE. A failed live call is UNAVAILABLE with a reason, never the recorded answer.</li>
+      <li><b>The quote must be in the note.</b> If it is not, the answer is kept but flagged, and review is forced on.</li>
+      <li><b>Only good answers are cached.</b> A cached timeout would be replayed as if it were a fact.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>The weather feed is down. The newsreader says “forecast unavailable this morning”. She does not read yesterday’s forecast, and the headlines still go out on time.</aside>
+  </div>
+
+  <h3>Try it</h3>
+  <pre class="cmd mac-only">MERIDIAN_AI_MODE=live python -m meridian_workbench
+python -m meridian_workbench.golden run</pre>
+  <pre class="cmd win-only">$env:MERIDIAN_AI_MODE = "live"
+python -m meridian_workbench
+Remove-Item Env:MERIDIAN_AI_MODE
+python -m meridian_workbench.golden run</pre>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Catching <code>APIError</code> before <code>APITimeoutError</code>: a timeout is also an APIError, so it would never be recognised.</li>
+    <li>A missing comma when merging the two golden cases gives a JSON error. Paste the final <code>golden_set.json</code> instead.</li>
+    <li>Adding a real key after the no-key run still shows UNAVAILABLE: that batch already finished and is reused.</li>
+  </ul></details>
+
+  <div class="quiz" data-answer="a">
+    <p class="quiz-title">Quick check 6 of 6</p>
+    <p class="q">In live mode, the model times out on all three attempts for C-1002. What does the report show for C-1002?</p>
+    <div class="opts">
+      <button class="opt" data-o="a" data-why="Right. The rule facts do not depend on the model, so the case stays flagged. The suggestion reads “UNAVAILABLE - model timed out after 3 attempts”."><b>A</b><span>The flagged case, with UNAVAILABLE and the reason</span></button>
+      <button class="opt" data-o="b" data-why="That is what Class 3 did. Recorded answers are test data, not a backup for a real service."><b>B</b><span>The recorded answer for C-1002, marked recorded</span></button>
+      <button class="opt" data-o="c" data-why="That loses a flagged case a person needs to see. The facts never wait for the model."><b>C</b><span>Nothing, as the case is removed from the report</span></button>
+      <button class="opt" data-o="d" data-why="A guess dressed up as an answer."><b>D</b><span>The most common issue family, marked for review</span></button>
+    </div>
+    <p class="why" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ================= STOP 8 ================= -->
+<section class="stop" id="s8" data-title="Checks that prove it" hidden>
+  <p class="stop-no">Stop 8 of 9, about 12 minutes</p>
+  <h2>A promise you can test</h2>
+  <p class="idea">Each promise is a named check. If a change breaks a promise, a check turns red before anyone sees a wrong report.</p>
+
+  <div class="widget">
+    <p class="widget-title">Break it on purpose</p>
+    <p class="widget-hint">Each button is a real one-line sabotage of the Final code. The lights show what the full test run reported for it.</p>
+    <div class="sab" id="sabButtons"></div>
+    <ul class="checks" id="sabChecks"></ul>
+    <p class="feedback" id="sabMsg" aria-live="polite"></p>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Fake callers fail on demand.</b> A timeout, every time, with no key, no internet and no cost.</li>
+      <li><b>Assert the whole promise:</b> the category, the line number, the raw text and the reason. A check of one detail can pass for the wrong reason.</li>
+      <li><b>If a check passes first time, break the code and watch it go red.</b> Some sabotages above stay green: those are promises nobody tests yet.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>A fire drill uses a pretend alarm. Nobody sets the building on fire to test the exits.</aside>
+  </div>
+
+  <h3>Try it</h3>
+  <pre class="cmd">python -m pytest -q tests/test_failures.py tests/test_rerun.py
+python -m pytest -q</pre>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li><code>2 failed</code> in test_ai_client and test_golden: <code>MERIDIAN_AI_MODE</code> is still set. Remove it and rerun.</li>
+    <li><code>4 failed</code> in test_loading and test_rerun: <code>MERIDIAN_DATA_DIR</code> is still set.</li>
+    <li>Writing test files into <code>data/</code> instead of <code>tmp_path</code>, which changes the real data.</li>
+  </ul></details>
+</section>
+
+<!-- ================= STOP 9 ================= -->
+<section class="stop" id="s9" data-title="The incident update" hidden>
+  <p class="stop-no">Stop 9 of 9, about 10 minutes</p>
+  <h2>Tell them what happened</h2>
+  <p class="idea">An update is facts, counts, impact and action. Every guess is labelled as a guess.</p>
+
+  <div class="widget" data-sorter>
+    <p class="widget-title">Build the update</p>
+    <p class="widget-hint">Tap a sentence, then tap the heading it belongs under. Every number comes from the halted run.</p>
+    <div class="pile" id="incPile"></div>
+    <div class="sections" id="incBins"></div>
+    <p class="msg" id="incMsg" aria-live="polite"></p>
+    <details id="incDone" hidden><summary>The finished update</summary><pre class="term update-out" id="incOut"></pre></details>
+  </div>
+
+  <div class="points">
+    <ul>
+      <li><b>Every number comes from a file or a run,</b> and you can say which one.</li>
+      <li><b>“Not yet known” holds the guesses,</b> each labelled. “The supplier probably changed their export” goes there.</li>
+      <li><b>No key, no note text, no personal data.</b> Counts and IDs are enough.</li>
+    </ul>
+    <aside class="analogy"><b>Think of it like this</b>The pilot: “We are delayed 40 minutes for a check on the left engine. You can stay seated. I will update you at 10:30.” Facts, impact, action, next update.</aside>
+  </div>
+
+  <h3>Close the class</h3>
+  <pre class="cmd mac-only">rm -rf scratch scratch_keywords.py
+python -m pytest -q
+python -m mypy
+python -m ruff check .
+git status
+git add -A
+git commit -m "Add intake gates, batch identity, safe reruns and failure checks"
+git push</pre>
+  <pre class="cmd win-only">Remove-Item -Recurse -Force scratch, scratch_keywords.py
+python -m pytest -q
+python -m mypy
+python -m ruff check .
+git status
+git add -A
+git commit -m "Add intake gates, batch identity, safe reruns and failure checks"
+git push</pre>
+  <p>Success looks like <code>46 passed</code>, <code>Success: no issues found in 27 source files</code> and <code>All checks passed!</code></p>
+
+  <details class="slips"><summary>Common slips</summary><ul>
+    <li>Skipping the first line: <code>git add -A</code> then commits your scratch folder.</li>
+    <li>Putting a guess under Facts. If nobody has confirmed it, it belongs under Not yet known.</li>
+  </ul></details>
+</section>
+
+<nav class="stop-foot" aria-label="Stop navigation" id="stopFoot">
+  <button class="btn" id="prevBtn">Previous stop</button>
+  <div class="mid">
+    <span class="stamp" id="stamp" hidden>Packed</span>
+    <button class="btn tape" id="packBtn">Mark this stop as packed</button>
+  </div>
+  <button class="btn primary" id="nextBtn">Next stop</button>
+</nav>
+
+<details class="allcmds">
+  <summary>Every command from today, in order</summary>
+  <pre class="cmd mac-only"><span class="c"># stop 1: the quiet failure (from the folder that holds your repo)</span>
+cp -r starter scratch
+cp starter/fixtures/cases_failures.csv scratch/data/cases.csv
+cd scratch
+PYTHONPATH=src python -m meridian_workbench
+cd ..
+<span class="c"># stop 2: the four words, and raise ... from (from your repo)</span>
+python scratch_keywords.py
+python -c "from meridian_workbench.parsing import parse_date; parse_date('2025-02-30')"
+<span class="c"># stop 4: the halted run</span>
+mkdir -p scratch/data
+cp data/notes.json data/shipments.csv data/inventory.csv scratch/data/
+cp fixtures/cases_failures.csv scratch/data/cases.csv
+MERIDIAN_DATA_DIR=scratch/data python -m meridian_workbench
+echo $?
+<span class="c"># stop 5: run twice</span>
+python -m meridian_workbench
+python -m meridian_workbench
+cat outputs/batches/B-39eedeb6ed2c/attempts.log
+<span class="c"># stop 7: live with no key, and the golden set</span>
+MERIDIAN_AI_MODE=live python -m meridian_workbench
+python -m meridian_workbench.golden run
+<span class="c"># stop 8: checks</span>
+python -m pytest -q tests/test_failures.py tests/test_rerun.py
+python -m pytest -q
+<span class="c"># stop 9: tidy, check, save</span>
+rm -rf scratch scratch_keywords.py
+python -m mypy
+python -m ruff check .
+git status
+git add -A
+git commit -m "Add intake gates, batch identity, safe reruns and failure checks"
+git push</pre>
+  <pre class="cmd win-only"><span class="c"># stop 1: the quiet failure (from the folder that holds your repo)</span>
+Copy-Item -Recurse starter scratch
+Copy-Item starter\fixtures\cases_failures.csv scratch\data\cases.csv
+cd scratch
+$env:PYTHONPATH = "src"; python -m meridian_workbench; Remove-Item Env:PYTHONPATH
+cd ..
+<span class="c"># stop 2: the four words, and raise ... from (from your repo)</span>
+python scratch_keywords.py
+python -c "from meridian_workbench.parsing import parse_date; parse_date('2025-02-30')"
+<span class="c"># stop 4: the halted run</span>
+New-Item -ItemType Directory -Force scratch\data | Out-Null
+Copy-Item data\notes.json, data\shipments.csv, data\inventory.csv scratch\data\
+Copy-Item fixtures\cases_failures.csv scratch\data\cases.csv
+$env:MERIDIAN_DATA_DIR = "scratch\data"
+python -m meridian_workbench
+$LASTEXITCODE
+Remove-Item Env:MERIDIAN_DATA_DIR
+<span class="c"># stop 5: run twice</span>
+python -m meridian_workbench
+python -m meridian_workbench
+Get-Content outputs\batches\B-39eedeb6ed2c\attempts.log
+<span class="c"># stop 7: live with no key, and the golden set</span>
+$env:MERIDIAN_AI_MODE = "live"
+python -m meridian_workbench
+Remove-Item Env:MERIDIAN_AI_MODE
+python -m meridian_workbench.golden run
+<span class="c"># stop 8: checks</span>
+python -m pytest -q tests/test_failures.py tests/test_rerun.py
+python -m pytest -q
+<span class="c"># stop 9: tidy, check, save</span>
+Remove-Item -Recurse -Force scratch, scratch_keywords.py
+python -m mypy
+python -m ruff check .
+git status
+git add -A
+git commit -m "Add intake gates, batch identity, safe reruns and failure checks"
+git push</pre>
+</details>
+
+</main>
+<footer class="site"><div class="wrap">FDE Module 2, Class 4 · Meridian Retail Workbench · every output on this page is computed from the class data with the same rules as the code</div></footer>
+
+<script>
+/* LOGIC-START: pure functions that mirror the Class 4 Python code line for line. No DOM here. */
+var L = (function(){
+'use strict';
+var DATA = {
+  cases: "case_id,order_id,order_status,promised_date\nC-1001,O-5001,DELIVERED,2025-03-06\nC-1002,O-5002,SHIPPED,2025-03-07\nC-1003,O-5003,SHIPPED,2025-03-12\nC-1004,O-5004,PROCESSING,2025-03-08\nC-1005,O-5005,SHIPPED,2025-03-06\nC-1006,O-5006,SHIPPED,2025-03-08\nC-1007,O-5007,CANCELLED,2025-03-05\n",
+  failures: "case_id,order_id,order_status,promised_date\nC-3001,O-7001,SHIPPED,2025-03-07\nC-3002,O-7002,RETURNED,2025-03-08\nC-3003,O-7003,SHIPPED,07/03/2025\nC-3004,O-7004,PROCESSING,2025-03-09\nC-3004,O-7005,SHIPPED,2025-03-06\nC-3005,O-7006,SHIPPED,2025-02-30\nC-3006,O-7007,CANCELLED,2025-03-05\nC-3007,O-7008,SHIPPED,2025-03-04\n",
+  inventory: "order_id,sku,units_on_hand,unit_value\nO-5001,SKU-101,14,12.50\nO-5002,SKU-102,3,249.00\nO-5003,SKU-103,8,39.99\nO-5004,SKU-204,0,89.00\nO-5005,SKU-105,22,4.75\nO-5006,SKU-106,5,19.90\nO-5007,SKU-107,9,64.00\n",
+  shipments: "order_id,carrier,shipment_status,last_scan_date\nO-5001,CARRIER_A,DELIVERED,2025-03-06\nO-5002,CARRIER_A,HELD_AT_DEPOT,2025-03-08\nO-5003,CARRIER_B,IN_TRANSIT,2025-03-09\nO-5005,CARRIER_B,IN_TRANSIT,2025-03-04\nO-5006,CARRIER_A,RETURNED_TO_DEPOT,2025-03-09\n",
+  notes: "[\n  {\"note_id\": \"N-01\", \"case_id\": \"C-1002\", \"text\": \"Held at depot awaiting address confirmation\"},\n  {\"note_id\": \"N-02\", \"case_id\": \"C-1005\", \"text\": \"see previous\"},\n  {\"note_id\": \"N-03\", \"case_id\": \"C-1006\", \"text\": \"cust n/a x2, rtn to dpt\"}\n]\n"
+};
+var NOTES = [
+  {note_id:'N-01', case_id:'C-1002', text:'Held at depot awaiting address confirmation'},
+  {note_id:'N-02', case_id:'C-1005', text:'see previous'},
+  {note_id:'N-03', case_id:'C-1006', text:'cust n/a x2, rtn to dpt'}
+];
+var RECORDED = {
+  'N-01': {issue_family:'ADDRESS_CONFIRMATION', summary:'Parcel is held at the depot until the delivery address is confirmed.', evidence_span:'awaiting address confirmation', source_note_id:'N-01', review_required:false},
+  'N-02': {issue_family:null, summary:null, evidence_span:null, source_note_id:'N-02', review_required:true, abstained:true, abstain_reason:'The note refers to an earlier message and says nothing about the issue.'},
+  'N-03': {issue_family:'FAILED_DELIVERY_ATTEMPT', summary:'The note suggests the customer was unavailable twice and the parcel was returned to the depot.', evidence_span:'cust n/a x2, rtn to dpt', source_note_id:'N-03', review_required:true}
+};
+var STATUSES = ['PROCESSING','SHIPPED','DELIVERED','CANCELLED'];
+var FAMILIES = ['ADDRESS_CONFIRMATION','FAILED_DELIVERY_ATTEMPT','STOCK_SHORTAGE','CARRIER_DELAY','DAMAGED_IN_TRANSIT'];
+var BATCH_DATE = '2025-03-10';
+
+/* ---- Python look-alikes ---- */
+function pyRepr(v){
+  if (v === null || v === undefined) return 'None';
+  if (v === true) return 'True';
+  if (v === false) return 'False';
+  if (typeof v === 'number') return String(v);
+  var s = String(v), q = (s.indexOf("'") !== -1 && s.indexOf('"') === -1) ? '"' : "'";
+  var out = s.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\t/g, '\\t');
+  if (q === "'") out = out.replace(/'/g, "\\'");
+  return q + out + q;
+}
+function pyStr(v){ if (v === true) return 'True'; if (v === false) return 'False'; if (v === null) return 'None'; return String(v); }
+function pyTruthy(v){
+  if (v === null || v === undefined || v === false || v === 0 || v === '') return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === 'object') return Object.keys(v).length > 0;
+  return true;
+}
+function pyPercent(part, whole){
+  // Python's {x:.0%}: round half to even on the exact value
+  var v = part / whole * 100, fl = Math.floor(v), diff = v - fl, r;
+  if (Math.abs(diff - 0.5) < 1e-9) r = (fl % 2 === 0) ? fl : fl + 1; else r = Math.round(v);
+  return r + '%';
+}
+function strip(s){ return s.replace(/^[\s\u001c-\u001f\u0085]+|[\s\u001c-\u001f\u0085]+$/g, ''); }
+
+/* ---- parsing.py ---- */
+function Malformed(msg){ this.kind = 'MalformedRecord'; this.message = msg; }
+var DATE_SHAPE = /^\d{4}-\d{2}-\d{2}$/, AMOUNT_SHAPE = /^\d+\.\d{2}$/, UNITS_SHAPE = /^\d+$/;
+function realDate(text){
+  var y = +text.slice(0,4), m = +text.slice(5,7), d = +text.slice(8,10);
+  if (y < 1 || m < 1 || m > 12) return false;
+  var leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  var dim = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+  return d >= 1 && d <= dim;
+}
+function requireText(raw, field){
+  if (raw === null || raw === undefined || !strip(raw)) throw new Malformed(field + ' is empty');
+  return strip(raw);
+}
+function parseDate(raw, field){
+  field = field || 'promised_date';
+  var text = requireText(raw, field);
+  if (!DATE_SHAPE.test(text)) throw new Malformed(field + ' ' + pyRepr(text) + ' is not YYYY-MM-DD');
+  if (!realDate(text)) throw new Malformed(field + ' ' + pyRepr(text) + ' is not a real calendar date');
+  return text;
+}
+function parseUnits(raw, field){
+  field = field || 'units_on_hand';
+  var text = requireText(raw, field);
+  if (!UNITS_SHAPE.test(text)) throw new Malformed(field + ' ' + pyRepr(text) + ' is not a whole number of zero or more');
+  return String(parseInt(text, 10));
+}
+function parseAmount(raw, field){
+  field = field || 'unit_value';
+  var text = requireText(raw, field);
+  if (!AMOUNT_SHAPE.test(text)) throw new Malformed(field + ' ' + pyRepr(text) + ' must look like 19.99 (two decimal places, no commas)');
+  return text.replace(/^0+(?=\d)/, '');
+}
+function parseStatus(raw, field){
+  field = field || 'order_status';
+  var text = requireText(raw, field);
+  if (STATUSES.indexOf(text) === -1) throw new Malformed(field + ' ' + pyRepr(text) + ' is not one of ' + STATUSES.join(', '));
+  return text;
+}
+function tryParse(kind, raw){
+  var f = {date: parseDate, units: parseUnits, amount: parseAmount, status: parseStatus}[kind];
+  try { return {ok: true, value: f(raw)}; } catch (e) { if (e instanceof Malformed) return {ok: false, reason: e.message}; throw e; }
+}
+
+/* ---- Python 3.11 date.fromisoformat, for the scratch_keywords drill ---- */
+function fromIsoFormat311(raw){
+  var m = /^(\d{4})-?(\d{2})-?(\d{2})$/.exec(raw);
+  if (!m || (raw.length !== 8 && raw.length !== 10) || (raw.length === 10 && (raw[4] !== '-' || raw[7] !== '-'))) return {ok: false};
+  var iso = m[1] + '-' + m[2] + '-' + m[3];
+  return realDate(iso) ? {ok: true, iso: iso} : {ok: false};
+}
+function checkRowDrill(caseId, promised){
+  var r = fromIsoFormat311(promised), lines = [], path;
+  if (r.ok) { path = ['try', 'else', 'finally']; lines.push('checked ' + caseId); lines.push('accepted, due ' + r.iso); }
+  else { path = ['try', 'except', 'finally']; lines.push('checked ' + caseId); lines.push('quarantined: promised_date is not a date'); }
+  return {path: path, lines: lines};
+}
+
+/* ---- loaders.py and reconcile.py ---- */
+function csvRows(text){
+  var lines = text.split('\n'); if (lines[lines.length - 1] === '') lines.pop();
+  var head = lines[0].split(','), out = [];
+  for (var i = 1; i < lines.length; i++) {
+    var cells = lines[i].split(','), row = {};
+    head.forEach(function(h, j){ row[h] = j < cells.length ? cells[j] : null; });
+    out.push([i + 1, row, head]);
+  }
+  return out;
+}
+function dictRepr(row, head){ return '{' + head.map(function(h){ return pyRepr(h) + ': ' + pyRepr(row[h]); }).join(', ') + '}'; }
+function loadCases(text, source){
+  var ledger = {source: source || 'cases.csv', input_rows: 0, accepted: 0, rejected: []}, rows = [];
+  csvRows(text).forEach(function(t){
+    var n = t[0], row = t[1];
+    ledger.input_rows += 1;
+    try {
+      var c = {case_id: requireText(row.case_id, 'case_id'), order_id: requireText(row.order_id, 'order_id'),
+               order_status: parseStatus(row.order_status), promised_date: parseDate(row.promised_date)};
+      rows.push([n, c]);
+    } catch (e) {
+      if (!(e instanceof Malformed)) throw e;
+      ledger.rejected.push({source: ledger.source, row_number: n, category: 'MALFORMED', raw: dictRepr(row, t[2]), reason: e.message});
+    }
+  });
+  ledger.accepted = rows.length;
+  return {rows: rows, ledger: ledger};
+}
+function Halt(kind, msg){ this.kind = kind; this.message = msg; }
+function applyDuplicatePolicy(rows, ledger, policy){
+  var first = {}, kept = [];
+  rows.forEach(function(t){
+    var n = t[0], c = t[1];
+    if (Object.prototype.hasOwnProperty.call(first, c.case_id)) {
+      if (policy === 'reject_batch') throw new Halt('RuleFailure', 'case_id ' + c.case_id + ' appears on rows ' + first[c.case_id] + ' and ' + n + '; duplicate_policy is reject_batch');
+      ledger.rejected.push({source: ledger.source, row_number: n, category: 'DUPLICATE', raw: c.case_id + ',' + c.order_id,
+        reason: 'case_id ' + c.case_id + ' already appears on row ' + first[c.case_id] + '; first_wins keeps that row'});
+      return;
+    }
+    first[c.case_id] = n; kept.push(t);
+  });
+  ledger.accepted = kept.length;
+  return kept;
+}
+function checkQuality(ledger, maxShare){
+  if (ledger.input_rows === 0) throw new Halt('QualityGateFailed', ledger.source + ' has no data rows; an empty file is a problem, not a quiet success');
+  var q = ledger.rejected.length, share = q / ledger.input_rows;
+  if (share > maxShare) throw new Halt('QualityGateFailed', ledger.source + ': ' + q + ' of ' + ledger.input_rows + ' rows (' + pyPercent(q, ledger.input_rows) + ') were quarantined; the limit is ' + pyPercent(maxShare * 100, 100));
+}
+function reconcileLedger(ledger){
+  var q = ledger.rejected.length;
+  if (ledger.accepted + q !== ledger.input_rows) {
+    throw new Halt('ReconciliationError', ledger.source + ': ' + ledger.input_rows + ' rows in, ' + ledger.accepted + ' accepted and ' + q + ' quarantined; difference of ' + (ledger.input_rows - ledger.accepted - q) + ' (not zero)');
+  }
+}
+function csvField(v){ v = String(v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function quarantineCsv(rejected){
+  var rows = rejected.slice().sort(function(a, b){ return a.source < b.source ? -1 : a.source > b.source ? 1 : a.row_number - b.row_number; });
+  return ['source,row_number,category,reason,raw'].concat(rows.map(function(r){
+    return [r.source, r.row_number, r.category, r.reason, r.raw].map(csvField).join(',');
+  })).join('\r\n') + '\r\n';
+}
+
+/* ---- rules.py ---- */
+function dayNum(iso){ var p = iso.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) / 86400000; }
+function needsAttention(c){
+  if (c.order_status === 'DELIVERED' || c.order_status === 'CANCELLED') return {flag: false, reason: 'CLOSED', days: 0};
+  var d = dayNum(BATCH_DATE) - dayNum(c.promised_date);
+  return d > 0 ? {flag: true, reason: 'OVERDUE_NOT_CLOSED', days: d} : {flag: false, reason: 'ON_TIME', days: 0};
+}
+
+/* ---- ai_client.py interpret_reply ---- */
+function interpretReply(text, noteText){
+  var start = text.indexOf('{'), end = text.lastIndexOf('}'), data;
+  var bad = function(reason){ return {status: 'INVALID_REPLY', reason: reason, review_required: true, warnings: []}; };
+  var slice = start === -1 ? text.slice(-1, end + 1) : text.slice(start, end + 1);
+  try { data = JSON.parse(slice); } catch (e) { return bad('the reply was not valid JSON'); }
+  if (data === null || typeof data !== 'object' || Array.isArray(data) || !Object.prototype.hasOwnProperty.call(data, 'issue_family')) return bad('the reply has no issue_family field');
+  var raw = data.issue_family;
+  if (raw === null) return {status: 'ABSTAINED', reason: pyStr(pyTruthy(data.abstain_reason) ? data.abstain_reason : 'the note does not say what the problem is'), review_required: true, warnings: []};
+  if (typeof raw !== 'string' || FAMILIES.indexOf(raw) === -1) return bad('unknown issue_family ' + pyRepr(raw));
+  var summary = data.summary, span = Object.prototype.hasOwnProperty.call(data, 'evidence_span') ? data.evidence_span : null;
+  if (typeof summary !== 'string') return bad('summary must be text');
+  if (span !== null && typeof span !== 'string') return bad('evidence_span must be text or null');
+  var warnings = [];
+  if (span === null) warnings.push('no evidence_span was quoted');
+  else if (noteText.indexOf(span) === -1) warnings.push('evidence_span does not appear in the note');
+  var rr = Object.prototype.hasOwnProperty.call(data, 'review_required') ? data.review_required : true;
+  return {status: 'OK', issue_family: raw, summary: summary, evidence_span: span, review_required: pyTruthy(rr) || warnings.length > 0, warnings: warnings, reason: null};
+}
+function pyJsonDumps(obj){
+  // json.dumps default separators, for recorded answers (strings, null, booleans only)
+  return '{' + Object.keys(obj).map(function(k){ var v = obj[k]; return JSON.stringify(k) + ': ' + (v === null ? 'null' : JSON.stringify(v)); }).join(', ') + '}';
+}
+function suggestionLine(mode, s){
+  if (s.status === 'OK') return '    suggestion (' + mode + '): ' + s.issue_family + ', review_required=' + pyStr(s.review_required);
+  return '    suggestion (' + mode + '): ' + s.status + ' - ' + s.reason;
+}
+
+/* ---- sha256 and batch.py ---- */
+function utf8(s){ return Array.prototype.slice.call(unescape(encodeURIComponent(s))).map(function(c){ return c.charCodeAt(0); }); }
+function sha256hex(bytes){
+  var K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var b = bytes.slice(), bitLen = b.length * 8;
+  b.push(0x80); while (b.length % 64 !== 56) b.push(0);
+  var hi = Math.floor(bitLen / 0x100000000), lo = bitLen >>> 0;
+  b.push((hi>>>24)&255,(hi>>>16)&255,(hi>>>8)&255,hi&255,(lo>>>24)&255,(lo>>>16)&255,(lo>>>8)&255,lo&255);
+  var w = new Array(64);
+  for (var i = 0; i < b.length; i += 64) {
+    for (var t = 0; t < 16; t++) w[t] = (b[i+4*t]<<24)|(b[i+4*t+1]<<16)|(b[i+4*t+2]<<8)|b[i+4*t+3];
+    for (t = 16; t < 64; t++) {
+      var s0 = ((w[t-15]>>>7)|(w[t-15]<<25))^((w[t-15]>>>18)|(w[t-15]<<14))^(w[t-15]>>>3);
+      var s1 = ((w[t-2]>>>17)|(w[t-2]<<15))^((w[t-2]>>>19)|(w[t-2]<<13))^(w[t-2]>>>10);
+      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;
+    }
+    var a=H[0],bb=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for (t = 0; t < 64; t++) {
+      var S1 = ((e>>>6)|(e<<26))^((e>>>11)|(e<<21))^((e>>>25)|(e<<7));
+      var ch = (e&f)^(~e&g), t1 = (h + S1 + ch + K[t] + w[t]) | 0;
+      var S0 = ((a>>>2)|(a<<30))^((a>>>13)|(a<<19))^((a>>>22)|(a<<10));
+      var mj = (a&bb)^(a&c)^(bb&c), t2 = (S0 + mj) | 0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=c; c=bb; bb=a; a=(t1+t2)|0;
+    }
+    H[0]=(H[0]+a)|0; H[1]=(H[1]+bb)|0; H[2]=(H[2]+c)|0; H[3]=(H[3]+d)|0; H[4]=(H[4]+e)|0; H[5]=(H[5]+f)|0; H[6]=(H[6]+g)|0; H[7]=(H[7]+h)|0;
+  }
+  return H.map(function(x){ return ('00000000' + (x >>> 0).toString(16)).slice(-8); }).join('');
+}
+function rulesText(mode, policy){
+  return '{"ai_mode": "' + mode + '", "duplicate_policy": "' + policy + '", "max_quarantine_share": 0.05, "model": "claude-haiku-5-5", "prompt_version": "v1"}';
+}
+function batchId(files, mode, policy){
+  // files: {name: text}. Sorted by name, exactly as batch_id_for does.
+  var bytes = utf8(BATCH_DATE).concat(utf8(rulesText(mode, policy)));
+  Object.keys(files).sort().forEach(function(name){ bytes = bytes.concat(utf8(name), [0], utf8(files[name]), [0]); });
+  return 'B-' + sha256hex(bytes).slice(0, 12);
+}
+function dataFiles(casesText, crlf){
+  var f = {'cases.csv': casesText, 'notes.json': DATA.notes, 'shipments.csv': DATA.shipments, 'inventory.csv': DATA.inventory};
+  if (crlf) Object.keys(f).forEach(function(k){ f[k] = f[k].replace(/\n/g, '\r\n'); });
+  return f;
+}
+
+/* ---- pipeline.py main(), for one cases.csv with the real notes, shipments and inventory ---- */
+function runProgram(casesText, opts){
+  opts = opts || {};
+  var mode = opts.mode || 'recorded', policy = opts.policy || 'first_wins';
+  var id = batchId(dataFiles(casesText, false), mode, policy);
+  var loaded = loadCases(casesText), ledger = loaded.ledger, kept;
+  var others = [{source: 'notes.json', n: 3}, {source: 'shipments.csv', n: 5}, {source: 'inventory.csv', n: 7}];
+  try {
+    kept = applyDuplicatePolicy(loaded.rows, ledger, policy);
+    checkQuality(ledger, 0.05); reconcileLedger(ledger);
+  } catch (e) {
+    if (!(e instanceof Halt)) throw e;
+    var wroteQ = e.kind !== 'RuleFailure';
+    return {exit: 2, stdout: '', stderr: 'HALTED: ' + e.message + '\n', batch: id, halted: e, ledger: ledger,
+            quarantine: wroteQ ? quarantineCsv(ledger.rejected) : null};
+  }
+  var out = [];
+  ledger.rejected.slice().forEach(function(r){ out.push('REJECTED ' + r.source + ' row ' + r.row_number + ' (' + r.category + '): ' + r.reason); });
+  out.push(ledger.source + ': input ' + ledger.input_rows + ', accepted ' + ledger.accepted + ', quarantined ' + ledger.rejected.length + ', reconciled yes');
+  others.forEach(function(o){ out.push(o.source + ': input ' + o.n + ', accepted ' + o.n + ', quarantined 0, reconciled yes'); });
+  var flagged = 0;
+  kept.forEach(function(t){
+    var c = t[1], d = needsAttention(c);
+    if (!d.flag) return;
+    flagged++;
+    out.push(c.case_id + ': ' + d.reason + ' (' + d.days + ' days)');
+    var notes = NOTES.filter(function(n){ return n.case_id === c.case_id; });
+    if (!notes.length) return;
+    var note = notes[notes.length - 1], s;
+    if (mode === 'recorded') s = RECORDED[note.note_id] ? interpretReply(pyJsonDumps(RECORDED[note.note_id]), note.text) : {status: 'ABSTAINED', reason: 'no recorded response exists for this note'};
+    else s = {status: 'UNAVAILABLE', reason: 'MERIDIAN_LLM_API_KEY is not set'};
+    out.push(suggestionLine(mode, s));
+  });
+  out.push(flagged + ' of ' + kept.length + ' cases need attention');
+  out.push('batch ' + id + ' (attempt <attempt-id>)');
+  return {exit: 0, stdout: out.join('\n') + '\n', stderr: '', batch: id, ledger: ledger, quarantine: quarantineCsv(ledger.rejected)};
+}
+
+/* ---- Python's random.Random (MT19937) and retry.py ---- */
+function PyRandom(seed){
+  var mt = new Array(624), idx = 625;
+  function mul(a, b){ return (((a & 0xffff0000) >>> 16) * b << 16) + (a & 0xffff) * b >>> 0; }
+  function initGen(s){ mt[0] = s >>> 0; for (idx = 1; idx < 624; idx++) { var p = mt[idx-1] ^ (mt[idx-1] >>> 30); mt[idx] = (mul(p, 1812433253) + idx) >>> 0; } }
+  function initByArray(key){
+    initGen(19650218); var i = 1, j = 0, k = Math.max(624, key.length);
+    for (; k; k--) { var p = mt[i-1] ^ (mt[i-1] >>> 30); mt[i] = ((mt[i] ^ mul(p, 1664525)) + key[j] + j) >>> 0; i++; j++; if (i >= 624) { mt[0] = mt[623]; i = 1; } if (j >= key.length) j = 0; }
+    for (k = 623; k; k--) { p = mt[i-1] ^ (mt[i-1] >>> 30); mt[i] = ((mt[i] ^ mul(p, 1566083941)) - i) >>> 0; i++; if (i >= 624) { mt[0] = mt[623]; i = 1; } }
+    mt[0] = 0x80000000; idx = 624;
+  }
+  function int32(){
+    var y;
+    if (idx >= 624) {
+      for (var kk = 0; kk < 624; kk++) {
+        y = (mt[kk] & 0x80000000) | (mt[(kk+1) % 624] & 0x7fffffff);
+        mt[kk] = mt[(kk+397) % 624] ^ (y >>> 1) ^ ((y & 1) ? 0x9908b0df : 0);
+      }
+      idx = 0;
+    }
+    y = mt[idx++];
+    y ^= (y >>> 11); y ^= (y << 7) & 0x9d2c5680; y ^= (y << 15) & 0xefc60000; y ^= (y >>> 18);
+    return y >>> 0;
+  }
+  initByArray([seed >>> 0]);
+  this.random = function(){ var a = int32() >>> 5, b = int32() >>> 6; return (a * 67108864 + b) / 9007199254740992; };
+  this.uniform = function(lo, hi){ return lo + (hi - lo) * this.random(); };
+}
+function backoffCeiling(attempt, base, cap){ return Math.min(cap, base * Math.pow(2, attempt - 1)); }
+/* What each outcome becomes in llm_client.py as written (529 is the known issue). */
+var OUTCOMES = {
+  ok:      {err: null, label: 'answers'},
+  timeout: {err: 'LlmTimeout', retry: true, label: 'no reply in time'},
+  r429:    {err: 'LlmRateLimited', retry: true, label: '429 too many requests'},
+  r500:    {err: 'LlmServerError', retry: true, label: '500 server error', msg: 'server error (500)'},
+  r529:    {err: 'LlmCallFailed', retry: false, label: '529 overloaded', msg: 'OverloadedError'},
+  r401:    {err: 'LlmCallFailed', retry: false, label: '401 bad key', msg: 'AuthenticationError'},
+  nokey:   {err: 'MissingApiKeyError', retry: false, label: 'no key set', msg: 'MERIDIAN_LLM_API_KEY is not set'}
+};
+function retrySim(plan, maxAttempts, seed){
+  // plan: outcome keys per attempt. Mirrors call_with_retry, then get_suggestion's except blocks.
+  var rng = new PyRandom(seed), lines = [], calls = 0;
+  for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+    var o = OUTCOMES[plan[Math.min(attempt - 1, plan.length - 1)]]; calls++;
+    if (!o.err) return {lines: lines, calls: calls, status: 'OK', reason: null};
+    if (!o.retry || attempt === maxAttempts) {
+      var reason = o.err === 'LlmTimeout' ? 'model timed out after ' + maxAttempts + ' attempts'
+        : o.err === 'LlmRateLimited' ? 'rate limited after ' + maxAttempts + ' attempts' : o.msg;
+      if (!o.retry && attempt < maxAttempts) reason = o.msg;
+      return {lines: lines, calls: calls, status: 'UNAVAILABLE', reason: reason, error: o.err};
+    }
+    var delay = rng.uniform(0, backoffCeiling(attempt, 0.5, 8.0));
+    lines.push('attempt ' + attempt + ' failed (' + o.err + '); waiting ' + delay.toFixed(2) + 's');
+  }
+}
+return {DATA: DATA, NOTES: NOTES, RECORDED: RECORDED, pyRepr: pyRepr, pyPercent: pyPercent, tryParse: tryParse,
+  checkRowDrill: checkRowDrill, loadCases: loadCases, applyDuplicatePolicy: applyDuplicatePolicy, checkQuality: checkQuality,
+  reconcileLedger: reconcileLedger, quarantineCsv: quarantineCsv, needsAttention: needsAttention, interpretReply: interpretReply,
+  pyJsonDumps: pyJsonDumps, suggestionLine: suggestionLine, batchId: batchId, dataFiles: dataFiles, runProgram: runProgram,
+  PyRandom: PyRandom, backoffCeiling: backoffCeiling, OUTCOMES: OUTCOMES, retrySim: retrySim, Halt: Halt};
+})();
+if (typeof module !== 'undefined') module.exports = L;
+/* LOGIC-END */
+
+(function(){
+'use strict';
+var $ = function(s, r){ return (r || document).querySelector(s); };
+var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var store = {
+  get: function(k, d){ try { var v = localStorage.getItem('mw4:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: function(k, v){ try { localStorage.setItem('mw4:' + k, JSON.stringify(v)); } catch (e) {} }
+};
+var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function later(fn, ms){ return setTimeout(fn, reduce ? 0 : ms); }
+function pressed(group, btn){ $$('button', group).forEach(function(b){ b.setAttribute('aria-pressed', String(b === btn)); }); }
+function uuid(){ try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) {} return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }); }
+function stamp(){ return new Date().toISOString().slice(0, 19) + '+00:00'; }
+var FAIL_ROWS = L.DATA.failures.trim().split('\n').slice(1).map(function(t, i){ return {line: i + 2, text: t}; });
+var HALT = L.runProgram(L.DATA.failures);
+
+/* ---------- operating system switch ---------- */
+var OS = store.get('os', /Win/i.test(navigator.platform || navigator.userAgent || '') ? 'win' : 'mac');
+function setOS(os){
+  OS = os; document.body.setAttribute('data-os', os);
+  $$('[data-os-pick]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-os-pick') === os)); });
+  store.set('os', os); renderGate();
+}
+$$('[data-os-pick]').forEach(function(b){ b.addEventListener('click', function(){ setOS(b.getAttribute('data-os-pick')); }); });
+
+/* ---------- hero: Class 3 versus Class 4 on the same eight rows ---------- */
+(function(){
+  var rowsBox = $('#heroRows'), binA = $('#binA'), binB = $('#binB'), term = $('#heroTerm'), note = $('#heroNote'), busy = false;
+  var btns = [$('#runOld'), $('#runNew')];
+  function chips(){
+    rowsBox.innerHTML = FAIL_ROWS.map(function(r){
+      var c = r.text.split(',');
+      return '<div class="rowchip" data-line="' + r.line + '">line ' + r.line + ' · ' + esc(c[0]) + '<small>' + esc(c[2]) + '</small><small>' + esc(c[3]) + '</small></div>';
+    }).join('');
+    binA.innerHTML = ''; binB.innerHTML = '';
+  }
+  function tag(bin, text){ var s = document.createElement('span'); s.textContent = text; bin.appendChild(s); }
+  function run(kind){
+    if (busy) return; busy = true; btns.forEach(function(b){ b.disabled = true; });
+    chips(); term.innerHTML = '<span class="p">reading cases.csv…</span>';
+    var steps = [];
+    if (kind === 'old') {
+      $('#binAName').textContent = 'Kept'; $('#binBName').textContent = 'Lost';
+      note.textContent = 'The Class 3 loader reads one row at a time and drops what it cannot read.';
+      FAIL_ROWS.forEach(function(r){
+        var bad = r.line === 3 || r.line === 4 || r.line === 7, dup = r.line === 6;
+        steps.push(function(){
+          var ch = $('[data-line="' + r.line + '"]', rowsBox);
+          if (bad) { ch.classList.add('bad'); later(function(){ ch.classList.add('gone'); }, 260); tag(binB, 'line ' + r.line + ': no record kept'); }
+          else { ch.classList.add(dup ? 'dup' : 'ok'); tag(binA, r.text.split(',')[0] + (dup ? ' (again!)' : '')); }
+        });
+      });
+      steps.push(function(){
+        term.innerHTML = '<span class="bad">REJECTED row 3 of cases.csv: \'RETURNED\' is not a valid OrderStatus</span>\n<span class="bad">REJECTED row 4 of cases.csv: Invalid isoformat string: \'07/03/2025\'</span>\n<span class="bad">REJECTED row 7 of cases.csv: day is out of range for month</span>\nTraceback (most recent call last):\n  …\n<span class="bad">AssertionError</span>';
+        $('#binAName').textContent = 'Kept, but no report written';
+        note.innerHTML = '<b>Three rows vanished with raw messages, C-3004 was kept twice, and the run died on an empty AssertionError.</b> Nothing says which row to fix.';
+      });
+    } else {
+      var loaded = L.loadCases(L.DATA.failures), kept = L.applyDuplicatePolicy(loaded.rows, loaded.ledger, 'first_wins');
+      var keptLines = kept.map(function(t){ return t[0]; }), rej = {};
+      loaded.ledger.rejected.forEach(function(r){ rej[r.row_number] = r; });
+      $('#binAName').textContent = 'Accepted'; $('#binBName').textContent = 'Quarantined, with a reason';
+      note.textContent = 'The Class 4 loader counts every row first, then sends it through exactly one door.';
+      FAIL_ROWS.forEach(function(r){
+        steps.push(function(){
+          var ch = $('[data-line="' + r.line + '"]', rowsBox);
+          if (rej[r.line]) { ch.classList.add('bad'); tag(binB, 'line ' + r.line + ': ' + rej[r.line].category); }
+          else if (keptLines.indexOf(r.line) !== -1) { ch.classList.add('ok'); tag(binA, r.text.split(',')[0]); }
+        });
+      });
+      steps.push(function(){
+        var lg = loaded.ledger;
+        term.innerHTML = '<span class="p">$</span> python -m meridian_workbench\n<span class="bad">' + esc(HALT.stderr.trim()) + '</span>\n<span class="p">exit code</span> <span class="hi">' + HALT.exit + '</span>';
+        note.innerHTML = '<b>' + lg.accepted + ' accepted + ' + lg.rejected.length + ' quarantined = ' + lg.input_rows + ' rows in.</b> Every row is accounted for, and a batch this bad halts before any model call.';
+      });
+    }
+    var i = 0;
+    (function next(){
+      if (i >= steps.length) { busy = false; btns.forEach(function(b){ b.disabled = false; }); return; }
+      steps[i++](); later(next, 330);
+    })();
+  }
+  chips();
+  btns[0].addEventListener('click', function(){ run('old'); });
+  btns[1].addEventListener('click', function(){ run('new'); });
+})();
+
+/* ---------- stop 1: the silent row ---------- */
+(function(){
+  var box = $('#silentRows'), msg = $('#silentMsg');
+  box.innerHTML = FAIL_ROWS.map(function(r){ return '<button type="button" class="grow" data-l="' + r.line + '" style="text-align:left;cursor:pointer"><span class="ln">line ' + r.line + '</span><span class="txt">' + esc(r.text).replace(/,/g, ',<wbr>') + '</span><span></span></button>'; }).join('');
+  $$('button', box).forEach(function(b){
+    b.addEventListener('click', function(){
+      $$('button', box).forEach(function(x){ x.classList.remove('isbad', 'isdup'); });
+      var l = +b.getAttribute('data-l');
+      if (l === 6) { b.classList.add('isdup'); msg.className = 'feedback good'; msg.textContent = 'That’s the one. C-3004 is on line 5 and line 6. Both were kept, and no line in the output says so. The only duplicate check was one empty assert at the very end.'; }
+      else if (l === 3 || l === 4 || l === 7) { b.classList.add('isbad'); msg.className = 'feedback meh'; msg.textContent = 'This row was mentioned, with a raw Python message. Loud, but not useful. Look for a row nobody mentioned at all.'; }
+      else { msg.className = 'feedback meh'; msg.textContent = 'This row is fine on its own. Compare its case_id with its neighbours.'; }
+    });
+  });
+})();
+
+/* ---------- stop 2: try, except, else, finally ---------- */
+(function(){
+  var msgs = {
+    '07/03/2025': 'Not ISO format, so fromisoformat raises ValueError. except runs, and finally prints first.',
+    '2025-02-30': 'Right shape, but February has no 30th: ValueError again. The same except catches it.',
+    '2025-03-07': 'No error, so except is skipped and else runs. finally still prints “checked” first.',
+    '20250307': 'Surprise: Python 3.11 accepts this compact form, so the drill says “accepted”. That is why parse_date checks the shape before calling fromisoformat.'
+  };
+  $$('#drillPick button').forEach(function(b){
+    b.addEventListener('click', function(){
+      pressed($('#drillPick'), b);
+      var d = b.getAttribute('data-d'), r = L.checkRowDrill('C-3003', d);
+      $$('#drillCode div').forEach(function(line){
+        var blk = line.getAttribute('data-b'), on = blk === 'def' || r.path.indexOf(blk) !== -1;
+        line.classList.toggle('run', on && blk !== 'def'); line.classList.toggle('skip', !on);
+      });
+      $('#drillOut').textContent = r.lines.join('\n');
+      $('#drillMsg').className = 'feedback good'; $('#drillMsg').textContent = msgs[d];
+    });
+  });
+})();
+
+/* ---------- stop 3: the parser bench ---------- */
+(function(){
+  var SAMPLES = {date: ['2025-03-07', '07/03/2025', '2025-02-30', '20250307', '2024-02-29', ' 2025-03-07 ', ''],
+                 units: ['14', '0', '-3', '1.5', '1,000'], amount: ['19.90', '19.9', '1,250.00', '1.250', 'NaN'],
+                 status: ['SHIPPED', ' SHIPPED ', 'shipped', 'RETURNED']};
+  var field = 'date', input = $('#benchText');
+  function shown(kind, v){
+    if (kind === 'date') { var p = v.split('-').map(Number); return 'date(' + p[0] + ', ' + p[1] + ', ' + p[2] + ')'; }
+    if (kind === 'units') return v;
+    if (kind === 'amount') return 'Decimal(\'' + v + '\')';
+    return 'OrderStatus.' + v;
+  }
+  function judge(){
+    var r = L.tryParse(field, input.value);
+    $('#doorAcc').classList.toggle('on', r.ok); $('#doorQua').classList.toggle('on', !r.ok);
+    $('#doorAccText').innerHTML = r.ok ? '<code>' + esc(shown(field, r.value)) + '</code>' : '–';
+    $('#doorQuaText').innerHTML = r.ok ? '–' : '<code>MalformedRecord: ' + esc(r.reason) + '</code>';
+  }
+  function samples(){
+    $('#benchSamples').innerHTML = SAMPLES[field].map(function(s, i){ return '<button type="button" class="btn small" data-i="' + i + '">' + esc(s === '' ? '(blank)' : L.pyRepr(s)) + '</button>'; }).join('');
+    $$('#benchSamples button').forEach(function(b){ b.addEventListener('click', function(){ input.value = SAMPLES[field][+b.getAttribute('data-i')]; judge(); }); });
+  }
+  $$('#benchField button').forEach(function(b){
+    b.addEventListener('click', function(){ pressed($('#benchField'), b); field = b.getAttribute('data-f'); input.value = SAMPLES[field][0 + (field === 'date' ? 1 : 2) % SAMPLES[field].length]; samples(); judge(); });
+  });
+  input.addEventListener('input', judge);
+  samples(); judge();
+})();
+
+/* ---------- stop 4: fix the batch ---------- */
+var FIXES = {3: ['RETURNED', 'SHIPPED'], 4: ['07/03/2025', '2025-03-07'], 6: ['C-3004,O-7005', 'C-3008,O-7005'], 7: ['2025-02-30', '2025-02-28']};
+var gateState = {fixed: {}, policy: 'first_wins'};
+function gateText(){
+  return 'case_id,order_id,order_status,promised_date\n' + FAIL_ROWS.map(function(r){
+    var t = r.text; if (gateState.fixed[r.line]) t = t.replace(FIXES[r.line][0], FIXES[r.line][1]); return t;
+  }).join('\n') + '\n';
+}
+function renderGate(){
+  var box = $('#gateRows'); if (!box) return;
+  var text = gateText(), res = L.runProgram(text, {policy: gateState.policy});
+  var loaded = L.loadCases(text), rej = {};
+  res.ledger.rejected.forEach(function(r){ rej[r.row_number] = r; });
+  var lines = text.trim().split('\n').slice(1);
+  box.innerHTML = lines.map(function(t, i){
+    var n = i + 2, r = rej[n], cls = r ? (r.category === 'DUPLICATE' ? 'isdup' : 'isbad') : '';
+    var fix = FIXES[n] ? '<button type="button" class="btn small fixbtn" data-fix="' + n + '" aria-pressed="' + (gateState.fixed[n] ? 'true' : 'false') + '">' + (gateState.fixed[n] ? 'Undo fix' : 'Fix: ' + esc(FIXES[n][0]) + ' → ' + esc(FIXES[n][1])) + '</button>' : '<span></span>';
+    return '<div class="grow ' + cls + '"><span class="ln">line ' + n + '</span><span class="txt">' + esc(t).replace(/,/g, ',<wbr>') + (r ? '<br><small style="color:var(--ink-2)">' + esc(r.category + ': ' + r.reason) + '</small>' : '') + '</span>' + fix + '</div>';
+  }).join('');
+  $$('[data-fix]', box).forEach(function(b){ b.addEventListener('click', function(){ var n = b.getAttribute('data-fix'); gateState.fixed[n] = !gateState.fixed[n]; renderGate(); }); });
+  var lg = res.ledger, q = lg.rejected.length, rule = res.halted && res.halted.kind === 'RuleFailure';
+  $('#gateBooks').innerHTML = rule
+    ? '<span>The duplicate rule stopped the batch before the gate and the books</span>'
+    : '<span>' + lg.accepted + ' accepted</span> + <span>' + q + ' quarantined</span> = <span>' + (lg.accepted + q) + '</span> ' + (lg.accepted + q === lg.input_rows ? '= ' + lg.input_rows + ' rows in ✓' : '≠ ' + lg.input_rows);
+  var share = lg.input_rows ? q / lg.input_rows : 0;
+  $('#gateFill').style.width = (rule ? 0 : share * 100) + '%';
+  $('#gateFill').classList.toggle('pass', share <= 0.05);
+  $('#gateLimit').style.left = '5%';
+  $('#gateMeterNote').textContent = rule ? 'The quality gate was never reached.' : q + ' of ' + lg.input_rows + ' rows quarantined (' + L.pyPercent(q, lg.input_rows) + '). The dashed line is the 5% limit.';
+  var exitLine = OS === 'win' ? '<span class="p">PS&gt;</span> $LASTEXITCODE' : '<span class="p">$</span> echo $?';
+  $('#gateTerm').innerHTML = '<span class="p">$</span> python -m meridian_workbench\n' +
+    (res.exit ? '<span class="bad">' + esc(res.stderr.trim()) + '</span>' : esc(res.stdout.trim()).replace(/^(.*reconciled yes)$/gm, '<span class="ok">$1</span>')) +
+    '\n' + exitLine + '\n<span class="hi">' + res.exit + '</span>';
+  $('#gateBatch').textContent = res.batch;
+  $('#gateQ').textContent = res.quarantine === null ? '(no quarantine.csv: reject_batch stopped the run before the file was written)' : res.quarantine.replace(/\r\n/g, '\n').trim();
+}
+$$('#gatePolicy button').forEach(function(b){ b.addEventListener('click', function(){ pressed($('#gatePolicy'), b); gateState.policy = b.getAttribute('data-p'); renderGate(); }); });
+
+/* ---------- stop 5: the batch lab ---------- */
+(function(){
+  var st = {mode: 'recorded', eol: 'lf'}, outputs = {}, lastId = null;
+  function cases(){ return $('#labEdit').checked ? L.DATA.cases.replace('C-1002,O-5002,SHIPPED,2025-03-07', 'C-1002,O-5002,SHIPPED,2025-03-08') : L.DATA.cases; }
+  function currentId(){ return L.batchId(L.dataFiles(cases(), st.eol === 'crlf'), st.mode, 'first_wins'); }
+  function paint(){
+    var id = currentId(), badge = $('#labId');
+    badge.textContent = id;
+    if (lastId && id !== lastId) { badge.classList.remove('changed'); void badge.offsetWidth; if (!reduce) badge.classList.add('changed'); }
+    lastId = id;
+    var keys = Object.keys(outputs);
+    $('#labFolders').innerHTML = keys.length ? keys.map(function(k){
+      var o = outputs[k];
+      return '<div class="folder"><h4>outputs/batches/' + esc(k) + '/</h4><div class="files">attention_report.json · quarantine.csv · summary.json · attempts.log</div><ul class="attempts">' +
+        o.log.map(function(l){ return '<li>' + esc(l) + '</li>'; }).join('') + '</ul></div>';
+    }).join('') : '<p class="widget-hint">No batch folders yet.</p>';
+  }
+  function seg(id, key){ $$('#' + id + ' button').forEach(function(b){ b.addEventListener('click', function(){ pressed($('#' + id), b); st[key] = b.getAttribute('data-v'); paint(); }); }); }
+  seg('labMode', 'mode'); seg('labEol', 'eol');
+  ['labEdit', 'labOrder', 'labCopy'].forEach(function(id){ $('#' + id).addEventListener('change', function(){
+    paint();
+    if (id !== 'labEdit' && $('#' + id).checked) { $('#labMsg').className = 'feedback good'; $('#labMsg').textContent = id === 'labOrder' ? 'Same ID: the files are sorted by name before hashing.' : 'Same ID: only file names and bytes go into the fingerprint, not the folder.'; }
+  }); });
+  $('#labRun').addEventListener('click', function(){
+    var id = currentId(), o = outputs[id], m = $('#labMsg'), att = uuid();
+    if (o && o.done) { o.log.push(stamp() + '  ' + att + '  reused finished batch; no work repeated'); m.className = 'feedback good'; m.textContent = 'summary.json already exists, so this attempt reused it: no rows parsed, no model calls. One more line in the log.'; }
+    else {
+      outputs[id] = {done: true, log: [stamp() + '  ' + att + '  completed']};
+      m.className = 'feedback good';
+      m.textContent = 'New batch: all four files read, report written, summary.json written last.' + (st.mode === 'live' ? ' In live mode with no key, each suggestion is UNAVAILABLE.' : '');
+    }
+    paint();
+  });
+  $('#labReset').addEventListener('click', function(){ outputs = {}; $('#labMsg').textContent = ''; paint(); });
+  paint();
+})();
+
+/* ---------- stop 6: the retry desk ---------- */
+(function(){
+  var keys = Object.keys(L.OUTCOMES), plan = ['timeout', 'timeout', 'ok', 'ok', 'ok'];
+  var box = $('#retryPlan');
+  box.innerHTML = [0, 1, 2, 3, 4].map(function(i){
+    return '<label data-a="' + i + '">Attempt ' + (i + 1) + '<select data-a="' + i + '">' + keys.map(function(k){ return '<option value="' + k + '"' + (plan[i] === k ? ' selected' : '') + '>' + esc(L.OUTCOMES[k].label) + '</option>'; }).join('') + '</select></label>';
+  }).join('');
+  $$('select', box).forEach(function(s){ s.addEventListener('change', function(){ plan[+s.getAttribute('data-a')] = s.value; run(); }); });
+  $('#retryMax').addEventListener('input', run); $('#retrySeed').addEventListener('input', run);
+  function chart(max, waits){
+    var W = 520, H = 200, pad = 34, n = 5, bw = (W - pad * 2) / n, y = function(v){ return H - 26 - (v / 8) * (H - 50); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Ceilings 0.5, 1, 2, 4 and 8 seconds, with the random waits">';
+    for (var a = 1; a <= n; a++) {
+      var c = L.backoffCeiling(a, 0.5, 8), x = pad + (a - 1) * bw + 8;
+      s += '<rect class="bar" x="' + x + '" y="' + y(c) + '" width="' + (bw - 16) + '" height="' + (y(0) - y(c)) + '" rx="3"></rect>';
+      if (waits[a - 1] !== undefined) s += '<rect class="wait" x="' + (x + 8) + '" y="' + y(waits[a - 1]) + '" width="' + (bw - 32) + '" height="' + Math.max(1, y(0) - y(waits[a - 1])) + '" rx="2"></rect><text x="' + (x + (bw - 16) / 2) + '" y="' + (y(waits[a - 1]) - 4) + '" text-anchor="middle">' + waits[a - 1].toFixed(2) + 's</text>';
+      s += '<text x="' + (x + (bw - 16) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">after ' + a + '</text>';
+    }
+    s += '<line class="capline" x1="' + pad + '" x2="' + (W - pad) + '" y1="' + y(8) + '" y2="' + y(8) + '"></line><text x="' + (W - pad) + '" y="' + (y(8) - 5) + '" text-anchor="end">cap 8s</text></svg>';
+    return s + '<p class="widget-hint">Grey: the ceiling after each failed attempt. Yellow: the wait actually drawn.</p>';
+  }
+  function run(){
+    var max = +$('#retryMax').value, seed = Math.max(0, parseInt($('#retrySeed').value, 10) || 0);
+    $('#retryMaxV').textContent = max;
+    $$('label', box).forEach(function(l){ l.hidden = +l.getAttribute('data-a') >= max; });
+    var r = L.retrySim(plan, max, seed), waits = r.lines.map(function(l){ return parseFloat(l.split('waiting ')[1]); });
+    var out = r.lines.map(function(l){ return '<span class="bad">' + esc(l) + '</span>'; });
+    out.push('<span class="p">model calls made: ' + r.calls + '</span>');
+    out.push(r.status === 'OK' ? '<span class="ok">reply received: judged as in stop 7</span>' : '<span class="hi">' + esc(L.suggestionLine('live', r).trim()) + '</span>');
+    if (plan.slice(0, r.calls).indexOf('r529') !== -1 && r.status !== 'OK') out.push('<span class="p">known issue: 529 becomes LlmCallFailed in this code, so it is not retried</span>');
+    $('#retryOut').innerHTML = out.join('\n');
+    $('#retryChart').innerHTML = chart(max, waits);
+  }
+  run();
+})();
+
+/* ---------- stop 7: the reply judge ---------- */
+(function(){
+  var NOTES = ['Held at depot awaiting address confirmation', 'Customer asking about parcel'], note = 0;
+  var PRESETS = [
+    ['good answer', '{"issue_family": "ADDRESS_CONFIRMATION", "summary": "Held at the depot.", "evidence_span": "awaiting address confirmation", "review_required": false}'],
+    ['abstains', '{"issue_family": null, "abstain_reason": "Note says nothing about the problem."}'],
+    ['plain text', 'Sorry, I cannot help with that.'],
+    ['wrong field name', '{"family": "ADDRESS_CONFIRMATION", "summary": "Held."}'],
+    ['unknown family', '{"issue_family": "WEATHER", "summary": "Storms."}'],
+    ['quote not in note', '{"issue_family": "CARRIER_DELAY", "summary": "The parcel is delayed.", "evidence_span": "parcel delayed", "review_required": false}'],
+    ['chatty wrapper', 'Here you go: {"issue_family": "CARRIER_DELAY", "summary": "Delayed.", "evidence_span": null} hope it helps'],
+    ['no reply: 3 timeouts', null]
+  ];
+  var ta = $('#judgeText'), dead = false;
+  function judge(){
+    var s = dead ? {status: 'UNAVAILABLE', reason: 'model timed out after 3 attempts', review_required: true, warnings: []} : L.interpretReply(ta.value, NOTES[note]);
+    var cls = s.status === 'OK' ? 'ok' : s.status === 'ABSTAINED' ? 'warn' : 'no';
+    var rows = '<dt>status</dt><dd><span class="badge big ' + cls + '">' + s.status + '</span></dd>';
+    if (s.status === 'OK') rows += '<dt>issue_family</dt><dd><code>' + esc(s.issue_family) + '</code></dd>';
+    else rows += '<dt>reason</dt><dd>' + esc(s.reason) + '</dd>';
+    rows += '<dt>review_required</dt><dd><code>' + (s.review_required ? 'True' : 'False') + '</code></dd>';
+    if (s.warnings && s.warnings.length) rows += '<dt>warnings</dt><dd>' + esc(s.warnings.join('; ')) + '</dd>';
+    rows += '<dt>cached?</dt><dd>' + (s.status === 'OK' || s.status === 'ABSTAINED' ? 'yes, reused on a safe rerun' : 'no, failures are never cached') + '</dd>';
+    $('#judgeOut').innerHTML = rows;
+    $('#judgeLine').textContent = L.suggestionLine('live', s).trim();
+  }
+  $('#judgePresets').innerHTML = PRESETS.map(function(p, i){ return '<button type="button" class="btn small" data-p="' + i + '">' + esc(p[0]) + '</button>'; }).join('');
+  $$('#judgePresets button').forEach(function(b){ b.addEventListener('click', function(){
+    var p = PRESETS[+b.getAttribute('data-p')]; pressed($('#judgePresets'), b);
+    dead = p[1] === null; ta.value = dead ? '(no reply came back)' : p[1]; ta.disabled = dead; judge();
+  }); });
+  $$('#judgeNote button').forEach(function(b){ b.addEventListener('click', function(){ pressed($('#judgeNote'), b); note = +b.getAttribute('data-n'); $('#judgeNoteText').textContent = NOTES[note]; judge(); }); });
+  ta.addEventListener('input', function(){ dead = false; judge(); });
+  $('#judgeNoteText').textContent = NOTES[0]; ta.value = PRESETS[0][1]; judge();
+})();
+
+/* ---------- stop 8: break it on purpose (results from real test runs) ---------- */
+(function(){
+  var EIGHT = ['test_malformed_date_is_quarantined', 'test_impossible_date_is_quarantined', 'test_duplicate_case_id_first_wins', 'test_missing_required_source_stops_run', 'test_reconciliation_balances', 'test_timeout_is_unavailable_and_keeps_facts', 'test_rate_limit_is_retried_then_unavailable', 'test_rerun_same_batch_does_not_duplicate'];
+  var SAB = {"no_shape_check": {"eight_red": ["test_malformed_date_is_quarantined"], "other_red": ["test_date_refuses_the_basic_iso_form_and_day_first_text"], "summary": "2 failed, 44 passed"}, "last_wins": {"eight_red": ["test_duplicate_case_id_first_wins", "test_reconciliation_balances"], "other_red": [], "summary": "2 failed, 44 passed"}, "one_file_check": {"eight_red": ["test_missing_required_source_stops_run"], "other_red": [], "summary": "1 failed, 45 passed"}, "count_after_pass": {"eight_red": ["test_reconciliation_balances", "test_rerun_same_batch_does_not_duplicate"], "other_red": ["test_one_row_per_case"], "summary": "3 failed, 43 passed"}, "no_timeout_retry": {"eight_red": ["test_timeout_is_unavailable_and_keeps_facts"], "other_red": ["test_transient_error_then_success_is_retried"], "summary": "2 failed, 44 passed"}, "fallback_recorded": {"eight_red": ["test_timeout_is_unavailable_and_keeps_facts"], "other_red": [], "summary": "1 failed, 45 passed"}, "always_rerun": {"eight_red": ["test_rerun_same_batch_does_not_duplicate"], "other_red": [], "summary": "1 failed, 45 passed"}, "limit_100": {"eight_red": [], "other_red": [], "summary": "46 passed"}};
+  var LABELS = [['original', 'The Final code'], ['no_shape_check', 'parse_date skips the shape check'], ['last_wins', 'duplicates are not checked'], ['one_file_check', 'only cases.csv is required'], ['count_after_pass', 'a row is counted only if it passes'], ['no_timeout_retry', 'timeouts are not retried'], ['fallback_recorded', 'a timeout falls back to the recorded answer'], ['always_rerun', 'a rerun always redoes the batch'], ['limit_100', 'the quality limit is 100%']];
+  SAB.original = {eight_red: [], other_red: [], summary: '46 passed'};
+  $('#sabButtons').innerHTML = LABELS.map(function(l){ return '<button type="button" class="btn" data-k="' + l[0] + '" aria-pressed="' + (l[0] === 'original') + '">' + esc(l[1]) + '</button>'; }).join('');
+  function show(k){
+    var r = SAB[k];
+    $('#sabChecks').innerHTML = EIGHT.map(function(t){ return '<li class="' + (r.eight_red.indexOf(t) !== -1 ? 'red' : '') + '">' + t + '</li>'; }).join('');
+    var m = $('#sabMsg');
+    if (k === 'original') { m.className = 'feedback good'; m.textContent = 'pytest: 46 passed. Now break something.'; }
+    else if (!r.eight_red.length && !r.other_red.length) { m.className = 'feedback meh'; m.textContent = 'pytest: ' + r.summary + '. Everything stays green, yet the promise is broken. No check guards this yet: a good ninth check to write.'; }
+    else { m.className = 'feedback good'; m.textContent = 'pytest: ' + r.summary + '.' + (r.other_red.length ? ' Also red elsewhere: ' + r.other_red.join(', ') + '.' : ''); }
+  }
+  $$('#sabButtons button').forEach(function(b){ b.addEventListener('click', function(){ pressed($('#sabButtons'), b); show(b.getAttribute('data-k')); }); });
+  show('original');
+})();
+
+/* ---------- stop 9: build the incident update ---------- */
+(function(){
+  var lg = HALT.ledger, id = HALT.batch;
+  var BINS = [['facts', 'Facts'], ['counts', 'Affected counts'], ['impact', 'Operational impact'], ['action', 'Required action'], ['unknown', 'Not yet known']];
+  var ITEMS = [
+    ['facts', 'Halt message: ' + HALT.stderr.replace('HALTED: ', '').trim() + '.'],
+    ['facts', 'Quarantined: line 3 (status RETURNED), line 4 (date 07/03/2025), line 6 (duplicate C-3004), line 7 (date 2025-02-30).'],
+    ['counts', 'cases.csv: ' + lg.input_rows + ' input, ' + lg.accepted + ' accepted, ' + lg.rejected.length + ' quarantined.'],
+    ['counts', 'Suggestions: 0 (no model call was made). Published: 0.'],
+    ['impact', 'No attention report for this batch. Teams must use the previous report and say so.'],
+    ['action', 'Owner: data owner for cases.csv. Fix or confirm the four rows, then run a new batch.'],
+    ['unknown', 'Guess: the supplier may have changed their export. Not confirmed.'],
+    ['unknown', 'Whether RETURNED is a new status we should accept.']
+  ];
+  var order = [6, 2, 0, 5, 3, 7, 1, 4], sel = null, placed = {}, msg = $('#incMsg');
+  $('#incPile').innerHTML = order.map(function(i){ return '<button type="button" class="chip" style="font-family:var(--body);text-align:left;border-radius:10px" data-i="' + i + '" aria-pressed="false">' + esc(ITEMS[i][1]) + '</button>'; }).join('');
+  $('#incBins').innerHTML = BINS.map(function(b){ return '<button type="button" class="bin" data-b="' + b[0] + '"><span class="bin-big">' + b[1] + '</span><span class="bin-items"></span></button>'; }).join('');
+  $$('#incPile .chip').forEach(function(c){ c.addEventListener('click', function(){
+    $$('#incPile .chip').forEach(function(x){ x.setAttribute('aria-pressed', 'false'); });
+    if (sel === c) { sel = null; msg.textContent = ''; return; }
+    sel = c; c.setAttribute('aria-pressed', 'true'); msg.textContent = 'Which heading does this belong under?';
+  }); });
+  $$('#incBins .bin').forEach(function(bin){ bin.addEventListener('click', function(){
+    if (!sel) { msg.textContent = 'Tap a sentence first.'; return; }
+    var i = +sel.getAttribute('data-i'), want = ITEMS[i][0];
+    if (bin.getAttribute('data-b') !== want) {
+      bin.classList.remove('shake'); void bin.offsetWidth; if (!reduce) bin.classList.add('shake');
+      msg.textContent = want === 'unknown' ? 'Nobody has confirmed this yet. Where do unconfirmed things go?' : 'Not quite. Is it what happened, a number, what people cannot do, or who must act?';
+      return;
+    }
+    var s = document.createElement('span'); s.textContent = ITEMS[i][1].slice(0, 28) + '…'; $('.bin-items', bin).appendChild(s);
+    sel.classList.add('gone'); sel = null; placed[i] = true; msg.textContent = '';
+    if (Object.keys(placed).length === ITEMS.length) {
+      var txt = ['# Incident update: ' + id, 'Summary: The batch for 2025-03-10 halted. No report was published.', 'Status: Halted', 'Batch: ' + id + ' for 2025-03-10. Attempt: from attempts.log', ''];
+      BINS.forEach(function(b){ txt.push(b[1] + ':'); ITEMS.forEach(function(it){ if (it[0] === b[0]) txt.push('- ' + it[1]); }); });
+      txt.push('', 'Next update: when the data owner replies.');
+      $('#incOut').textContent = txt.join('\n'); $('#incDone').hidden = false; $('#incDone').open = true;
+      msg.textContent = 'Done. Facts first, then impact and action, then what is unknown.';
+    }
+  }); });
+})();
+
+/* ---------- quizzes ---------- */
+$$('.quiz').forEach(function(q){
+  var ans = q.getAttribute('data-answer'), why = $('.why', q);
+  $$('.opt', q).forEach(function(o){ o.addEventListener('click', function(){
+    $$('.opt', q).forEach(function(x){ x.classList.remove('right', 'wrong'); });
+    var ok = o.getAttribute('data-o') === ans; o.classList.add(ok ? 'right' : 'wrong');
+    why.innerHTML = '<b>' + (ok ? 'Correct.' : 'Not quite.') + '</b> ' + esc(o.getAttribute('data-why'));
+  }); });
+});
+
+/* ---------- stops, progress and links ---------- */
+var stops = $$('.stop'), strip = $('#stops'), cur = 0, packed = store.get('packed', []);
+if (!Array.isArray(packed)) packed = [];
+stops.forEach(function(s, i){
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'stop-dot';
+  b.setAttribute('aria-label', 'Stop ' + (i + 1) + ': ' + s.getAttribute('data-title')); b.title = (i + 1) + '. ' + s.getAttribute('data-title');
+  b.innerHTML = '<span>' + (i + 1) + '</span>'; b.addEventListener('click', function(){ show(i, true); }); strip.appendChild(b);
+});
+var dots = $$('.stop-dot');
+function isPacked(id){ return packed.indexOf(id) !== -1; }
+function paint(){
+  dots.forEach(function(d, j){ d.classList.toggle('current', j === cur); d.classList.toggle('packed', isPacked(stops[j].id)); if (j === cur) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  var on = isPacked(stops[cur].id); $('#stamp').hidden = !on;
+  $('#packBtn').textContent = on ? 'Unmark this stop' : 'Mark this stop as packed'; $('#packedCount').textContent = packed.length;
+}
+function show(i, scroll){
+  i = Math.max(0, Math.min(stops.length - 1, i)); cur = i;
+  stops.forEach(function(s, j){ s.hidden = j !== i; });
+  $('#prevBtn').disabled = i === 0; $('#nextBtn').textContent = i === stops.length - 1 ? 'Back to stop 1' : 'Next stop';
+  paint(); store.set('last', stops[i].id);
+  if (scroll) { try { if (location.hash !== '#' + stops[i].id) history.replaceState(null, '', '#' + stops[i].id); } catch (e) {} }
+  var d = dots[i]; if (d) strip.scrollLeft = d.offsetLeft - strip.clientWidth / 2 + d.offsetWidth / 2;
+  if (scroll) { var y = $('#main').getBoundingClientRect().top + window.pageYOffset - $('.track').offsetHeight - 6; window.scrollTo({top: Math.max(0, y), behavior: reduce ? 'auto' : 'smooth'}); }
+}
+$('#packBtn').addEventListener('click', function(){ var id = stops[cur].id, k = packed.indexOf(id); if (k === -1) packed.push(id); else packed.splice(k, 1); store.set('packed', packed); paint(); });
+$('#prevBtn').addEventListener('click', function(){ show(cur - 1, true); });
+$('#nextBtn').addEventListener('click', function(){ show(cur === stops.length - 1 ? 0 : cur + 1, true); });
+function fromHash(){ var h = (location.hash || '').slice(1); for (var i = 0; i < stops.length; i++) if (stops[i].id === h) return i; return -1; }
+var start = fromHash();
+if (start < 0) { var last = store.get('last', ''); for (var j = 0; j < stops.length; j++) if (stops[j].id === last) start = j; }
+setOS(OS);
+show(start < 0 ? 0 : start, false);
+window.addEventListener('hashchange', function(){ var k = fromHash(); if (k >= 0) show(k, true); });
+})();
+
+</script>
+</body>
+</html>

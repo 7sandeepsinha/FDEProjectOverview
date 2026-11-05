@@ -1,0 +1,6 @@
+-e .
+python-dotenv==1.0.1
+anthropic==1.15.0
+ruff==0.6.9
+mypy==1.11.2
+pytest==8.3.3

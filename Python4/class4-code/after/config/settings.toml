@@ -1,0 +1,31 @@
+#  Settings change between runs or machines. Business rules do not live here.
+ 
+[paths]
+data_dir = "data"
+output_dir = "outputs"
+fixtures_dir = "fixtures"
+golden_dir = "golden"
+ 
+[rules]
+batch_date = "2025-03-10"
+ 
+[intake]
+# "first_wins" keeps the first row for a repeated case_id and quarantines the rest.
+# "reject_batch" stops the whole batch when a case_id repeats.
+duplicate_policy = "first_wins"
+# Halt before any model call if more than this share of a file's rows are quarantined.
+max_quarantine_share = 0.05
+ 
+[retry]
+# Attempts per model call, including the first try. Only timeouts, rate limits and server errors are retried.
+max_attempts = 3
+base_seconds = 0.5
+cap_seconds = 8.0
+ 
+[ai]
+# "recorded" reads saved responses from fixtures/. "live" makes one bounded model call per note.
+mode = "recorded"
+model = "claude-haiku-5-5"
+prompt_version = "v1"
+max_tokens = 300
+timeout_seconds = 20
